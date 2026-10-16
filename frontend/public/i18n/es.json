@@ -1,0 +1,28 @@
+{
+  "app": {
+    "title": "TaskFlow",
+    "tagline": "Gestión de proyectos para agencias digitales",
+    "language": "Idioma"
+  },
+  "status": {
+    "title": "Estado del sistema",
+    "subtitle": "Fase 0 · esqueleto funcional",
+    "api": "API",
+    "loading": "Verificando…",
+    "refresh": "Verificar de nuevo",
+    "checkedAt": "Última verificación: {{ time }}",
+    "unreachable": "No se puede conectar con la API en {{ url }}. Verificá que esté corriendo.",
+    "serverMessage": "Mensaje de la API",
+    "version": "Versión",
+    "environment": "Entorno",
+    "states": {
+      "Healthy": "Operativo",
+      "Degraded": "Degradado",
+      "Unhealthy": "Con fallas",
+      "Unreachable": "Sin conexión"
+    },
+    "checks": {
+      "database": "Base de datos"
+    }
+  }
+}

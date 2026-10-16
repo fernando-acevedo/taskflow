@@ -1,0 +1,23 @@
+.toolbar {
+  gap: 16px;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+}
+
+.brand {
+  font: var(--mat-sys-title-large);
+}
+
+.tagline {
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.language {
+  margin-left: auto;
+}
+
+@media (max-width: 600px) {
+  .tagline {
+    display: none;
+  }
+}

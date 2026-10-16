@@ -1,0 +1,21 @@
+<ng-container *transloco="let t">
+  <mat-toolbar class="toolbar">
+    <span class="brand">{{ t('app.title') }}</span>
+    <span class="tagline">{{ t('app.tagline') }}</span>
+    <mat-button-toggle-group
+      class="language"
+      hideSingleSelectionIndicator
+      [attr.aria-label]="t('app.language')"
+      [value]="language.current()"
+      (change)="language.use($event.value)"
+    >
+      @for (lang of languages; track lang) {
+        <mat-button-toggle [value]="lang">{{ lang.toUpperCase() }}</mat-button-toggle>
+      }
+    </mat-button-toggle-group>
+  </mat-toolbar>
+
+  <main>
+    <router-outlet />
+  </main>
+</ng-container>

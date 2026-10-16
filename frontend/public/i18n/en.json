@@ -1,0 +1,28 @@
+{
+  "app": {
+    "title": "TaskFlow",
+    "tagline": "Project management for digital agencies",
+    "language": "Language"
+  },
+  "status": {
+    "title": "System status",
+    "subtitle": "Phase 0 · walking skeleton",
+    "api": "API",
+    "loading": "Checking…",
+    "refresh": "Check again",
+    "checkedAt": "Last checked at {{ time }}",
+    "unreachable": "Can't reach the API at {{ url }}. Make sure it is running.",
+    "serverMessage": "Message from the API",
+    "version": "Version",
+    "environment": "Environment",
+    "states": {
+      "Healthy": "Healthy",
+      "Degraded": "Degraded",
+      "Unhealthy": "Unhealthy",
+      "Unreachable": "Unreachable"
+    },
+    "checks": {
+      "database": "Database"
+    }
+  }
+}

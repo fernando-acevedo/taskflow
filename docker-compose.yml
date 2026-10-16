@@ -1,0 +1,16 @@
+# Optional: SQL Server in a container, as an alternative to LocalDB (Windows only).
+# Start it with `docker compose up -d` and point ConnectionStrings__TaskFlow at it, for example:
+# Server=localhost,1433;Database=TaskFlow;User Id=sa;Password=<SA_PASSWORD>;TrustServerCertificate=True
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${SA_PASSWORD:?Set SA_PASSWORD in your shell or a .env file}
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+
+volumes:
+  sqlserver-data:

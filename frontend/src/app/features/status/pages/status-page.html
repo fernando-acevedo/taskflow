@@ -1,0 +1,65 @@
+<ng-container *transloco="let t; prefix: 'status'">
+  <header class="page-header">
+    <h1>{{ t('title') }}</h1>
+    <p>{{ t('subtitle') }}</p>
+  </header>
+
+  <mat-card appearance="outlined">
+    @if (loading()) {
+      <mat-progress-bar mode="indeterminate" [attr.aria-label]="t('loading')" />
+    }
+
+    <mat-card-content>
+      @let status = overallStatus();
+      <div class="overall" [attr.data-status]="status">
+        <mat-icon aria-hidden="true">
+          @switch (status) {
+            @case ('Healthy') { check_circle }
+            @case ('Degraded') { warning }
+            @default { error }
+          }
+        </mat-icon>
+        <div>
+          <span class="label">{{ t('api') }}</span>
+          <strong>{{ status ? t('states.' + status) : t('loading') }}</strong>
+        </div>
+      </div>
+
+      @if (status === 'Unreachable') {
+        <p class="hint">{{ t('unreachable', { url: apiUrl }) }}</p>
+      }
+
+      @if (health(); as report) {
+        <ul class="checks">
+          @for (check of report.checks; track check.name) {
+            <li [attr.data-status]="check.status">
+              <span>{{ t('checks.' + check.name) }}</span>
+              <span>{{ t('states.' + check.status) }} · {{ check.durationMs.toFixed(0) }} ms</span>
+            </li>
+          }
+        </ul>
+      }
+
+      @if (info(); as apiInfo) {
+        <dl class="info">
+          <dt>{{ t('serverMessage') }}</dt>
+          <dd>{{ apiInfo.message }}</dd>
+          <dt>{{ t('version') }}</dt>
+          <dd>{{ apiInfo.version }}</dd>
+          <dt>{{ t('environment') }}</dt>
+          <dd>{{ apiInfo.environment }}</dd>
+        </dl>
+      }
+    </mat-card-content>
+
+    <mat-card-actions align="end">
+      @if (checkedAt(); as time) {
+        <span class="checked-at">{{ t('checkedAt', { time: (time | date: 'mediumTime' : undefined : language.current()) }) }}</span>
+      }
+      <button mat-button type="button" (click)="refresh()" [disabled]="loading()">
+        <mat-icon aria-hidden="true">refresh</mat-icon>
+        {{ t('refresh') }}
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</ng-container>
