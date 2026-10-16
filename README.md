@@ -59,15 +59,25 @@ Key decisions are written down as ADRs:
 
 ## Run it locally
 
-Prerequisites: .NET SDK 10.0.400+, Node.js 24+, and SQL Server LocalDB (included with Visual Studio) or
-Docker (see `docker-compose.yml`).
+Prerequisites: .NET SDK 10.0.400+, Node.js 24+, and a SQL Server: Docker Desktop (recommended) or
+SQL Server LocalDB (included with Visual Studio).
 
-On Windows, the quickest way is the dev script. It starts both servers in their own windows, waits until
-they answer and opens the app in your browser; press Enter in its window to stop them.
+On Windows, the quickest way is the dev script:
 
 ```powershell
-.\dev.cmd              # or .\dev.ps1; add -ApiDocs to also open the API reference, -NoBrowser to skip the browser
+.\dev.cmd                       # or .\dev.ps1
+.\dev.cmd -Database LocalDb     # skip Docker
+.\dev.cmd -ApiDocs -StopDatabase
 ```
+
+It does the whole setup:
+
+1. **Database.** With Docker available it checks whether the `sqlserver` service from `docker-compose.yml` is
+   running and healthy, and starts it if not (starting Docker Desktop first when needed). The first run
+   creates a git-ignored `.env` with a random `SA_PASSWORD`. Without Docker it falls back to LocalDB.
+2. **Servers.** Opens a window for the API (pointed at the chosen database) and one for the frontend.
+3. **Browser.** Waits until both answer and opens the app. Press Enter in the script's window to stop the
+   servers; the database container keeps running unless you pass `-StopDatabase`.
 
 Or start each side by hand:
 
@@ -82,7 +92,7 @@ npm ci
 npm start
 ```
 
-In Development the API seeds an admin account on LocalDB: **admin@taskflow.local** / **Admin12345**
+In Development the API seeds an admin account in the local database: **admin@taskflow.local** / **Admin12345**
 (see `appsettings.Development.json`; never used outside local development). Anyone can register a
 standard account from the sign-up page.
 

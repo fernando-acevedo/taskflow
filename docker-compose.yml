@@ -1,16 +1,26 @@
-# Optional: SQL Server in a container, as an alternative to LocalDB (Windows only).
-# Start it with `docker compose up -d` and point ConnectionStrings__TaskFlow at it, for example:
-# Server=localhost,1433;Database=TaskFlow;User Id=sa;Password=<SA_PASSWORD>;TrustServerCertificate=True
+# Local dependencies for TaskFlow. dev.ps1 starts this automatically when Docker is available.
+#
+# SA_PASSWORD (and optionally SQL_PORT) come from the .env file next to this one. dev.ps1 creates .env
+# with a random password the first time; .env is git-ignored.
+#
+# Manual use:   docker compose up -d --wait
+# Connection:   Server=localhost,1433;Database=TaskFlow;User Id=sa;Password=<SA_PASSWORD>;TrustServerCertificate=True
 services:
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
     environment:
       ACCEPT_EULA: "Y"
-      MSSQL_SA_PASSWORD: ${SA_PASSWORD:?Set SA_PASSWORD in your shell or a .env file}
+      MSSQL_SA_PASSWORD: ${SA_PASSWORD:?Set SA_PASSWORD in .env (dev.ps1 creates it for you)}
     ports:
-      - "1433:1433"
+      - "${SQL_PORT:-1433}:1433"
     volumes:
       - sqlserver-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q 'SELECT 1' -b -o /dev/null"]
+      interval: 5s
+      timeout: 5s
+      retries: 24
+      start_period: 20s
 
 volumes:
   sqlserver-data:
