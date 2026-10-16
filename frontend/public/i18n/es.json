@@ -4,14 +4,87 @@
     "tagline": "Gestión de proyectos para agencias digitales",
     "language": "Idioma"
   },
+  "nav": {
+    "account": "Menú de la cuenta",
+    "profile": "Perfil",
+    "status": "Estado del sistema",
+    "logout": "Cerrar sesión",
+    "login": "Iniciar sesión"
+  },
+  "home": {
+    "greeting": "Hola, {{ name }}",
+    "intro": "Iniciaste sesión en TaskFlow.",
+    "comingSoonTitle": "Los proyectos están en camino",
+    "comingSoon": "Los clientes, los proyectos y el tablero Kanban llegan en las próximas fases. Por ahora puedes editar tu perfil o consultar el estado del sistema."
+  },
+  "auth": {
+    "email": "Email",
+    "password": "Contraseña",
+    "login": {
+      "title": "Iniciar sesión",
+      "subtitle": "Te damos la bienvenida a TaskFlow",
+      "submit": "Iniciar sesión",
+      "noAccount": "¿Eres nuevo en TaskFlow?",
+      "createAccount": "Crea una cuenta"
+    },
+    "register": {
+      "title": "Crea tu cuenta",
+      "subtitle": "Te lleva menos de un minuto",
+      "confirmPassword": "Confirmar contraseña",
+      "submit": "Crear cuenta",
+      "haveAccount": "¿Ya tienes una cuenta?",
+      "signIn": "Inicia sesión",
+      "rules": {
+        "length": "Al menos 8 caracteres",
+        "mix": "Una mayúscula, una minúscula y un número"
+      }
+    },
+    "validation": {
+      "required": "Este campo es obligatorio.",
+      "email": "Ingresa un email válido.",
+      "passwordPolicy": "Usa al menos 8 caracteres con una mayúscula, una minúscula y un número.",
+      "passwordsMismatch": "Las contraseñas no coinciden."
+    },
+    "loginErrors": {
+      "invalidCredentials": "El email o la contraseña son incorrectos.",
+      "lockedOut": "Esta cuenta está bloqueada. Si fue desactivada, pide a un administrador que la reactive; si no, vuelve a intentarlo en unos minutos.",
+      "tooManyAttempts": "Demasiados intentos. Espera un minuto y vuelve a intentarlo.",
+      "unexpected": "No pudimos iniciar tu sesión. Revisa tu conexión y vuelve a intentarlo."
+    }
+  },
+  "profile": {
+    "title": "Tu perfil",
+    "email": "Email",
+    "role": "Rol",
+    "roles": {
+      "admin": "Admin",
+      "member": "Miembro"
+    },
+    "displayName": "Nombre visible",
+    "save": "Guardar",
+    "saved": "Guardado"
+  },
+  "errors": {
+    "DuplicateUserName": "Ya existe una cuenta con este email.",
+    "DuplicateEmail": "Ya existe una cuenta con este email.",
+    "InvalidEmail": "Ingresa un email válido.",
+    "InvalidUserName": "Ingresa un email válido.",
+    "PasswordTooShort": "La contraseña debe tener al menos 8 caracteres.",
+    "PasswordRequiresUpper": "La contraseña necesita una mayúscula.",
+    "PasswordRequiresLower": "La contraseña necesita una minúscula.",
+    "PasswordRequiresDigit": "La contraseña necesita un número.",
+    "displayName": "Usa entre 2 y 100 caracteres.",
+    "tooManyAttempts": "Demasiados intentos. Espera un minuto y vuelve a intentarlo.",
+    "unexpected": "Algo salió mal. Vuelve a intentarlo."
+  },
   "status": {
     "title": "Estado del sistema",
-    "subtitle": "Fase 0 · esqueleto funcional",
+    "subtitle": "Fase 1 · autenticación",
     "api": "API",
     "loading": "Verificando…",
     "refresh": "Verificar de nuevo",
     "checkedAt": "Última verificación: {{ time }}",
-    "unreachable": "No se puede conectar con la API en {{ url }}. Verificá que esté corriendo.",
+    "unreachable": "No se puede conectar con la API en {{ url }}. Verifica que esté corriendo.",
     "serverMessage": "Mensaje de la API",
     "version": "Versión",
     "environment": "Entorno",

@@ -1,13 +1,15 @@
 using System.Globalization;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using Serilog;
 using TaskFlow.Api.ErrorHandling;
 using TaskFlow.Api.Health;
+using TaskFlow.Api.Identity;
 using TaskFlow.Application;
+using TaskFlow.Application.Abstractions;
 using TaskFlow.Infrastructure;
-using TaskFlow.Infrastructure.Persistence;
+using TaskFlow.Infrastructure.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +22,10 @@ builder.Services.AddSerilog((services, logger) => logger
 builder.Services
     .AddApplication()
     .AddInfrastructure(builder.Configuration);
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUser, HttpContextCurrentUser>();
+builder.Services.AddAuthorization();
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
@@ -37,6 +43,16 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
     options.ApplyCurrentCultureToResponseHeaders = true;
 });
 
+const string AuthRateLimitPolicy = "auth";
+var authPermitLimit = builder.Configuration.GetValue("RateLimiting:Auth:PermitLimit", 10);
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy(AuthRateLimitPolicy, context => RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = authPermitLimit, Window = TimeSpan.FromMinutes(1) }));
+});
+
 const string FrontendCorsPolicy = "Frontend";
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 builder.Services.AddCors(options => options.AddPolicy(FrontendCorsPolicy, policy => policy
@@ -51,6 +67,7 @@ app.UseStatusCodePages();
 app.UseSerilogRequestLogging();
 app.UseRequestLocalization();
 app.UseCors(FrontendCorsPolicy);
+app.UseRateLimiter();
 
 if (app.Environment.IsDevelopment())
 {
@@ -59,16 +76,19 @@ if (app.Environment.IsDevelopment())
 }
 
 // HTTPS is enforced by the hosting platform (App Service "HTTPS only"), not by the app.
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapGroup("/api/auth")
+    .WithTags("Auth")
+    .RequireRateLimiting(AuthRateLimitPolicy)
+    .MapIdentityApi<ApplicationUser>();
 app.MapHealthChecks("/health", new HealthCheckOptions { ResponseWriter = HealthResponseWriter.WriteAsync });
 
-if (app.Configuration.GetValue<bool>("Database:MigrateOnStartup"))
-{
-    await using var scope = app.Services.CreateAsyncScope();
-    await scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.MigrateAsync();
-}
+await app.Services.InitializeDatabaseAsync(
+    migrate: app.Configuration.GetValue<bool>("Database:MigrateOnStartup"),
+    seed: app.Configuration.GetValue<bool>("Database:SeedOnStartup"));
 
 await app.RunAsync();
 

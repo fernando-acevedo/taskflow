@@ -1,7 +1,10 @@
 <ng-container *transloco="let t">
   <mat-toolbar class="toolbar">
-    <span class="brand">{{ t('app.title') }}</span>
+    <a class="brand" routerLink="/">{{ t('app.title') }}</a>
     <span class="tagline">{{ t('app.tagline') }}</span>
+
+    <span class="spacer"></span>
+
     <mat-button-toggle-group
       class="language"
       hideSingleSelectionIndicator
@@ -13,6 +16,32 @@
         <mat-button-toggle [value]="lang">{{ lang.toUpperCase() }}</mat-button-toggle>
       }
     </mat-button-toggle-group>
+
+    @if (user(); as current) {
+      <button mat-button type="button" class="account" [matMenuTriggerFor]="accountMenu" [attr.aria-label]="t('nav.account')">
+        <mat-icon aria-hidden="true">account_circle</mat-icon>
+        <span class="account-name">{{ current.displayName }}</span>
+        @if (isAdmin()) {
+          <span class="badge">{{ t('profile.roles.admin') }}</span>
+        }
+      </button>
+      <mat-menu #accountMenu="matMenu" xPosition="before">
+        <a mat-menu-item routerLink="/profile">
+          <mat-icon aria-hidden="true">person</mat-icon>
+          <span>{{ t('nav.profile') }}</span>
+        </a>
+        <a mat-menu-item routerLink="/status">
+          <mat-icon aria-hidden="true">monitor_heart</mat-icon>
+          <span>{{ t('nav.status') }}</span>
+        </a>
+        <button mat-menu-item type="button" (click)="logout()">
+          <mat-icon aria-hidden="true">logout</mat-icon>
+          <span>{{ t('nav.logout') }}</span>
+        </button>
+      </mat-menu>
+    } @else {
+      <a mat-button routerLink="/login">{{ t('nav.login') }}</a>
+    }
   </mat-toolbar>
 
   <main>

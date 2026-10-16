@@ -4,7 +4,8 @@ using TaskFlow.Api.IntegrationTests.Infrastructure;
 
 namespace TaskFlow.Api.IntegrationTests;
 
-public sealed class HealthEndpointTests(SqlServerApiFactory factory) : IClassFixture<SqlServerApiFactory>
+[Collection(SqlServerTestGroup.Name)]
+public sealed class HealthEndpointTests(SqlServerApiFactory factory)
 {
     [Fact]
     public async Task ReturnsHealthyWhenDatabaseIsReachable()

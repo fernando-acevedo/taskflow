@@ -93,6 +93,7 @@ if (-not (Test-Path (Join-Path $frontendDir 'node_modules'))) {
 }
 
 $started = @()
+$ownedPorts = @()
 
 if (Test-PortInUse $apiPort) {
     Write-Host "Port $apiPort is already in use; reusing the running API." -ForegroundColor Yellow
@@ -100,6 +101,7 @@ if (Test-PortInUse $apiPort) {
 else {
     Write-Host 'Starting API...' -ForegroundColor Cyan
     $started += Start-ServerWindow 'TaskFlow API' $backendDir 'dotnet run --project src/TaskFlow.Api'
+    $ownedPorts += $apiPort
 }
 
 if (Test-PortInUse $appPort) {
@@ -108,6 +110,7 @@ if (Test-PortInUse $appPort) {
 else {
     Write-Host 'Starting frontend...' -ForegroundColor Cyan
     $started += Start-ServerWindow 'TaskFlow frontend' $frontendDir "npm start -- --port $appPort"
+    $ownedPorts += $appPort
 }
 
 $apiStatus = Wait-ForUrl $apiHealthUrl 'API'
@@ -139,10 +142,19 @@ if ($started.Count -eq 0) {
 
 Read-Host 'Press Enter to stop the servers started by this script' | Out-Null
 
+# The process listening on a port can outlive its window's process tree (dotnet run hands off to the
+# app host), so stop the listeners on the ports this script started as well as the windows.
+$listenerIds = @(Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue |
+    Where-Object { $ownedPorts -contains $_.LocalPort } |
+    Select-Object -ExpandProperty OwningProcess -Unique)
+
 foreach ($process in $started) {
     if (-not $process.HasExited) {
         # /T also stops the child processes (dotnet, node) running inside each window.
-        & taskkill.exe /PID $process.Id /T /F | Out-Null
+        & taskkill.exe /PID $process.Id /T /F 2>$null | Out-Null
     }
+}
+foreach ($id in $listenerIds) {
+    Stop-Process -Id $id -Force -ErrorAction SilentlyContinue
 }
 Write-Host 'Servers stopped.' -ForegroundColor Green
