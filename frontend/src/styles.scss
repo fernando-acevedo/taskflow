@@ -131,3 +131,14 @@ body {
     color: var(--mat-sys-on-error-container);
   }
 }
+
+// Chart colors. Status uses the first four categorical slots in a fixed order (validated for CVD separation on
+// this surface); magnitude bars use one hue. Values and labels always use text tokens, never these colors.
+html {
+  --tf-chart-todo: #2a78d6;
+  --tf-chart-in-progress: #eb6834;
+  --tf-chart-review: #1baf7a;
+  --tf-chart-done: #eda100;
+  --tf-chart-bar: #2a78d6;
+  --tf-chart-track: var(--mat-sys-surface-container-high);
+}

@@ -17,9 +17,6 @@
   },
   "home": {
     "greeting": "Hi, {{ name }}",
-    "intro": "You're signed in to TaskFlow.",
-    "projectsTitle": "Your projects",
-    "projectsText": "Plan the work of each client project on a Kanban board, share it with your team and keep an eye on due dates.",
     "openProjects": "Go to projects"
   },
   "auth": {
@@ -233,7 +230,8 @@
       "board": "Board",
       "list": "List",
       "members": "Members",
-      "settings": "Settings"
+      "settings": "Settings",
+      "overview": "Overview"
     }
   },
   "members": {
@@ -311,5 +309,32 @@
     "deleted": "Task deleted",
     "deleteTitle": "Delete this task?",
     "deleteMessage": "“{{ title }}” will be deleted permanently."
+  },
+  "dashboard": {
+    "intro": "Here is what needs your attention across your projects.",
+    "summary": "Summary",
+    "myOpen": "My open tasks",
+    "openTasks": "Open tasks",
+    "overdue": "Overdue",
+    "overdueCount": "{{ count }} overdue",
+    "dueThisWeek": "Due this week",
+    "next7Days": "Today and the next 6 days",
+    "done": "Done",
+    "ofTotal": "of {{ total }} tasks",
+    "myTasks": "Assigned to me",
+    "noTasks": "Nothing is assigned to you right now.",
+    "noDueDate": "No due date",
+    "moreTasks": "Showing the first {{ shown }} of {{ total }}. Open a project to see the rest.",
+    "clients": "By client",
+    "clientsMine": "Active projects you are a member of",
+    "clientsAll": "All active projects",
+    "noClients": "No active projects yet.",
+    "client": "Client",
+    "activeProjects": "Projects",
+    "byStatus": "Tasks by status",
+    "byAssignee": "Workload by assignee",
+    "byPriority": "Open tasks by priority",
+    "openOnly": "Tasks not done yet",
+    "nothingOpen": "Every task is done."
   }
 }

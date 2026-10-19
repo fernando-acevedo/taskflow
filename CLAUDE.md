@@ -5,8 +5,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 TaskFlow is a project-management app for digital agencies (clients, projects, Kanban, workload dashboard) in
 English and Spanish. Backend is ASP.NET Core 10 + EF Core 10 + SQL Server; frontend is Angular 22 (standalone,
 zoneless, signals) + NgRx + Angular Material + Transloco. The project is built in phases (see the Roadmap in
-`README.md`); phases 1 (authentication), 2 (domain and API for clients, projects, members and tasks) and 3
-(the Angular screens for them, with the Kanban board) are done, and phase 4 (dashboard) comes next.
+`README.md`); phases 1 (authentication), 2 (domain and API for clients, projects, members and tasks), 3 (the
+Angular screens, with the Kanban board) and 4 (dashboards) are done; phase 5 (Azure deployment and the public
+demo) comes next.
 
 ## Commands
 
@@ -108,6 +109,10 @@ that don't need a database. `AuthApi` contains helpers for registering and loggi
   to revert; dragging pauses while a move is in flight, and tasks reload after each move because the API
   renumbers (and re-versions) the neighbors. The list view's filters live in the URL query string and are read
   with `@ngrx/router-store`.
+- `features/dashboard/` serves the home page (`dashboard.routes.ts`, `myDashboard` state) and the project's
+  Overview tab (registered on the projects route, `projectDashboard` state). Charts are hand-built components in
+  `dashboard/ui/` (ADR 0007); their colors are the `--tf-chart-*` variables in `styles.scss`, and every chart
+  shows its numbers as text.
 - Translations live in `public/i18n/en.json` and `es.json`, and every user-visible string needs both. API
   error codes are translated under `apiErrors` (`Projects.LastOwner` → `apiErrors.Projects.LastOwner`), so a new
   backend error code needs entries in both `.resx` files and both JSON files.

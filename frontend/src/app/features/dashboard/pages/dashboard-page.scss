@@ -1,0 +1,105 @@
+:host {
+  display: block;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 16px;
+}
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+mat-card-header {
+  padding-bottom: 8px;
+}
+
+.due {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-small);
+
+  &.overdue {
+    color: var(--mat-sys-error);
+    font-weight: 600;
+  }
+
+  mat-icon {
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
+  }
+}
+
+.more {
+  margin: 0;
+  padding: 12px 16px;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-small);
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+  text-align: left;
+}
+
+thead th {
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-label-medium);
+}
+
+tbody th {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+tbody tr:last-child > * {
+  border-bottom: 0;
+}
+
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+td.overdue {
+  color: var(--mat-sys-error);
+  font-weight: 600;
+
+  mat-icon {
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
+    vertical-align: -3px;
+  }
+}
