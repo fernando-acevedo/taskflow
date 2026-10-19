@@ -5,8 +5,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 TaskFlow is a project-management app for digital agencies (clients, projects, Kanban, workload dashboard) in
 English and Spanish. Backend is ASP.NET Core 10 + EF Core 10 + SQL Server; frontend is Angular 22 (standalone,
 zoneless, signals) + NgRx + Angular Material + Transloco. The project is built in phases (see the Roadmap in
-`README.md`); phases 1 (authentication) and 2 (domain and API for clients, projects, members and tasks) are
-done, and phase 3 (the Angular screens for them) comes next.
+`README.md`); phases 1 (authentication), 2 (domain and API for clients, projects, members and tasks) and 3
+(the Angular screens for them, with the Kanban board) are done, and phase 4 (dashboard) comes next.
 
 ## Commands
 
@@ -93,12 +93,24 @@ that don't need a database. `AuthApi` contains helpers for registering and loggi
   `token-refresher` (refreshes once on a 401, shared by concurrent requests), token storage (access token in
   memory, refresh token in `localStorage`), guards, and `restoreSession`, an app initializer that restores the
   session before the first navigation. `i18n/` contains the Transloco setup and an interceptor that sends
-  `Accept-Language`.
+  `Accept-Language`. `http/api-error.ts` turns a failed call into an `ApiError` whose `code` is the API's error
+  code; `notifications/notifier.ts` shows it as a snackbar translated from `apiErrors.<code>`.
 - `src/app/features/<feature>/` is split into `data-access/` (API service + NgRx `store/` with
   `*.actions.ts`, `*.effects.ts` (functional effects), `*.feature.ts` (`createFeature`)), `ui/` and `pages/`.
-  Pages are lazy-loaded in `app.routes.ts`. Feature state and effects are provided on the route
-  (`provideState` / `provideEffects`), except auth, which is registered at the root in `app.config.ts`.
-- Translations live in `public/i18n/en.json` and `es.json`, and every user-visible string needs both.
+  Each feature has a `<feature>.routes.ts` loaded with `loadChildren`, which provides its state and effects on
+  the route (`provideState` / `provideEffects`); auth is the exception, registered at the root in `app.config.ts`.
+  Lists use `@ngrx/entity`. Feature reducers reset on `ShellActions.logoutClicked` / `AuthApiActions.sessionExpired`.
+  `src/app/shared/ui/` holds reusable presentational pieces (confirm dialog, empty state); list-page layout classes
+  (`.page-header`, `.filters`, `.rows`, `.chip`) are global in `styles.scss`.
+- Projects and tasks share one route (`features/projects/projects.routes.ts`): `ProjectPage` loads the project,
+  members and tasks, and its tabs (board, list, members, settings) read them from the store. The board moves a
+  card optimistically (`tasks/data-access/store/board.ts` mirrors the API's renumbering) and keeps `moveUndo`
+  to revert; dragging pauses while a move is in flight, and tasks reload after each move because the API
+  renumbers (and re-versions) the neighbors. The list view's filters live in the URL query string and are read
+  with `@ngrx/router-store`.
+- Translations live in `public/i18n/en.json` and `es.json`, and every user-visible string needs both. API
+  error codes are translated under `apiErrors` (`Projects.LastOwner` → `apiErrors.Projects.LastOwner`), so a new
+  backend error code needs entries in both `.resx` files and both JSON files.
 
 ## Conventions
 

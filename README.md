@@ -6,8 +6,8 @@
 Project management for digital agencies: clients, projects, a Kanban board and a workload dashboard,
 in English and Spanish. Built with .NET 10, Angular and NgRx, SQL Server, and deployed to Azure.
 
-> **Status: phase 2 (domain and API).** Authentication works end to end, and the API manages clients,
-> projects with members, and tasks. The Angular screens for them arrive in phase 3; see [Roadmap](#roadmap).
+> **Status: phase 3 (Angular features).** Authentication, clients, projects with members, and tasks work end
+> to end, including the Kanban board. The dashboard arrives in phase 4; see [Roadmap](#roadmap).
 
 ## Tech stack
 
@@ -61,6 +61,11 @@ docs/adr/                    architecture decision records
   tasks, and filter them by status, priority, assignee, overdue and title. Archived projects are read-only.
 - Edits of projects and tasks send the `rowVersion` they read; if someone changed the item in between, the
   API answers 409 with the code `Concurrency.Stale`.
+
+In the Angular app, admins manage clients and users; everyone else sees the projects they belong to. A project
+opens on its Kanban board, where dragging a card updates the board at once and puts it back with a message if the
+API rejects the move. The list view filters tasks by status, priority, assignee, overdue and title, and keeps the
+filters in the URL. Members, roles and archiving are managed from the project's tabs.
 
 Key decisions are written down as ADRs:
 
@@ -134,8 +139,8 @@ otherwise a throwaway LocalDB database. In CI they always use the container.
 | 0 | Walking skeleton: solution layout, health checks, i18n, CI | Done |
 | 1 | Authentication with Identity API Endpoints, roles, guards | Done |
 | 2 | Domain and API: clients, projects, members, tasks | Done |
-| 3 | Angular features with NgRx, Kanban with drag and drop | Next |
-| 4 | Dashboard | Planned |
+| 3 | Angular features with NgRx, Kanban with drag and drop | Done |
+| 4 | Dashboard | Next |
 | 5 | Azure deployment and the public demo with nightly reset | Planned |
 | 6 | Polish: screenshots, accessibility, docs | Planned |
 

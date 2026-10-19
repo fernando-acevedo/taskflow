@@ -15,12 +15,12 @@ import { authFeature } from '../../../core/auth/store/auth.feature';
       <p class="intro">{{ t('home.intro') }}</p>
       <mat-card appearance="outlined">
         <mat-card-content>
-          <h2>{{ t('home.comingSoonTitle') }}</h2>
-          <p>{{ t('home.comingSoon') }}</p>
+          <h2>{{ t('home.projectsTitle') }}</h2>
+          <p>{{ t('home.projectsText') }}</p>
         </mat-card-content>
         <mat-card-actions>
+          <a mat-flat-button routerLink="/projects">{{ t('home.openProjects') }}</a>
           <a mat-button routerLink="/profile">{{ t('nav.profile') }}</a>
-          <a mat-button routerLink="/status">{{ t('nav.status') }}</a>
         </mat-card-actions>
       </mat-card>
     </ng-container>

@@ -4,7 +4,7 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { RouterLink, RouterOutlet } from '@angular/router';
+import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { TranslocoDirective } from '@jsverse/transloco';
 import { Store } from '@ngrx/store';
 import { ShellActions } from './core/auth/store/auth.actions';
@@ -21,6 +21,7 @@ import { SUPPORTED_LANGUAGES } from './core/i18n/languages';
     MatMenuModule,
     MatToolbarModule,
     RouterLink,
+    RouterLinkActive,
     RouterOutlet,
     TranslocoDirective,
   ],

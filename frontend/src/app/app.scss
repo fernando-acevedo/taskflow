@@ -18,6 +18,16 @@
   flex: 1;
 }
 
+.main-nav {
+  display: flex;
+  gap: 4px;
+
+  .active {
+    background: var(--mat-sys-secondary-container);
+    color: var(--mat-sys-on-secondary-container);
+  }
+}
+
 .account {
   max-width: 260px;
 }
@@ -37,8 +47,21 @@
   font: var(--mat-sys-label-small);
 }
 
-@media (max-width: 720px) {
+@media (max-width: 1100px) {
   .tagline {
+    display: none;
+  }
+}
+
+// The section links move into the account menu when the toolbar gets narrow.
+@media (max-width: 760px) {
+  .main-nav {
+    display: none;
+  }
+}
+
+@media (min-width: 761px) {
+  .compact-only {
     display: none;
   }
 }

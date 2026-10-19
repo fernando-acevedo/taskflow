@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { provideEffects } from '@ngrx/effects';
 import { provideState } from '@ngrx/store';
-import { authGuard, guestGuard } from './core/auth/auth.guards';
+import { adminGuard, authGuard, guestGuard } from './core/auth/auth.guards';
 import * as statusEffects from './features/status/data-access/store/status.effects';
 import { statusFeature } from './features/status/data-access/store/status.feature';
 
@@ -33,6 +33,20 @@ export const routes: Routes = [
       {
         path: 'profile',
         loadComponent: () => import('./features/profile/pages/profile-page').then((m) => m.ProfilePage),
+      },
+      {
+        path: 'projects',
+        loadChildren: () => import('./features/projects/projects.routes').then((m) => m.projectsRoutes),
+      },
+      {
+        path: 'clients',
+        canActivate: [adminGuard],
+        loadChildren: () => import('./features/clients/clients.routes').then((m) => m.clientsRoutes),
+      },
+      {
+        path: 'admin',
+        canActivate: [adminGuard],
+        loadChildren: () => import('./features/admin/admin.routes').then((m) => m.adminRoutes),
       },
     ],
   },

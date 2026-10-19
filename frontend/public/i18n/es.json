@@ -9,13 +9,18 @@
     "profile": "Perfil",
     "status": "Estado del sistema",
     "logout": "Cerrar sesión",
-    "login": "Iniciar sesión"
+    "login": "Iniciar sesión",
+    "main": "Secciones principales",
+    "projects": "Proyectos",
+    "clients": "Clientes",
+    "users": "Usuarios"
   },
   "home": {
     "greeting": "Hola, {{ name }}",
     "intro": "Iniciaste sesión en TaskFlow.",
-    "comingSoonTitle": "Los proyectos están en camino",
-    "comingSoon": "Los clientes, los proyectos y el tablero Kanban llegan en las próximas fases. Por ahora puedes editar tu perfil o consultar el estado del sistema."
+    "projectsTitle": "Tus proyectos",
+    "projectsText": "Planifica el trabajo de cada proyecto de cliente en un tablero Kanban, compártelo con tu equipo y controla los vencimientos.",
+    "openProjects": "Ir a proyectos"
   },
   "auth": {
     "email": "Email",
@@ -97,5 +102,214 @@
     "checks": {
       "database": "Base de datos"
     }
+  },
+  "common": {
+    "cancel": "Cancelar",
+    "dismiss": "Cerrar"
+  },
+  "apiErrors": {
+    "validation": "Algunos campos no son válidos. Revísalos e inténtalo de nuevo.",
+    "forbidden": "No tienes permiso para hacer esto.",
+    "network": "No se puede conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.",
+    "unexpected": "Algo salió mal. Inténtalo de nuevo.",
+    "Users": {
+      "NotFound": "No se encontró el usuario.",
+      "EmailNotFound": "No hay ningún usuario registrado con ese email.",
+      "CannotChangeOwnStatus": "No puedes desactivar ni reactivar tu propia cuenta.",
+      "CannotChangeOwnRole": "No puedes cambiar tu propio rol."
+    },
+    "Clients": {
+      "NotFound": "No se encontró el cliente.",
+      "NameTaken": "Ya existe otro cliente con ese nombre.",
+      "HasActiveProjects": "No se puede archivar un cliente con proyectos activos.",
+      "Archived": "El cliente está archivado; restáuralo primero."
+    },
+    "Projects": {
+      "NotFound": "No se encontró el proyecto.",
+      "Forbidden": "No tienes acceso a este proyecto.",
+      "NameTaken": "El cliente ya tiene un proyecto con ese nombre.",
+      "Archived": "El proyecto está archivado y es de solo lectura.",
+      "AlreadyMember": "Ese usuario ya es miembro del proyecto.",
+      "MemberNotFound": "Ese usuario no es miembro del proyecto.",
+      "LastOwner": "Un proyecto necesita al menos un propietario. Primero haz propietario a otra persona.",
+      "AssigneeNotMember": "El responsable debe ser miembro del proyecto."
+    },
+    "Tasks": {
+      "NotFound": "No se encontró la tarea. Puede que alguien la haya eliminado."
+    },
+    "Concurrency": {
+      "Stale": "Otra persona modificó esto mientras tanto. Lo recargamos; inténtalo de nuevo."
+    }
+  },
+  "clients": {
+    "title": "Clientes",
+    "subtitle": "Los clientes de la agencia. Cada proyecto pertenece a uno.",
+    "create": "Nuevo cliente",
+    "createTitle": "Nuevo cliente",
+    "editTitle": "Editar cliente",
+    "search": "Buscar por nombre",
+    "showArchived": "Mostrar archivados",
+    "retry": "Reintentar",
+    "empty": "Todavía no hay clientes. Agrega el primero para empezar a crear proyectos.",
+    "noMatches": "Ningún cliente coincide con la búsqueda.",
+    "archived": "Archivado",
+    "activeProjects": "Proyectos activos: {{ count }}",
+    "edit": "Editar",
+    "archive": "Archivar",
+    "restore": "Restaurar",
+    "archiveTitle": "¿Archivar {{ name }}?",
+    "archiveMessage": "Dejará de ofrecerse para proyectos nuevos. Puedes restaurarlo más adelante.",
+    "name": "Nombre",
+    "nameRule": "Usa entre 2 y 100 caracteres.",
+    "contactEmail": "Email de contacto",
+    "emailRule": "Ingresa un email válido.",
+    "notes": "Notas",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "saved": "Cliente guardado"
+  },
+  "users": {
+    "title": "Usuarios",
+    "subtitle": "Quién puede iniciar sesión y quién administra TaskFlow.",
+    "search": "Buscar por nombre o email",
+    "retry": "Reintentar",
+    "noMatches": "Ningún usuario coincide con la búsqueda.",
+    "admin": "Admin",
+    "inactive": "Desactivado",
+    "you": "Tú",
+    "actions": "Acciones para {{ name }}",
+    "grantAdmin": "Hacer admin",
+    "revokeAdmin": "Quitar rol de admin",
+    "activate": "Reactivar",
+    "deactivate": "Desactivar",
+    "deactivateTitle": "¿Desactivar a {{ name }}?",
+    "deactivateMessage": "Se cerrará su sesión y no podrá volver a entrar hasta que reactives la cuenta.",
+    "saved": "Usuario actualizado"
+  },
+  "projects": {
+    "title": "Proyectos",
+    "subtitle": "Los proyectos de los que eres miembro.",
+    "create": "Nuevo proyecto",
+    "createTitle": "Nuevo proyecto",
+    "editTitle": "Editar proyecto",
+    "search": "Buscar por nombre",
+    "client": "Cliente",
+    "allClients": "Todos los clientes",
+    "showArchived": "Proyectos archivados",
+    "retry": "Reintentar",
+    "empty": "Todavía no estás en ningún proyecto. Crea uno o pide a un propietario que te agregue.",
+    "noMatches": "Ningún proyecto coincide con estos filtros.",
+    "roles": {
+      "Owner": "Propietario",
+      "Member": "Miembro"
+    },
+    "memberCount": "Miembros: {{ count }}",
+    "updated": "Actualizado el {{ date }}",
+    "open": "Abrir {{ name }}",
+    "noClients": "No hay clientes activos. Primero un admin tiene que agregar uno.",
+    "clientRule": "Elige un cliente.",
+    "name": "Nombre",
+    "nameRule": "Usa entre 3 y 100 caracteres.",
+    "description": "Descripción",
+    "created": "Creado",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "edit": "Editar",
+    "archive": "Archivar",
+    "restore": "Restaurar",
+    "archivedChip": "Archivado",
+    "archiveTitle": "¿Archivar {{ name }}?",
+    "archiveMessage": "El proyecto pasa a ser de solo lectura y se mueve a la lista de archivados. Los propietarios pueden restaurarlo.",
+    "saved": "Proyecto guardado",
+    "archived": "Proyecto archivado",
+    "restored": "Proyecto restaurado"
+  },
+  "project": {
+    "back": "Todos los proyectos",
+    "readOnlyAdmin": "Estás viendo este proyecto como admin. Solo sus miembros pueden modificarlo.",
+    "readOnlyArchived": "Este proyecto está archivado, así que es de solo lectura.",
+    "tabs": {
+      "label": "Secciones del proyecto",
+      "board": "Tablero",
+      "list": "Lista",
+      "members": "Miembros",
+      "settings": "Configuración"
+    }
+  },
+  "members": {
+    "email": "Email",
+    "emailHint": "La persona necesita una cuenta de TaskFlow.",
+    "emailRule": "Ingresa un email válido.",
+    "role": "Rol",
+    "roles": {
+      "Owner": "Propietario",
+      "Member": "Miembro"
+    },
+    "add": "Agregar",
+    "inactive": "Desactivado",
+    "leave": "Salir del proyecto",
+    "actions": "Acciones para {{ name }}",
+    "makeOwner": "Hacer propietario",
+    "makeMember": "Hacer miembro",
+    "remove": "Quitar del proyecto",
+    "removeTitle": "¿Quitar a {{ name }}?",
+    "removeMessage": "Perderá el acceso al proyecto. Las tareas que tiene asignadas conservan su nombre.",
+    "leaveTitle": "¿Salir de {{ name }}?",
+    "leaveMessage": "Perderás el acceso al proyecto hasta que un propietario te vuelva a agregar.",
+    "added": "Miembro agregado",
+    "roleChanged": "Rol actualizado",
+    "removed": "Miembro quitado",
+    "left": "Saliste del proyecto"
+  },
+  "tasks": {
+    "create": "Nueva tarea",
+    "createTitle": "Nueva tarea",
+    "editTitle": "Editar tarea",
+    "viewTitle": "Tarea",
+    "retry": "Reintentar",
+    "loading": "Cargando…",
+    "dragHint": "Arrastra las tarjetas entre columnas para cambiar su estado.",
+    "emptyColumn": "Sin tareas",
+    "statuses": {
+      "ToDo": "Por hacer",
+      "InProgress": "En curso",
+      "Review": "En revisión",
+      "Done": "Hecha"
+    },
+    "priorities": {
+      "Low": "Baja",
+      "Medium": "Media",
+      "High": "Alta",
+      "Critical": "Crítica"
+    },
+    "overdue": "Vencida",
+    "unassigned": "Sin asignar",
+    "formerMember": "Ex miembro",
+    "title": "Título",
+    "titleRule": "Ingresa un título de hasta 200 caracteres.",
+    "description": "Descripción",
+    "priority": "Prioridad",
+    "assignee": "Responsable",
+    "status": "Estado",
+    "dueDate": "Vencimiento",
+    "dueDateRule": "El vencimiento no puede estar en el pasado.",
+    "delete": "Eliminar",
+    "close": "Cerrar",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "search": "Buscar por título",
+    "any": "Cualquiera",
+    "anyone": "Cualquiera",
+    "me": "Yo",
+    "onlyOverdue": "Solo vencidas",
+    "clearFilters": "Quitar filtros",
+    "empty": "Todavía no hay tareas.",
+    "noMatches": "Ninguna tarea coincide con estos filtros.",
+    "showing": "Mostrando {{ count }} de {{ total }} tareas",
+    "created": "Tarea creada",
+    "saved": "Tarea guardada",
+    "deleted": "Tarea eliminada",
+    "deleteTitle": "¿Eliminar esta tarea?",
+    "deleteMessage": "«{{ title }}» se eliminará para siempre."
   }
 }

@@ -1,0 +1,55 @@
+<ng-container *transloco="let t">
+  <a mat-button routerLink="/projects" class="back">
+    <mat-icon aria-hidden="true">arrow_back</mat-icon>
+    {{ t('project.back') }}
+  </a>
+
+  @if (error(); as loadError) {
+    <app-empty-state icon="folder_off" [message]="notifier.errorMessage(loadError)">
+      <button mat-button type="button" (click)="reload()">{{ t('projects.retry') }}</button>
+    </app-empty-state>
+  } @else if (project(); as current) {
+    <header class="project-header">
+      <div class="title">
+        <h1>{{ current.name }}</h1>
+        <span class="chip">{{ current.clientName }}</span>
+        @if (current.isArchived) {
+          <span class="chip error">{{ t('projects.archivedChip') }}</span>
+        }
+      </div>
+      @if (current.description) {
+        <p class="description">{{ current.description }}</p>
+      }
+      @if (current.myRole === null) {
+        <p class="notice" role="note">
+          <mat-icon aria-hidden="true">visibility</mat-icon>
+          {{ t('project.readOnlyAdmin') }}
+        </p>
+      } @else if (current.isArchived) {
+        <p class="notice" role="note">
+          <mat-icon aria-hidden="true">inventory_2</mat-icon>
+          {{ t('project.readOnlyArchived') }}
+        </p>
+      }
+    </header>
+
+    <nav mat-tab-nav-bar [tabPanel]="panel" [attr.aria-label]="t('project.tabs.label')">
+      @for (tab of tabs; track tab.path) {
+        @if (tab.path !== 'settings' || isOwner()) {
+          <a mat-tab-link [routerLink]="tab.path" routerLinkActive #active="routerLinkActive" [active]="active.isActive" [attr.aria-label]="t(tab.label)">
+            <mat-icon aria-hidden="true">{{ tab.icon }}</mat-icon>
+            <span class="tab-label">{{ t(tab.label) }}</span>
+          </a>
+        }
+      }
+    </nav>
+    @if (loading()) {
+      <mat-progress-bar mode="indeterminate" />
+    }
+    <mat-tab-nav-panel #panel>
+      <router-outlet />
+    </mat-tab-nav-panel>
+  } @else {
+    <mat-progress-bar mode="indeterminate" />
+  }
+</ng-container>

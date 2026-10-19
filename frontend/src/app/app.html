@@ -3,6 +3,16 @@
     <a class="brand" routerLink="/">{{ t('app.title') }}</a>
     <span class="tagline">{{ t('app.tagline') }}</span>
 
+    @if (user()) {
+      <nav class="main-nav" [attr.aria-label]="t('nav.main')">
+        <a mat-button routerLink="/projects" routerLinkActive="active">{{ t('nav.projects') }}</a>
+        @if (isAdmin()) {
+          <a mat-button routerLink="/clients" routerLinkActive="active">{{ t('nav.clients') }}</a>
+          <a mat-button routerLink="/admin/users" routerLinkActive="active">{{ t('nav.users') }}</a>
+        }
+      </nav>
+    }
+
     <span class="spacer"></span>
 
     <mat-button-toggle-group
@@ -26,6 +36,20 @@
         }
       </button>
       <mat-menu #accountMenu="matMenu" xPosition="before">
+        <a mat-menu-item routerLink="/projects" class="compact-only">
+          <mat-icon aria-hidden="true">folder</mat-icon>
+          <span>{{ t('nav.projects') }}</span>
+        </a>
+        @if (isAdmin()) {
+          <a mat-menu-item routerLink="/clients" class="compact-only">
+            <mat-icon aria-hidden="true">business</mat-icon>
+            <span>{{ t('nav.clients') }}</span>
+          </a>
+          <a mat-menu-item routerLink="/admin/users" class="compact-only">
+            <mat-icon aria-hidden="true">group</mat-icon>
+            <span>{{ t('nav.users') }}</span>
+          </a>
+        }
         <a mat-menu-item routerLink="/profile">
           <mat-icon aria-hidden="true">person</mat-icon>
           <span>{{ t('nav.profile') }}</span>
