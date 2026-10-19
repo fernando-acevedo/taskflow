@@ -1,6 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 
-namespace TaskFlow.Application.Common;
+namespace TaskFlow.Domain.Common;
 
 /// <summary>Outcome of a use case: success, or an expected <see cref="Common.Error"/>.</summary>
 public class Result

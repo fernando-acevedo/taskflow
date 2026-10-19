@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Localization;
-using TaskFlow.Application.Common;
+using TaskFlow.Domain.Common;
 
 namespace TaskFlow.Api.Controllers;
 
@@ -15,6 +15,10 @@ public abstract class ApiControllerBase : ControllerBase
 
     protected ActionResult<T> OkOrProblem<T>(Result<T> result) =>
         result.IsSuccess ? Ok(result.Value) : ProblemFrom(result.Error);
+
+    /// <summary>201 with a Location header built from the new resource's route values.</summary>
+    protected ActionResult<T> CreatedOrProblem<T>(Result<T> result, string actionName, Func<T, object> routeValues) =>
+        result.IsSuccess ? CreatedAtAction(actionName, routeValues(result.Value), result.Value) : ProblemFrom(result.Error);
 
     /// <summary>
     /// Validation errors become a ValidationProblemDetails keyed by field. Other errors become a ProblemDetails

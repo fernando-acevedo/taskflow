@@ -6,8 +6,8 @@
 Project management for digital agencies: clients, projects, a Kanban board and a workload dashboard,
 in English and Spanish. Built with .NET 10, Angular and NgRx, SQL Server, and deployed to Azure.
 
-> **Status: phase 1 (authentication).** Registration, sign-in with token refresh, roles and profile editing
-> work end to end. Clients, projects and tasks arrive in the next phases; see [Roadmap](#roadmap).
+> **Status: phase 2 (domain and API).** Authentication works end to end, and the API manages clients,
+> projects with members, and tasks. The Angular screens for them arrive in phase 3; see [Roadmap](#roadmap).
 
 ## Tech stack
 
@@ -49,6 +49,19 @@ docs/adr/                    architecture decision records
 - The Angular app keeps the access token in memory and the refresh token in `localStorage`, refreshes once
   on a 401 (shared by concurrent requests), and restores the session on reload before the first navigation.
 
+### Clients, projects and tasks
+
+- `/api/clients`: everyone can list clients; admins create, edit, archive and restore them. A client with
+  active projects can't be archived.
+- `/api/projects`: any user creates a project for an active client and becomes its owner. Users see the
+  projects they belong to; admins can read all of them but only work in the ones they are members of.
+- `/api/projects/{id}/members`: owners add users by email, change roles and remove members; a project always
+  keeps at least one owner, and members can leave.
+- `/api/projects/{id}/tasks`: members create, edit, move (`PUT .../position`, the Kanban drag and drop) and delete
+  tasks, and filter them by status, priority, assignee, overdue and title. Archived projects are read-only.
+- Edits of projects and tasks send the `rowVersion` they read; if someone changed the item in between, the
+  API answers 409 with the code `Concurrency.Stale`.
+
 Key decisions are written down as ADRs:
 
 1. [Clean Architecture with four projects](docs/adr/0001-clean-architecture.md)
@@ -56,6 +69,7 @@ Key decisions are written down as ADRs:
 3. [Bearer tokens instead of cookies](docs/adr/0003-bearer-tokens-over-cookies.md)
 4. [Target .NET 10 LTS](docs/adr/0004-dotnet-10.md)
 5. [Reset the public demo from inside the API](docs/adr/0005-demo-reset-inside-api.md)
+6. [Use cases query the DbContext and check project access themselves](docs/adr/0006-dbcontext-and-access-checks-in-use-cases.md)
 
 ## Run it locally
 
@@ -119,8 +133,8 @@ otherwise a throwaway LocalDB database. In CI they always use the container.
 | --- | --- | --- |
 | 0 | Walking skeleton: solution layout, health checks, i18n, CI | Done |
 | 1 | Authentication with Identity API Endpoints, roles, guards | Done |
-| 2 | Domain and API: clients, projects, members, tasks | Next |
-| 3 | Angular features with NgRx, Kanban with drag and drop | Planned |
+| 2 | Domain and API: clients, projects, members, tasks | Done |
+| 3 | Angular features with NgRx, Kanban with drag and drop | Next |
 | 4 | Dashboard | Planned |
 | 5 | Azure deployment and the public demo with nightly reset | Planned |
 | 6 | Polish: screenshots, accessibility, docs | Planned |

@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using TaskFlow.Application.Abstractions;
+using TaskFlow.Application.Users;
 
 namespace TaskFlow.Api.Identity;
 
@@ -15,4 +16,6 @@ internal sealed class HttpContextCurrentUser(IHttpContextAccessor httpContextAcc
                 : throw new InvalidOperationException("There is no authenticated user in the current request.");
         }
     }
+
+    public bool IsAdmin => httpContextAccessor.HttpContext?.User.IsInRole(Roles.Admin) ?? false;
 }

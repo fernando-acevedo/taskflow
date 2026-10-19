@@ -1,4 +1,4 @@
-using TaskFlow.Application.Common;
+using TaskFlow.Domain.Common;
 
 namespace TaskFlow.Application.Users;
 
@@ -19,6 +19,9 @@ public static class UserErrors
 {
     public static Error NotFound(Guid userId) =>
         Error.NotFound("Users.NotFound", $"User '{userId}' was not found.");
+
+    public static readonly Error EmailNotFound =
+        Error.NotFound("Users.EmailNotFound", "No user is registered with that email.");
 
     public static readonly Error CannotChangeOwnStatus =
         Error.Conflict("Users.CannotChangeOwnStatus", "You can't deactivate or reactivate your own account.");

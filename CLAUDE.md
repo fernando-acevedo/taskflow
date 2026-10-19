@@ -5,7 +5,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 TaskFlow is a project-management app for digital agencies (clients, projects, Kanban, workload dashboard) in
 English and Spanish. Backend is ASP.NET Core 10 + EF Core 10 + SQL Server; frontend is Angular 22 (standalone,
 zoneless, signals) + NgRx + Angular Material + Transloco. The project is built in phases (see the Roadmap in
-`README.md`); phase 1 (authentication) is done, and clients/projects/tasks come next.
+`README.md`); phases 1 (authentication) and 2 (domain and API for clients, projects, members and tasks) are
+done, and phase 3 (the Angular screens for them) comes next.
 
 ## Commands
 
@@ -44,20 +45,29 @@ Clean Architecture with four projects in `backend/src` (ADR 0001). Dependencies 
 `Api → Infrastructure → Application → Domain`. `ArchitectureTests` in the unit-test projects enforce this,
 so a reference added in the wrong direction fails the tests.
 
+- **Domain**: `Client`, `Project` (aggregate root owning `ProjectMember`) and `TaskItem`, with private setters.
+  Rules live in entity methods that return `Result`/`Error` (`Domain/Common`) instead of throwing; each
+  entity file also holds its `XxxErrors`. `TaskItem` methods take the `Project` so its rules (archived is
+  read-only, assignee must be a member) apply.
 - **Application**: use cases are plain classes, one file per use case (e.g. `Users/SetUserActive.cs` holds
   `SetUserActiveCommand` + `SetUserActiveHandler`). Any class whose name ends in `Handler` is registered
-  automatically by `AddApplication()`, and so is every FluentValidation validator. No mediator library.
-  Handlers return `Result`/`Result<T>` (`Common/Result.cs`, `Common/Error.cs`) instead of throwing for
-  expected failures. Ports such as `IIdentityService` and `ICurrentUser` live here and are implemented elsewhere.
+  automatically by `AddApplication()`, and so is every FluentValidation validator. No mediator library. Handlers
+  return `Result`/`Result<T>` (from the Domain) instead of throwing for expected failures. Ports such as
+  `IAppDbContext`, `IIdentityService` and `ICurrentUser` live here and are implemented elsewhere. Handlers query
+  `IAppDbContext` directly (no repositories), and every project-scoped handler starts with
+  `ProjectAccess.GetAsync(projectId, ProjectAccessLevel.View|Work|Manage)`, which returns 404/403 errors (ADR
+  0006). Use `TimeProvider` for the current time. Projects and tasks carry a `rowversion`: edits compare it and
+  return `CommonErrors.Stale`.
 - **Infrastructure**: `AppDbContext` (EF Core, SQL Server, connection string `TaskFlow`), ASP.NET Identity
   (`ApplicationUser`, `IdentityService`, `IdentitySeeder`). `InitializeDatabaseAsync` runs migrations and seeding
   on startup when `Database:MigrateOnStartup` / `Database:SeedOnStartup` are true. Migrations under
   `Persistence/Migrations` are generated code, and `.editorconfig` turns analyzers off there.
 - **Api**: controllers derive from `ApiControllerBase`, which maps results to HTTP via `OkOrProblem` /
-  `NoContentOrProblem`. Validation errors become `ValidationProblemDetails`; other `ErrorType`s map to
-  404/409/403/400. The `ProblemDetails` title is localized by looking up the error **code** in
-  `Resources/SharedResource{.es}.resx`, and the code is sent as `extensions.code` so the frontend can translate
-  it. When you add an error code, add its translations to both `.resx` files.
+  `CreatedOrProblem` / `NoContentOrProblem`. Route ids are passed to commands from small request records declared
+  next to the controller. Enums are serialized as strings. Validation errors become `ValidationProblemDetails`;
+  other `ErrorType`s map to 404/409/403/400. The `ProblemDetails` title is localized by looking up the error
+  **code** in `Resources/SharedResource{.es}.resx`, and the code is sent as `extensions.code` so the frontend can
+  translate it. When you add an error code, add its translations to both `.resx` files.
 - Identity uses ASP.NET Core Identity API Endpoints (`MapIdentityApi`) under `/api/auth` with bearer + refresh
   tokens, not cookies (ADRs 0002, 0003). That group is rate limited per IP. Everything else is controllers.
 - Request localization supports `en` (default) and `es` from `Accept-Language`.
@@ -66,13 +76,13 @@ so a reference added in the wrong direction fails the tests.
 ### Tests
 
 xUnit v3 + Shouldly + NSubstitute. `TaskFlow.Api.IntegrationTests` hosts the API with `WebApplicationFactory`:
-`SqlServerApiFactory` uses a Testcontainers SQL Server, falls back to a throwaway LocalDB database on Windows,
-and skips when neither is available. When `CI` is set, a missing Docker fails the run instead. All database
-test classes share one instance through `[Collection(SqlServerTestGroup.Name)]`, so new ones should join that
-collection rather than start another container. The factory seeds its own admin (`admin@tests.local`) and
-lifts the auth rate limit. `NoDatabaseApiFactory` covers endpoints that don't need a database. `AuthApi`
-contains helpers for registering and logging in. Use-case unit tests live in `TaskFlow.Application.UnitTests`,
-mirroring the Application folders (`Users/SetUserActiveHandlerTests.cs`).
+`SqlServerApiFactory` uses a Testcontainers SQL Server, falls back to a throwaway LocalDB database on Windows, and
+skips when neither is available. When `CI` is set, a missing Docker fails the run instead. All database test
+classes share one instance through `[Collection(SqlServerTestGroup.Name)]`, so new ones should join that
+collection rather than start another container. The factory seeds its own admin (`admin@tests.local`) and lifts
+the auth rate limit. `ProjectApi` sets up clients, projects and tasks. `NoDatabaseApiFactory` covers endpoints
+that don't need a database. `AuthApi` contains helpers for registering and logging in. Use-case unit tests live in
+`TaskFlow.Application.UnitTests`, mirroring the Application folders (`Users/SetUserActiveHandlerTests.cs`).
 
 ## Frontend architecture
 

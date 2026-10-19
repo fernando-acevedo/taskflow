@@ -9,4 +9,19 @@
   <data name="Users.NotFound" xml:space="preserve"><value>No se encontró el usuario.</value></data>
   <data name="Users.CannotChangeOwnStatus" xml:space="preserve"><value>No puedes desactivar ni reactivar tu propia cuenta.</value></data>
   <data name="Users.CannotChangeOwnRole" xml:space="preserve"><value>No puedes cambiar tu propio rol.</value></data>
+  <data name="Users.EmailNotFound" xml:space="preserve"><value>No hay ningún usuario registrado con ese email.</value></data>
+  <data name="Clients.NotFound" xml:space="preserve"><value>No se encontró el cliente.</value></data>
+  <data name="Clients.NameTaken" xml:space="preserve"><value>Ya existe otro cliente con ese nombre.</value></data>
+  <data name="Clients.HasActiveProjects" xml:space="preserve"><value>No se puede archivar un cliente con proyectos activos.</value></data>
+  <data name="Clients.Archived" xml:space="preserve"><value>El cliente está archivado; restáuralo antes de agregarle proyectos.</value></data>
+  <data name="Projects.NotFound" xml:space="preserve"><value>No se encontró el proyecto.</value></data>
+  <data name="Projects.Forbidden" xml:space="preserve"><value>No tienes permiso para hacer esto en el proyecto.</value></data>
+  <data name="Projects.NameTaken" xml:space="preserve"><value>El cliente ya tiene un proyecto con ese nombre.</value></data>
+  <data name="Projects.Archived" xml:space="preserve"><value>El proyecto está archivado y es de solo lectura.</value></data>
+  <data name="Projects.AlreadyMember" xml:space="preserve"><value>El usuario ya es miembro del proyecto.</value></data>
+  <data name="Projects.MemberNotFound" xml:space="preserve"><value>El usuario no es miembro del proyecto.</value></data>
+  <data name="Projects.LastOwner" xml:space="preserve"><value>Un proyecto necesita al menos un propietario.</value></data>
+  <data name="Projects.AssigneeNotMember" xml:space="preserve"><value>El responsable debe ser miembro del proyecto.</value></data>
+  <data name="Tasks.NotFound" xml:space="preserve"><value>No se encontró la tarea.</value></data>
+  <data name="Concurrency.Stale" xml:space="preserve"><value>Otra persona modificó este elemento. Recárgalo e inténtalo de nuevo.</value></data>
 </root>

@@ -1,5 +1,5 @@
 using TaskFlow.Application.Abstractions;
-using TaskFlow.Application.Common;
+using TaskFlow.Domain.Common;
 
 namespace TaskFlow.Application.Users;
 
