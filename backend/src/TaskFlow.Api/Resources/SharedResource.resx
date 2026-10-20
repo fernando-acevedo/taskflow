@@ -9,4 +9,19 @@
   <data name="Users.NotFound" xml:space="preserve"><value>The user was not found.</value></data>
   <data name="Users.CannotChangeOwnStatus" xml:space="preserve"><value>You can't deactivate or reactivate your own account.</value></data>
   <data name="Users.CannotChangeOwnRole" xml:space="preserve"><value>You can't change your own role.</value></data>
+  <data name="Users.EmailNotFound" xml:space="preserve"><value>No user is registered with that email.</value></data>
+  <data name="Clients.NotFound" xml:space="preserve"><value>The client was not found.</value></data>
+  <data name="Clients.NameTaken" xml:space="preserve"><value>Another client already has this name.</value></data>
+  <data name="Clients.HasActiveProjects" xml:space="preserve"><value>A client with active projects can't be archived.</value></data>
+  <data name="Clients.Archived" xml:space="preserve"><value>The client is archived; restore it before adding projects.</value></data>
+  <data name="Projects.NotFound" xml:space="preserve"><value>The project was not found.</value></data>
+  <data name="Projects.Forbidden" xml:space="preserve"><value>You don't have permission to do this in the project.</value></data>
+  <data name="Projects.NameTaken" xml:space="preserve"><value>The client already has a project with this name.</value></data>
+  <data name="Projects.Archived" xml:space="preserve"><value>The project is archived and read-only.</value></data>
+  <data name="Projects.AlreadyMember" xml:space="preserve"><value>The user is already a member of the project.</value></data>
+  <data name="Projects.MemberNotFound" xml:space="preserve"><value>The user is not a member of the project.</value></data>
+  <data name="Projects.LastOwner" xml:space="preserve"><value>A project needs at least one owner.</value></data>
+  <data name="Projects.AssigneeNotMember" xml:space="preserve"><value>The assignee must be a member of the project.</value></data>
+  <data name="Tasks.NotFound" xml:space="preserve"><value>The task was not found.</value></data>
+  <data name="Concurrency.Stale" xml:space="preserve"><value>Someone else changed this item. Reload it and try again.</value></data>
 </root>

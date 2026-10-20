@@ -15,6 +15,21 @@ internal sealed class IdentityService(UserManager<ApplicationUser> userManager, 
         return row?.ToDto();
     }
 
+    public async Task<UserDto?> FindByEmailAsync(string email, CancellationToken cancellationToken)
+    {
+        var normalizedEmail = userManager.NormalizeEmail(email);
+        var row = await ProjectRows(db.Users.Where(user => user.NormalizedEmail == normalizedEmail), await AdminRoleIdAsync(cancellationToken))
+            .FirstOrDefaultAsync(cancellationToken);
+        return row?.ToDto();
+    }
+
+    public async Task<IReadOnlyList<UserDto>> FindByIdsAsync(IReadOnlyCollection<Guid> userIds, CancellationToken cancellationToken)
+    {
+        var rows = await ProjectRows(db.Users.Where(user => userIds.Contains(user.Id)), await AdminRoleIdAsync(cancellationToken))
+            .ToListAsync(cancellationToken);
+        return [.. rows.Select(row => row.ToDto())];
+    }
+
     public async Task<PagedResult<UserDto>> ListAsync(string? search, int page, int pageSize, CancellationToken cancellationToken)
     {
         var users = db.Users.AsNoTracking();

@@ -7,6 +7,11 @@ public interface IIdentityService
 {
     Task<UserDto?> FindByIdAsync(Guid userId, CancellationToken cancellationToken);
 
+    Task<UserDto?> FindByEmailAsync(string email, CancellationToken cancellationToken);
+
+    /// <summary>The users that exist among <paramref name="userIds"/>, in no particular order.</summary>
+    Task<IReadOnlyList<UserDto>> FindByIdsAsync(IReadOnlyCollection<Guid> userIds, CancellationToken cancellationToken);
+
     Task<PagedResult<UserDto>> ListAsync(string? search, int page, int pageSize, CancellationToken cancellationToken);
 
     Task UpdateDisplayNameAsync(Guid userId, string displayName, CancellationToken cancellationToken);
