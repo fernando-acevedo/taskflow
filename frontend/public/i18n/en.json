@@ -4,9 +4,82 @@
     "tagline": "Project management for digital agencies",
     "language": "Language"
   },
+  "nav": {
+    "account": "Account menu",
+    "profile": "Profile",
+    "status": "System status",
+    "logout": "Sign out",
+    "login": "Sign in"
+  },
+  "home": {
+    "greeting": "Hi, {{ name }}",
+    "intro": "You're signed in to TaskFlow.",
+    "comingSoonTitle": "Projects are on the way",
+    "comingSoon": "Clients, projects and the Kanban board arrive in the next phases. For now you can edit your profile or check the system status."
+  },
+  "auth": {
+    "email": "Email",
+    "password": "Password",
+    "login": {
+      "title": "Sign in",
+      "subtitle": "Welcome back to TaskFlow",
+      "submit": "Sign in",
+      "noAccount": "New to TaskFlow?",
+      "createAccount": "Create an account"
+    },
+    "register": {
+      "title": "Create your account",
+      "subtitle": "It takes less than a minute",
+      "confirmPassword": "Confirm password",
+      "submit": "Create account",
+      "haveAccount": "Already have an account?",
+      "signIn": "Sign in",
+      "rules": {
+        "length": "At least 8 characters",
+        "mix": "An uppercase letter, a lowercase letter and a number"
+      }
+    },
+    "validation": {
+      "required": "This field is required.",
+      "email": "Enter a valid email address.",
+      "passwordPolicy": "Use at least 8 characters with an uppercase letter, a lowercase letter and a number.",
+      "passwordsMismatch": "The passwords don't match."
+    },
+    "loginErrors": {
+      "invalidCredentials": "The email or password is incorrect.",
+      "lockedOut": "This account is locked. If it was deactivated, ask an administrator to reactivate it; otherwise try again in a few minutes.",
+      "tooManyAttempts": "Too many attempts. Wait a minute and try again.",
+      "unexpected": "We couldn't sign you in. Check your connection and try again."
+    }
+  },
+  "profile": {
+    "title": "Your profile",
+    "email": "Email",
+    "role": "Role",
+    "roles": {
+      "admin": "Admin",
+      "member": "Member"
+    },
+    "displayName": "Display name",
+    "save": "Save",
+    "saved": "Saved"
+  },
+  "errors": {
+    "DuplicateUserName": "An account with this email already exists.",
+    "DuplicateEmail": "An account with this email already exists.",
+    "InvalidEmail": "Enter a valid email address.",
+    "InvalidUserName": "Enter a valid email address.",
+    "PasswordTooShort": "The password must have at least 8 characters.",
+    "PasswordRequiresUpper": "The password needs an uppercase letter.",
+    "PasswordRequiresLower": "The password needs a lowercase letter.",
+    "PasswordRequiresDigit": "The password needs a number.",
+    "displayName": "Use between 2 and 100 characters.",
+    "tooManyAttempts": "Too many attempts. Wait a minute and try again.",
+    "unexpected": "Something went wrong. Try again."
+  },
   "status": {
     "title": "System status",
-    "subtitle": "Phase 0 · walking skeleton",
+    "subtitle": "Phase 1 · authentication",
     "api": "API",
     "loading": "Checking…",
     "refresh": "Check again",

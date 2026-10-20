@@ -6,4 +6,7 @@
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <data name="ApiWelcome" xml:space="preserve"><value>Bienvenido a la API de TaskFlow.</value></data>
   <data name="UnexpectedError" xml:space="preserve"><value>Ocurrió un error inesperado.</value></data>
+  <data name="Users.NotFound" xml:space="preserve"><value>No se encontró el usuario.</value></data>
+  <data name="Users.CannotChangeOwnStatus" xml:space="preserve"><value>No puedes desactivar ni reactivar tu propia cuenta.</value></data>
+  <data name="Users.CannotChangeOwnRole" xml:space="preserve"><value>No puedes cambiar tu propio rol.</value></data>
 </root>

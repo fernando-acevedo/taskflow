@@ -6,16 +6,17 @@
 Project management for digital agencies: clients, projects, a Kanban board and a workload dashboard,
 in English and Spanish. Built with .NET 10, Angular and NgRx, SQL Server, and deployed to Azure.
 
-> **Status: phase 0 (walking skeleton).** The solution structure, health checks, localization and CI are in
-> place. Features arrive in the next phases; see [Roadmap](#roadmap).
+> **Status: phase 1 (authentication).** Registration, sign-in with token refresh, roles and profile editing
+> work end to end. Clients, projects and tasks arrive in the next phases; see [Roadmap](#roadmap).
 
 ## Tech stack
 
 | Area | Technology |
 | --- | --- |
-| API | ASP.NET Core 10 (controllers), EF Core 10, SQL Server, Serilog, OpenAPI + Scalar |
+| API | ASP.NET Core 10 (controllers), EF Core 10, SQL Server, FluentValidation, Serilog, OpenAPI + Scalar |
 | Frontend | Angular 22 (standalone, zoneless, signals), NgRx, Angular Material, Transloco |
-| Tests | xUnit v3, Shouldly, Testcontainers (SQL Server), Vitest |
+| Auth | ASP.NET Core Identity API Endpoints, bearer + refresh tokens, roles, rate limiting |
+| Tests | xUnit v3, Shouldly, NSubstitute, Testcontainers (SQL Server), Vitest |
 | CI | GitHub Actions |
 | Hosting (phase 5) | Azure App Service, Azure Static Web Apps, Azure SQL Database |
 
@@ -36,6 +37,18 @@ frontend/
 docs/adr/                    architecture decision records
 ```
 
+### Authentication
+
+- ASP.NET Core Identity API Endpoints under `/api/auth` (`register`, `login`, `refresh`, ...) issue bearer
+  tokens: a 1-hour access token and a 14-day refresh token.
+- `GET/PUT /api/users/me` returns and updates the signed-in user's profile and roles.
+- Admin-only endpoints under `/api/admin/users` list, deactivate, reactivate, promote and demote users.
+  Deactivating locks the account and invalidates its refresh tokens; admins can't change their own status
+  or role.
+- `/api/auth/*` is rate limited to 10 requests per minute per IP.
+- The Angular app keeps the access token in memory and the refresh token in `localStorage`, refreshes once
+  on a 401 (shared by concurrent requests), and restores the session on reload before the first navigation.
+
 Key decisions are written down as ADRs:
 
 1. [Clean Architecture with four projects](docs/adr/0001-clean-architecture.md)
@@ -46,15 +59,25 @@ Key decisions are written down as ADRs:
 
 ## Run it locally
 
-Prerequisites: .NET SDK 10.0.400+, Node.js 24+, and SQL Server LocalDB (included with Visual Studio) or
-Docker (see `docker-compose.yml`).
+Prerequisites: .NET SDK 10.0.400+, Node.js 24+, and a SQL Server: Docker Desktop (recommended) or
+SQL Server LocalDB (included with Visual Studio).
 
-On Windows, the quickest way is the dev script. It starts both servers in their own windows, waits until
-they answer and opens the app in your browser; press Enter in its window to stop them.
+On Windows, the quickest way is the dev script:
 
 ```powershell
-.\dev.cmd              # or .\dev.ps1; add -ApiDocs to also open the API reference, -NoBrowser to skip the browser
+.\dev.cmd                       # or .\dev.ps1
+.\dev.cmd -Database LocalDb     # skip Docker
+.\dev.cmd -ApiDocs -StopDatabase
 ```
+
+It does the whole setup:
+
+1. **Database.** With Docker available it checks whether the `sqlserver` service from `docker-compose.yml` is
+   running and healthy, and starts it if not (starting Docker Desktop first when needed). The first run
+   creates a git-ignored `.env` with a random `SA_PASSWORD`. Without Docker it falls back to LocalDB.
+2. **Servers.** Opens a window for the API (pointed at the chosen database) and one for the frontend.
+3. **Browser.** Waits until both answer and opens the app. Press Enter in the script's window to stop the
+   servers; the database container keeps running unless you pass `-StopDatabase`.
 
 Or start each side by hand:
 
@@ -69,6 +92,10 @@ npm ci
 npm start
 ```
 
+In Development the API seeds an admin account in the local database: **admin@taskflow.local** / **Admin12345**
+(see `appsettings.Development.json`; never used outside local development). Anyone can register a
+standard account from the sign-up page.
+
 Useful URLs while the API runs in Development:
 
 - `http://localhost:5080/health`: health report, including the database
@@ -78,20 +105,21 @@ Useful URLs while the API runs in Development:
 ## Tests
 
 ```bash
-cd backend && dotnet test        # integration tests need Docker; without it they are skipped locally
+cd backend && dotnet test        # integration tests use Docker, or LocalDB on Windows when Docker is missing
 cd frontend && npm test          # Vitest
 cd frontend && npm run lint      # ESLint
 ```
 
-In CI the integration tests always run against SQL Server in a container.
+Integration tests run against a real SQL Server: a Testcontainers instance when Docker is available,
+otherwise a throwaway LocalDB database. In CI they always use the container.
 
 ## Roadmap
 
 | Phase | Scope | State |
 | --- | --- | --- |
 | 0 | Walking skeleton: solution layout, health checks, i18n, CI | Done |
-| 1 | Authentication with Identity API Endpoints, roles, guards | Next |
-| 2 | Domain and API: clients, projects, members, tasks | Planned |
+| 1 | Authentication with Identity API Endpoints, roles, guards | Done |
+| 2 | Domain and API: clients, projects, members, tasks | Next |
 | 3 | Angular features with NgRx, Kanban with drag and drop | Planned |
 | 4 | Dashboard | Planned |
 | 5 | Azure deployment and the public demo with nightly reset | Planned |

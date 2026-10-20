@@ -1,0 +1,44 @@
+<ng-container *transloco="let t">
+  <h1>{{ t('profile.title') }}</h1>
+
+  @if (user(); as current) {
+    <mat-card appearance="outlined">
+      @if (pending()) {
+        <mat-progress-bar mode="indeterminate" />
+      }
+      <mat-card-content>
+        <dl class="facts">
+          <dt>{{ t('profile.email') }}</dt>
+          <dd>{{ current.email }}</dd>
+          <dt>{{ t('profile.role') }}</dt>
+          <dd>{{ current.roles.length ? t('profile.roles.admin') : t('profile.roles.member') }}</dd>
+        </dl>
+
+        <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+          @if (errors().length) {
+            <div class="form-error" role="alert">
+              @for (code of errors(); track code) {
+                <div>{{ t('errors.' + code) }}</div>
+              }
+            </div>
+          }
+
+          <mat-form-field appearance="outline">
+            <mat-label>{{ t('profile.displayName') }}</mat-label>
+            <input matInput formControlName="displayName" autocomplete="name" required />
+            @if (form.controls.displayName.invalid) {
+              <mat-error>{{ t('errors.displayName') }}</mat-error>
+            }
+          </mat-form-field>
+
+          <div class="actions">
+            <button mat-flat-button type="submit" [disabled]="pending() || form.pristine">{{ t('profile.save') }}</button>
+            @if (saved() && form.pristine) {
+              <span class="saved" role="status">{{ t('profile.saved') }}</span>
+            }
+          </div>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  }
+</ng-container>
