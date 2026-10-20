@@ -3,12 +3,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 export interface BarRow {
-  key: string;
-  label: string;
-  value: number;
+  readonly key: string;
+  readonly label: string;
+  readonly value: number;
   /** Extra text after the value, such as "1 overdue". Shown with a warning icon when `alert` is set. */
-  note?: string;
-  alert?: boolean;
+  readonly note?: string;
+  readonly alert?: boolean;
 }
 
 /**
@@ -97,7 +97,7 @@ export interface BarRow {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BarList {
-  readonly rows = input.required<BarRow[]>();
+  readonly rows = input.required<readonly BarRow[]>();
   /** The value of a full bar; defaults to the largest row. */
   readonly max = input<number | null>(null);
 

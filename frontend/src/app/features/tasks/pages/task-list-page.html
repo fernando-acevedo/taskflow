@@ -2,18 +2,7 @@
   @let current = filters();
 
   <div class="filters">
-    <mat-form-field appearance="outline" subscriptSizing="dynamic">
-      <mat-label>{{ t('search') }}</mat-label>
-      <mat-icon matPrefix aria-hidden="true">search</mat-icon>
-      <input
-        #searchBox
-        matInput
-        type="search"
-        [value]="current.search"
-        (keyup.enter)="setFilter({ search: searchBox.value })"
-        (search)="setFilter({ search: searchBox.value })"
-      />
-    </mat-form-field>
+    <app-search-field [label]="t('search')" [value]="current.search" (searched)="setFilter({ search: $event })" />
 
     <mat-form-field appearance="outline" subscriptSizing="dynamic">
       <mat-label>{{ t('status') }}</mat-label>

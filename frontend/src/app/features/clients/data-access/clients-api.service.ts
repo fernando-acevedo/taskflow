@@ -5,26 +5,26 @@ import { environment } from '../../../../environments/environment';
 import { PagedResult } from '../../../core/http/api-error';
 
 export interface Client {
-  id: string;
-  name: string;
-  contactEmail: string | null;
-  notes: string | null;
-  isArchived: boolean;
-  activeProjectCount: number;
-  createdAt: string;
+  readonly id: string;
+  readonly name: string;
+  readonly contactEmail: string | null;
+  readonly notes: string | null;
+  readonly isArchived: boolean;
+  readonly activeProjectCount: number;
+  readonly createdAt: string;
 }
 
 export interface ClientInput {
-  name: string;
-  contactEmail: string | null;
-  notes: string | null;
+  readonly name: string;
+  readonly contactEmail: string | null;
+  readonly notes: string | null;
 }
 
 export interface ClientQuery {
-  search: string;
-  includeArchived: boolean;
-  page: number;
-  pageSize: number;
+  readonly search: string;
+  readonly includeArchived: boolean;
+  readonly page: number;
+  readonly pageSize: number;
 }
 
 @Injectable({ providedIn: 'root' })

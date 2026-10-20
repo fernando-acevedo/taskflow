@@ -2,7 +2,8 @@ import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
-import { Observable, catchError, exhaustMap, filter, forkJoin, map, of, switchMap, tap, withLatestFrom } from 'rxjs';
+import { Observable, catchError, concatMap, filter, forkJoin, map, of, switchMap, tap, withLatestFrom } from 'rxjs';
+import { User } from '../../../../core/auth/auth.models';
 import { authFeature } from '../../../../core/auth/store/auth.feature';
 import { toApiError } from '../../../../core/http/api-error';
 import { Notifier } from '../../../../core/notifications/notifier';
@@ -44,10 +45,12 @@ export const createProject = createEffect(
   (actions$ = inject(Actions), api = inject(ProjectsApiService)) =>
     actions$.pipe(
       ofType(ProjectsPageActions.createSubmitted),
-      exhaustMap(({ project }) =>
+      concatMap(({ project, submissionId }) =>
         api.create(project).pipe(
-          map((created) => ProjectsApiActions.projectCreated({ project: created })),
-          catchError((error: unknown) => of(ProjectsApiActions.projectChangeFailed({ error: toApiError(error) }))),
+          map((created) => ProjectsApiActions.projectCreated({ project: created, submissionId })),
+          catchError((error: unknown) =>
+            of(ProjectsApiActions.projectChangeFailed({ error: toApiError(error), submissionId })),
+          ),
         ),
       ),
     ),
@@ -58,7 +61,7 @@ export const openCreatedProject = createEffect(
   (actions$ = inject(Actions), router = inject(Router)) =>
     actions$.pipe(
       ofType(ProjectsApiActions.projectCreated),
-      tap(({ project }) => router.navigate(['/projects', project.id])),
+      tap(({ project }) => void router.navigate(['/projects', project.id])),
     ),
   { functional: true, dispatch: false },
 );
@@ -80,7 +83,10 @@ export const loadProject = createEffect(
   { functional: true },
 );
 
-/** Every change to the open project runs here, one at a time, and ends with a reload of the project. */
+/**
+ * Every change to the open project runs here, one at a time and none dropped (two quick role changes both
+ * reach the API), and ends with a reload of the project.
+ */
 export const changeProject = createEffect(
   (actions$ = inject(Actions), store = inject(Store), api = inject(ProjectsApiService)) =>
     actions$.pipe(
@@ -94,13 +100,15 @@ export const changeProject = createEffect(
       ),
       withLatestFrom(store.select(projectsFeature.selectCurrent)),
       filter((pair): pair is [(typeof pair)[0], Project] => pair[1] !== null),
-      exhaustMap(([action, project]) => {
+      concatMap(([action, project]) => {
         let request: Observable<unknown>;
         let message: string;
+        let submissionId: number | undefined;
         switch (action.type) {
           case ProjectPageActions.updateSubmitted.type:
             request = api.update(project.id, action.project, project.rowVersion);
             message = 'projects.saved';
+            submissionId = action.submissionId;
             break;
           case ProjectPageActions.archiveConfirmed.type:
           case ProjectPageActions.restoreClicked.type:
@@ -110,6 +118,7 @@ export const changeProject = createEffect(
           case ProjectPageActions.memberAddSubmitted.type:
             request = api.addMember(project.id, action.email, action.role);
             message = 'members.added';
+            submissionId = action.submissionId;
             break;
           case ProjectPageActions.memberRoleChanged.type:
             request = api.changeRole(project.id, action.userId, action.role);
@@ -120,8 +129,10 @@ export const changeProject = createEffect(
             message = 'members.removed';
         }
         return request.pipe(
-          map(() => ProjectsApiActions.projectChanged({ message })),
-          catchError((error: unknown) => of(ProjectsApiActions.projectChangeFailed({ error: toApiError(error) }))),
+          map(() => ProjectsApiActions.projectChanged({ message, submissionId })),
+          catchError((error: unknown) =>
+            of(ProjectsApiActions.projectChangeFailed({ error: toApiError(error), submissionId })),
+          ),
         );
       }),
     ),
@@ -133,8 +144,10 @@ export const leaveProject = createEffect(
     actions$.pipe(
       ofType(ProjectPageActions.leaveConfirmed),
       withLatestFrom(store.select(projectsFeature.selectCurrent), store.select(authFeature.selectUser)),
-      exhaustMap(([, project, user]) =>
-        api.removeMember(project?.id ?? '', user?.id ?? '').pipe(
+      // Without an open project or a signed-in user there is nobody to remove; the button isn't shown then.
+      filter((triple): triple is [(typeof triple)[0], Project, User] => triple[1] !== null && triple[2] !== null),
+      concatMap(([, project, user]) =>
+        api.removeMember(project.id, user.id).pipe(
           map(() => ProjectsApiActions.projectLeft()),
           catchError((error: unknown) => of(ProjectsApiActions.projectChangeFailed({ error: toApiError(error) }))),
         ),
@@ -154,7 +167,7 @@ export const notify = createEffect(
             break;
           case ProjectsApiActions.projectLeft.type:
             notifier.success('members.left');
-            router.navigate(['/projects']);
+            void router.navigate(['/projects']);
             break;
           default:
             notifier.error(action.error);

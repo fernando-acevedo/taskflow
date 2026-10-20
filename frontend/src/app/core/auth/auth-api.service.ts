@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { Credentials, TokenResponse, User } from './auth.models';
+import { Credentials, InvitationAcceptance, TokenResponse, User } from './auth.models';
 
 export const AUTH_ENDPOINTS_PREFIX = '/api/auth/';
 
@@ -17,6 +17,10 @@ export class AuthApiService {
 
   register(credentials: Credentials): Observable<void> {
     return this.http.post<void>(`${this.baseUrl}${AUTH_ENDPOINTS_PREFIX}register`, credentials);
+  }
+
+  acceptInvitation(acceptance: InvitationAcceptance): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/api/invitations/accept`, acceptance);
   }
 
   refresh(refreshToken: string): Observable<TokenResponse> {

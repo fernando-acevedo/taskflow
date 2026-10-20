@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { TranslocoService } from '@jsverse/transloco';
 import { ApiError } from '../http/api-error';
+import { translateOr } from '../i18n/error-text.pipe';
 
 /** Short messages at the bottom of the screen, for results that don't belong in a form. */
 @Injectable({ providedIn: 'root' })
@@ -19,8 +20,6 @@ export class Notifier {
 
   /** The translation of the error code, or the generic message for a code the frontend doesn't know yet. */
   errorMessage(error: ApiError): string {
-    const key = `apiErrors.${error.code}`;
-    const message = this.transloco.translate(key);
-    return message === key ? this.transloco.translate('apiErrors.unexpected') : message;
+    return translateOr(this.transloco, `apiErrors.${error.code}`, 'apiErrors.unexpected');
   }
 }

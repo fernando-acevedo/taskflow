@@ -1,4 +1,4 @@
-import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
@@ -24,7 +24,7 @@ describe('authInterceptor', () => {
     http = TestBed.inject(HttpClient);
     httpMock = TestBed.inject(HttpTestingController);
     tokens = TestBed.inject(TokenStorage);
-    store = TestBed.inject(MockStore);
+    store = TestBed.inject<MockStore>(MockStore);
     vi.spyOn(store, 'dispatch');
     tokens.save({ tokenType: 'Bearer', accessToken: 'old-access', expiresIn: 3600, refreshToken: 'refresh-1' });
   });
@@ -74,9 +74,24 @@ describe('authInterceptor', () => {
     expect(store.dispatch).toHaveBeenCalledWith(AuthApiActions.sessionExpired());
   });
 
+  it.each([
+    { status: 0, statusText: 'Unknown Error' },
+    { status: 503, statusText: 'Service Unavailable' },
+  ])('keeps the session when the refresh fails with $status', (refreshFailure) => {
+    let failed = false;
+    http.get(`${api}/users/me`).subscribe({ error: () => (failed = true) });
+
+    httpMock.expectOne(`${api}/users/me`).flush(null, unauthorized);
+    httpMock.expectOne(`${api}/auth/refresh`).flush(null, refreshFailure);
+
+    expect(failed).toBe(true);
+    expect(store.dispatch).not.toHaveBeenCalled();
+    expect(tokens.refreshToken()).toBe('refresh-1');
+  });
+
   it('passes other errors through without refreshing', () => {
     let status = 0;
-    http.get(`${api}/users/me`).subscribe({ error: (error) => (status = error.status) });
+    http.get(`${api}/users/me`).subscribe({ error: (error: HttpErrorResponse) => (status = error.status) });
 
     httpMock.expectOne(`${api}/users/me`).flush(null, { status: 403, statusText: 'Forbidden' });
 

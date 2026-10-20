@@ -2,11 +2,11 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 export interface StatusSegment {
-  key: string;
-  label: string;
-  count: number;
+  readonly key: string;
+  readonly label: string;
+  readonly count: number;
   /** A CSS color, normally one of the `--tf-chart-*` variables. */
-  color: string;
+  readonly color: string;
 }
 
 /**
@@ -99,7 +99,7 @@ export interface StatusSegment {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StatusBar {
-  readonly segments = input.required<StatusSegment[]>();
+  readonly segments = input.required<readonly StatusSegment[]>();
   /** Spoken summary for screen readers, e.g. "To do 3, In progress 1". Built from the segments when empty. */
   readonly label = input('');
 

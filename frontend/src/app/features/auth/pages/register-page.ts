@@ -1,11 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import {
-  AbstractControl,
-  NonNullableFormBuilder,
-  ReactiveFormsModule,
-  ValidationErrors,
-  Validators,
-} from '@angular/forms';
+import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -14,17 +8,11 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { RouterLink } from '@angular/router';
 import { TranslocoDirective } from '@jsverse/transloco';
 import { Store } from '@ngrx/store';
+import { newPasswordGroup } from '../../../core/auth/password-rules';
 import { RegisterPageActions } from '../../../core/auth/store/auth.actions';
 import { authFeature } from '../../../core/auth/store/auth.feature';
-
-/** Mirrors the API's password policy so most mistakes are caught before the request. */
-export const PASSWORD_PATTERN = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
-
-function passwordsMatch(group: AbstractControl): ValidationErrors | null {
-  const password = group.get('password')?.value;
-  const confirmation = group.get('confirmPassword')?.value;
-  return password && confirmation && password !== confirmation ? { passwordsMismatch: true } : null;
-}
+import { ErrorTextPipe } from '../../../core/i18n/error-text.pipe';
+import { NewPasswordFields } from '../../../shared/ui/new-password-fields';
 
 @Component({
   selector: 'app-register-page',
@@ -37,6 +25,8 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
     MatInputModule,
     MatProgressBarModule,
     TranslocoDirective,
+    ErrorTextPipe,
+    NewPasswordFields,
   ],
   templateUrl: './register-page.html',
   styleUrl: './auth-page.scss',
@@ -47,14 +37,11 @@ export class RegisterPage {
   protected readonly pending = this.store.selectSignal(authFeature.selectPending);
   protected readonly errors = this.store.selectSignal(authFeature.selectFormErrors);
 
-  protected readonly form = inject(NonNullableFormBuilder).group(
-    {
-      email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.pattern(PASSWORD_PATTERN)]],
-      confirmPassword: ['', Validators.required],
-    },
-    { validators: passwordsMatch },
-  );
+  private readonly fb = inject(NonNullableFormBuilder);
+  protected readonly form = this.fb.group({
+    email: ['', [Validators.required, Validators.email]],
+    passwords: newPasswordGroup(this.fb),
+  });
 
   constructor() {
     this.store.dispatch(RegisterPageActions.opened());
@@ -65,7 +52,7 @@ export class RegisterPage {
       this.form.markAllAsTouched();
       return;
     }
-    const { email, password } = this.form.getRawValue();
-    this.store.dispatch(RegisterPageActions.registerSubmitted({ credentials: { email, password } }));
+    const { email, passwords } = this.form.getRawValue();
+    this.store.dispatch(RegisterPageActions.registerSubmitted({ credentials: { email, password: passwords.password } }));
   }
 }

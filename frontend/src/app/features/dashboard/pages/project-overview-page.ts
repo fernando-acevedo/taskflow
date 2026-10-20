@@ -1,10 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { TranslocoDirective, TranslocoService } from '@jsverse/transloco';
 import { Store } from '@ngrx/store';
-import { LanguageService } from '../../../core/i18n/language.service';
 import { Notifier } from '../../../core/notifications/notifier';
 import { EmptyState } from '../../../shared/ui/empty-state';
 import { projectsFeature } from '../../projects/data-access/store/projects.feature';
@@ -56,8 +56,14 @@ const STATUS_COLORS: Record<TaskStatus, string> = {
 export class ProjectOverviewPage {
   private readonly store = inject(Store);
   private readonly transloco = inject(TranslocoService);
-  private readonly language = inject(LanguageService);
   protected readonly notifier = inject(Notifier);
+
+  /**
+   * The active language's translations, emitted once they are loaded. The labels below depend on it instead
+   * of on the language itself: after switching language, `translate()` would return the bare keys until the
+   * new file arrives, and nothing would recompute them then.
+   */
+  private readonly translation = toSignal(this.transloco.selectTranslation(), { initialValue: null });
 
   private readonly project = this.store.selectSignal(projectsFeature.selectCurrent);
   /** Only the id: reloads of the project itself must not refetch the metrics. */
@@ -71,7 +77,9 @@ export class ProjectOverviewPage {
   );
 
   protected readonly statusSegments = computed<StatusSegment[]>(() => {
-    this.language.current();
+    if (!this.translation()) {
+      return [];
+    }
     return (this.dashboard()?.byStatus ?? []).map(({ status, count }) => ({
       key: status,
       label: this.transloco.translate(`tasks.statuses.${status}`),
@@ -81,7 +89,9 @@ export class ProjectOverviewPage {
   });
 
   protected readonly assigneeRows = computed<BarRow[]>(() => {
-    this.language.current();
+    if (!this.translation()) {
+      return [];
+    }
     return (this.dashboard()?.openByAssignee ?? []).map((load) => ({
       key: load.userId ?? 'none',
       label:
@@ -94,7 +104,9 @@ export class ProjectOverviewPage {
 
   /** Most urgent first. */
   protected readonly priorityRows = computed<BarRow[]>(() => {
-    this.language.current();
+    if (!this.translation()) {
+      return [];
+    }
     return [...(this.dashboard()?.openByPriority ?? [])].reverse().map(({ priority, count }) => ({
       key: priority,
       label: this.transloco.translate(`tasks.priorities.${priority}`),

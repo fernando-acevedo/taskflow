@@ -13,7 +13,7 @@
         @if (errors().length) {
           <div class="form-error" role="alert">
             @for (code of errors(); track code) {
-              <div>{{ t('errors.' + code) }}</div>
+              <div>{{ code | errorText }}</div>
             }
           </div>
         }
@@ -28,30 +28,7 @@
           }
         </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>{{ t('auth.password') }}</mat-label>
-          <input matInput type="password" formControlName="password" autocomplete="new-password" required />
-          @if (form.controls.password.hasError('required')) {
-            <mat-error>{{ t('auth.validation.required') }}</mat-error>
-          } @else if (form.controls.password.hasError('pattern')) {
-            <mat-error>{{ t('auth.validation.passwordPolicy') }}</mat-error>
-          }
-        </mat-form-field>
-        <ul class="rules">
-          <li>{{ t('auth.register.rules.length') }}</li>
-          <li>{{ t('auth.register.rules.mix') }}</li>
-        </ul>
-
-        <mat-form-field appearance="outline">
-          <mat-label>{{ t('auth.register.confirmPassword') }}</mat-label>
-          <input matInput type="password" formControlName="confirmPassword" autocomplete="new-password" required />
-          @if (form.controls.confirmPassword.hasError('required')) {
-            <mat-error>{{ t('auth.validation.required') }}</mat-error>
-          }
-        </mat-form-field>
-        @if (form.hasError('passwordsMismatch') && form.controls.confirmPassword.touched) {
-          <p class="form-error" role="alert">{{ t('auth.validation.passwordsMismatch') }}</p>
-        }
+        <app-new-password-fields [group]="form.controls.passwords" />
       </mat-card-content>
 
       <mat-card-actions class="actions">

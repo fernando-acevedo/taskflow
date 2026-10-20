@@ -6,15 +6,36 @@ import { HttpErrorResponse } from '@angular/common/http';
  * translation files. `fields` holds the field names of a validation error, with the API's (localized) messages.
  */
 export interface ApiError {
-  code: string;
-  fields: Record<string, string[]>;
+  readonly code: string;
+  readonly fields: Record<string, string[]>;
 }
 
 export interface PagedResult<T> {
-  items: T[];
-  page: number;
-  pageSize: number;
-  totalCount: number;
+  readonly items: readonly T[];
+  readonly page: number;
+  readonly pageSize: number;
+  readonly totalCount: number;
+}
+
+/** The parts of a ProblemDetails body the frontend reads, narrowed from the untyped `HttpErrorResponse.error`. */
+export interface ProblemBody {
+  readonly code?: string;
+  readonly detail?: string;
+  readonly errors?: Record<string, string[]>;
+}
+
+export function problemBody(error: HttpErrorResponse): ProblemBody {
+  const body: unknown = error.error;
+  if (typeof body !== 'object' || body === null) {
+    return {};
+  }
+
+  const { code, detail, errors } = body as Record<string, unknown>;
+  return {
+    code: typeof code === 'string' ? code : undefined,
+    detail: typeof detail === 'string' ? detail : undefined,
+    errors: typeof errors === 'object' && errors !== null ? (errors as Record<string, string[]>) : undefined,
+  };
 }
 
 export function toApiError(error: unknown): ApiError {
@@ -22,11 +43,11 @@ export function toApiError(error: unknown): ApiError {
     return { code: 'unexpected', fields: {} };
   }
 
-  const body = error.error as { code?: string; errors?: Record<string, string[]> } | null;
-  if (body?.code) {
+  const body = problemBody(error);
+  if (body.code) {
     return { code: body.code, fields: {} };
   }
-  if (error.status === 400 && body?.errors) {
+  if (error.status === 400 && body.errors) {
     return { code: 'validation', fields: body.errors };
   }
   if (error.status === 403) {

@@ -2,10 +2,15 @@
   <h2 mat-dialog-title>{{ data.task ? (data.readOnly ? t('viewTitle') : t('editTitle')) : t('createTitle') }}</h2>
   <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
     <mat-dialog-content>
+      @if (saving()) {
+        <mat-progress-bar mode="indeterminate" />
+      }
       <mat-form-field appearance="outline">
         <mat-label>{{ t('title') }}</mat-label>
         <input matInput formControlName="title" required />
-        @if (form.controls.title.invalid) {
+        @if (form.controls.title.getError('api'); as message) {
+          <mat-error>{{ message }}</mat-error>
+        } @else if (form.controls.title.invalid) {
           <mat-error>{{ t('titleRule') }}</mat-error>
         }
       </mat-form-field>
@@ -13,6 +18,9 @@
       <mat-form-field appearance="outline">
         <mat-label>{{ t('description') }}</mat-label>
         <textarea matInput formControlName="description" rows="4"></textarea>
+        @if (form.controls.description.getError('api'); as message) {
+          <mat-error>{{ message }}</mat-error>
+        }
       </mat-form-field>
 
       <div class="row">
@@ -33,12 +41,17 @@
               <mat-option [value]="member.userId">{{ member.displayName ?? t('formerMember') }}</mat-option>
             }
           </mat-select>
+          @if (form.controls.assigneeId.getError('api'); as message) {
+            <mat-error>{{ message }}</mat-error>
+          }
         </mat-form-field>
 
         <mat-form-field appearance="outline">
           <mat-label>{{ t('dueDate') }}</mat-label>
           <input matInput type="date" formControlName="dueDate" [min]="minDate" />
-          @if (form.controls.dueDate.hasError('past')) {
+          @if (form.controls.dueDate.getError('api'); as message) {
+            <mat-error>{{ message }}</mat-error>
+          } @else if (form.controls.dueDate.hasError('past')) {
             <mat-error>{{ t('dueDateRule') }}</mat-error>
           }
         </mat-form-field>
@@ -47,7 +60,7 @@
 
     <mat-dialog-actions>
       @if (data.task && !data.readOnly) {
-        <button mat-button type="button" (click)="delete()">
+        <button mat-button type="button" (click)="delete()" [disabled]="saving()">
           <mat-icon aria-hidden="true">delete</mat-icon>
           {{ t('delete') }}
         </button>
@@ -57,7 +70,7 @@
         <button mat-flat-button type="button" mat-dialog-close>{{ t('close') }}</button>
       } @else {
         <button mat-button type="button" mat-dialog-close>{{ t('cancel') }}</button>
-        <button mat-flat-button type="submit">{{ t('save') }}</button>
+        <button mat-flat-button type="submit" [disabled]="saving()">{{ t('save') }}</button>
       }
     </mat-dialog-actions>
   </form>

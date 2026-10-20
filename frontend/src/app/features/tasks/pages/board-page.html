@@ -29,16 +29,26 @@
             [cdkDropListDisabled]="!canEdit() || moving()"
             (cdkDropListDropped)="drop($event)"
           >
-            @for (task of column; track task.id) {
-              <button
-                type="button"
-                class="card"
-                cdkDrag
-                [cdkDragData]="task"
-                (click)="editor.open(task)"
-              >
-                <app-task-card [task]="task" [assignee]="assigneeName(task)" />
-              </button>
+            @for (task of column; track task.id; let index = $index) {
+              <div class="card" cdkDrag [cdkDragData]="task">
+                <button type="button" class="open" (click)="editor.open(task)">
+                  <app-task-card [task]="task" [assignee]="assigneeName(task)" />
+                </button>
+                @if (canEdit()) {
+                  <!-- The keyboard (and screen reader) way to do what dragging does. -->
+                  <button
+                    mat-icon-button
+                    type="button"
+                    class="move"
+                    [matMenuTriggerFor]="moveMenu"
+                    [matMenuTriggerData]="{ task, index, last: column.length - 1 }"
+                    [disabled]="moving()"
+                    [attr.aria-label]="t('moveTo', { title: task.title })"
+                  >
+                    <mat-icon aria-hidden="true">swap_horiz</mat-icon>
+                  </button>
+                }
+              </div>
             } @empty {
               <p class="empty">{{ loading() ? t('loading') : t('emptyColumn') }}</p>
             }
@@ -46,5 +56,27 @@
         </section>
       }
     </div>
+
+    <mat-menu #moveMenu="matMenu" xPosition="before">
+      <ng-template matMenuContent let-task="task" let-index="index" let-last="last">
+        @for (target of statuses; track target) {
+          @if (target !== task.status) {
+            <button mat-menu-item type="button" (click)="moveTo(task, target)">{{ t('statuses.' + target) }}</button>
+          }
+        }
+        @if (index > 0) {
+          <button mat-menu-item type="button" (click)="moveWithin(task, index - 1)">
+            <mat-icon aria-hidden="true">arrow_upward</mat-icon>
+            {{ t('moveUp') }}
+          </button>
+        }
+        @if (index < last) {
+          <button mat-menu-item type="button" (click)="moveWithin(task, index + 1)">
+            <mat-icon aria-hidden="true">arrow_downward</mat-icon>
+            {{ t('moveDown') }}
+          </button>
+        }
+      </ng-template>
+    </mat-menu>
   }
 </ng-container>

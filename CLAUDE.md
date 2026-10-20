@@ -71,6 +71,9 @@ so a reference added in the wrong direction fails the tests.
   translate it. When you add an error code, add its translations to both `.resx` files.
 - Identity uses ASP.NET Core Identity API Endpoints (`MapIdentityApi`) under `/api/auth` with bearer + refresh
   tokens, not cookies (ADRs 0002, 0003). That group is rate limited per IP. Everything else is controllers.
+- Admins invite users: the account has no password until the user follows the emailed link (ADR 0008). Email
+  goes through `Infrastructure/Email` (`IEmailSender`: MailKit SMTP, or the log in Development when no SMTP host
+  is set); integration tests swap in `TestEmailSender` and read the link from it.
 - Request localization supports `en` (default) and `es` from `Accept-Language`.
 - Central package management: add NuGet versions to `backend/Directory.Packages.props`, not to the csproj files.
 
@@ -101,12 +104,19 @@ that don't need a database. `AuthApi` contains helpers for registering and loggi
   Each feature has a `<feature>.routes.ts` loaded with `loadChildren`, which provides its state and effects on
   the route (`provideState` / `provideEffects`); auth is the exception, registered at the root in `app.config.ts`.
   Lists use `@ngrx/entity`. Feature reducers reset on `ShellActions.logoutClicked` / `AuthApiActions.sessionExpired`.
-  `src/app/shared/ui/` holds reusable presentational pieces (confirm dialog, empty state); list-page layout classes
-  (`.page-header`, `.filters`, `.rows`, `.chip`) are global in `styles.scss`.
+  Write effects use `concatMap` (none is dropped). Form dialogs stay open until the API answers: the page passes
+  a `SaveFn` that tags the submitted action with a `submissionId` (`shared/data-access/submission.ts`), effects
+  copy it onto their success/failure action, and `Submissions.dispatchAndWait` returns that outcome;
+  `applyApiFieldErrors` shows validation messages under the fields. `src/app/shared/ui/` holds reusable
+  presentational pieces (confirm dialog, empty state, `PagedList`, `SearchField`, `NewPasswordFields`); list-page
+  layout classes (`.page-header`, `.filters`, `.rows`, `.chip`) are global in `styles.scss`.
+- TypeScript runs in `strict` mode with `strictTemplates`, and ESLint uses the type-checked typescript-eslint
+  configs. Redux DevTools is registered only in development, with passwords and tokens masked.
 - Projects and tasks share one route (`features/projects/projects.routes.ts`): `ProjectPage` loads the project,
   members and tasks, and its tabs (board, list, members, settings) read them from the store. The board moves a
   card optimistically (`tasks/data-access/store/board.ts` mirrors the API's renumbering) and keeps `moveUndo`
-  to revert; dragging pauses while a move is in flight, and tasks reload after each move because the API
+  to revert; each card's "Move to" menu dispatches the same `taskDropped` for keyboard users. Moving pauses
+  while a move is in flight, and tasks reload after each move because the API
   renumbers (and re-versions) the neighbors. The list view's filters live in the URL query string and are read
   with `@ngrx/router-store`.
 - `features/dashboard/` serves the home page (`dashboard.routes.ts`, `myDashboard` state) and the project's

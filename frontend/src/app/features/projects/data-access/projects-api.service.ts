@@ -1,53 +1,53 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, map } from 'rxjs';
+import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { PagedResult } from '../../../core/http/api-error';
 
 export type ProjectRole = 'Owner' | 'Member';
 
 export interface Project {
-  id: string;
-  name: string;
-  description: string | null;
-  clientId: string;
-  clientName: string;
-  isArchived: boolean;
+  readonly id: string;
+  readonly name: string;
+  readonly description: string | null;
+  readonly clientId: string;
+  readonly clientName: string;
+  readonly isArchived: boolean;
   /** Null when an admin views a project they are not a member of (read-only). */
-  myRole: ProjectRole | null;
-  memberCount: number;
-  createdAt: string;
-  updatedAt: string;
+  readonly myRole: ProjectRole | null;
+  readonly memberCount: number;
+  readonly createdAt: string;
+  readonly updatedAt: string;
   /** Base64 concurrency token; send it back when editing. */
-  rowVersion: string;
+  readonly rowVersion: string;
 }
 
 export interface ProjectMember {
-  userId: string;
-  email: string;
-  displayName: string;
-  isActive: boolean;
-  role: ProjectRole;
-  joinedAt: string;
+  readonly userId: string;
+  readonly email: string;
+  readonly displayName: string;
+  readonly isActive: boolean;
+  readonly role: ProjectRole;
+  readonly joinedAt: string;
 }
 
 export interface ProjectInput {
-  clientId: string;
-  name: string;
-  description: string | null;
+  readonly clientId: string;
+  readonly name: string;
+  readonly description: string | null;
 }
 
 export interface ProjectQuery {
-  search: string;
-  clientId: string | null;
-  archived: boolean;
-  page: number;
-  pageSize: number;
+  readonly search: string;
+  readonly clientId: string | null;
+  readonly archived: boolean;
+  readonly page: number;
+  readonly pageSize: number;
 }
 
 export interface ClientOption {
-  id: string;
-  name: string;
+  readonly id: string;
+  readonly name: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -97,10 +97,8 @@ export class ProjectsApiService {
     return this.http.delete<void>(`${this.baseUrl}/${id}/members/${userId}`);
   }
 
-  /** Active clients to choose from when creating or moving a project. */
+  /** Every active client (id and name), to choose from when creating or moving a project. */
   clientOptions(): Observable<ClientOption[]> {
-    return this.http
-      .get<PagedResult<ClientOption>>(`${environment.apiUrl}/api/clients`, { params: { pageSize: 100 } })
-      .pipe(map((page) => page.items.map(({ id, name }) => ({ id, name }))));
+    return this.http.get<ClientOption[]>(`${environment.apiUrl}/api/clients/options`);
   }
 }

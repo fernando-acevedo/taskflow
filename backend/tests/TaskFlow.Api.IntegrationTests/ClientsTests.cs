@@ -26,6 +26,28 @@ public sealed class ClientsTests(SqlServerApiFactory factory)
     }
 
     [Fact]
+    public async Task OptionsListEveryActiveClientWithoutContactDetails()
+    {
+        Assert.SkipWhen(factory.SkipReason is not null, factory.SkipReason ?? string.Empty);
+        using var admin = await factory.CreateAdminClientAsync();
+        var active = await admin.CreateClientAsync();
+        var archived = await admin.CreateClientAsync();
+        (await admin.PostAsync(new Uri($"/api/clients/{archived.Id}/archive", UriKind.Relative), null, Ct)).EnsureSuccessStatusCode();
+        var (userClient, _) = await factory.CreateUserClientAsync();
+        using var user = userClient;
+
+        using var response = await user.GetAsync(new Uri("/api/clients/options", UriKind.Relative), Ct);
+        var body = await response.Content.ReadAsStringAsync(Ct);
+        var options = await response.Content.ReadFromJsonAsync<List<ClientResponse>>(Ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        options.ShouldNotBeNull();
+        options.ShouldContain(option => option.Id == active.Id && option.Name == active.Name);
+        options.ShouldNotContain(option => option.Id == archived.Id);
+        body.ShouldNotContain("contactEmail");
+    }
+
+    [Fact]
     public async Task AdminCreatesClientAndNamesAreUnique()
     {
         Assert.SkipWhen(factory.SkipReason is not null, factory.SkipReason ?? string.Empty);

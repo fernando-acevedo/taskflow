@@ -40,15 +40,21 @@ export const adminUsersFeature = createFeature({
         loadError: null,
       }),
     ),
-    on(UsersPageActions.activeChanged, UsersPageActions.adminChanged, (state): AdminUsersState => ({ ...state, saving: true })),
+    on(
+      UsersPageActions.createSubmitted,
+      UsersPageActions.invitationResendClicked,
+      UsersPageActions.activeChanged,
+      UsersPageActions.adminChanged,
+      (state): AdminUsersState => ({ ...state, saving: true }),
+    ),
     on(
       AdminUsersApiActions.usersLoaded,
       (state, { page }): AdminUsersState =>
-        adapter.setAll(page.items, { ...state, totalCount: page.totalCount, loading: false }),
+        adapter.setAll([...page.items], { ...state, totalCount: page.totalCount, loading: false }),
     ),
     on(AdminUsersApiActions.usersLoadFailed, (state, { error }): AdminUsersState => ({ ...state, loading: false, loadError: error })),
-    on(AdminUsersApiActions.userUpdated, (state): AdminUsersState => ({ ...state, saving: false, loading: true })),
-    on(AdminUsersApiActions.userUpdateFailed, (state): AdminUsersState => ({ ...state, saving: false })),
+    on(AdminUsersApiActions.userCreated, AdminUsersApiActions.userUpdated, (state): AdminUsersState => ({ ...state, saving: false, loading: true })),
+    on(AdminUsersApiActions.invitationSent, AdminUsersApiActions.userUpdateFailed, (state): AdminUsersState => ({ ...state, saving: false })),
   ),
   extraSelectors: ({ selectAdminUsersState }) => adapter.getSelectors(selectAdminUsersState),
 });

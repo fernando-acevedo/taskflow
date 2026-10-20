@@ -57,25 +57,39 @@
   padding: 4px 8px 12px;
 }
 
+// The card is the drag item; inside it, one button opens the task and a smaller one opens the move menu.
 .card {
-  display: block;
-  width: 100%;
-  padding: 12px;
+  position: relative;
   border: 1px solid var(--mat-sys-outline-variant);
   border-radius: 8px;
   background: var(--mat-sys-surface);
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
 
   &:hover {
     border-color: var(--mat-sys-outline);
   }
 
-  &:focus-visible {
-    outline: 2px solid var(--mat-sys-primary);
-    outline-offset: 2px;
+  .open {
+    display: block;
+    width: 100%;
+    padding: 12px 44px 12px 12px;
+    border: 0;
+    border-radius: inherit;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid var(--mat-sys-primary);
+      outline-offset: 2px;
+    }
+  }
+
+  .move {
+    position: absolute;
+    top: 2px;
+    right: 2px;
   }
 }
 
