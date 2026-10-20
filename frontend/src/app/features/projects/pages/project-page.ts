@@ -45,6 +45,7 @@ export class ProjectPage {
   protected readonly tabs = [
     { path: 'board', label: 'project.tabs.board', icon: 'view_kanban' },
     { path: 'list', label: 'project.tabs.list', icon: 'list' },
+    { path: 'overview', label: 'project.tabs.overview', icon: 'insights' },
     { path: 'members', label: 'project.tabs.members', icon: 'group' },
     { path: 'settings', label: 'project.tabs.settings', icon: 'settings' },
   ];

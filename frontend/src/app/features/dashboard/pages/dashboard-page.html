@@ -1,0 +1,105 @@
+<ng-container *transloco="let t">
+  <header class="page-header">
+    <div>
+      <h1>{{ t('home.greeting', { name: user()?.displayName }) }}</h1>
+      <p>{{ t('dashboard.intro') }}</p>
+    </div>
+    <a mat-flat-button routerLink="/projects">{{ t('home.openProjects') }}</a>
+  </header>
+
+  @if (loading() && !dashboard()) {
+    <mat-progress-bar mode="indeterminate" [attr.aria-label]="t('tasks.loading')" />
+  }
+
+  @if (error(); as loadError) {
+    <app-empty-state icon="cloud_off" [message]="notifier.errorMessage(loadError)">
+      <button mat-button type="button" (click)="refresh()">{{ t('projects.retry') }}</button>
+    </app-empty-state>
+  } @else if (dashboard(); as data) {
+    <section class="kpis" [attr.aria-label]="t('dashboard.summary')">
+      <app-stat-tile [label]="t('dashboard.myOpen')" [value]="data.openTasks" />
+      <app-stat-tile [label]="t('dashboard.overdue')" [value]="data.overdueTasks" tone="alert" />
+      <app-stat-tile [label]="t('dashboard.dueThisWeek')" [value]="data.dueThisWeek" [hint]="t('dashboard.next7Days')" />
+    </section>
+
+    <div class="columns">
+      <mat-card appearance="outlined">
+        <mat-card-header>
+          <mat-card-title>{{ t('dashboard.myTasks') }}</mat-card-title>
+        </mat-card-header>
+        @if (data.tasks.length === 0) {
+          <app-empty-state icon="task_alt" [message]="t('dashboard.noTasks')" />
+        } @else {
+          <ul class="rows">
+            @for (task of data.tasks; track task.id) {
+              <li>
+                <div class="main">
+                  <a [routerLink]="['/projects', task.projectId, 'list']" [queryParams]="{ assignee: 'me' }">
+                    <strong>{{ task.title }}</strong>
+                  </a>
+                  <span class="chip">{{ t('tasks.statuses.' + task.status) }}</span>
+                  @if (task.priority === 'High' || task.priority === 'Critical') {
+                    <span class="chip" [class.error]="task.priority === 'Critical'">{{ t('tasks.priorities.' + task.priority) }}</span>
+                  }
+                  <span class="meta">{{ task.projectName }} · {{ task.clientName }}</span>
+                </div>
+                <span class="due" [class.overdue]="task.isOverdue">
+                  @if (task.dueDate) {
+                    @if (task.isOverdue) {
+                      <mat-icon aria-hidden="true">warning</mat-icon>
+                      {{ t('tasks.overdue') }} ·
+                    }
+                    {{ task.dueDate | date: 'd MMM' : 'UTC' : language.current() }}
+                  } @else {
+                    {{ t('dashboard.noDueDate') }}
+                  }
+                </span>
+              </li>
+            }
+          </ul>
+          @if (data.openTasks > data.tasks.length) {
+            <p class="more">{{ t('dashboard.moreTasks', { shown: data.tasks.length, total: data.openTasks }) }}</p>
+          }
+        }
+      </mat-card>
+
+      <mat-card appearance="outlined">
+        <mat-card-header>
+          <mat-card-title>{{ t('dashboard.clients') }}</mat-card-title>
+          <mat-card-subtitle>{{ isAdmin() ? t('dashboard.clientsAll') : t('dashboard.clientsMine') }}</mat-card-subtitle>
+        </mat-card-header>
+        @if (data.clients.length === 0) {
+          <app-empty-state icon="business" [message]="t('dashboard.noClients')" />
+        } @else {
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">{{ t('dashboard.client') }}</th>
+                  <th scope="col" class="num">{{ t('dashboard.activeProjects') }}</th>
+                  <th scope="col" class="num">{{ t('dashboard.openTasks') }}</th>
+                  <th scope="col" class="num">{{ t('dashboard.overdue') }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (client of data.clients; track client.clientId) {
+                  <tr>
+                    <th scope="row">{{ client.clientName }}</th>
+                    <td class="num">{{ client.activeProjects }}</td>
+                    <td class="num">{{ client.openTasks }}</td>
+                    <td class="num" [class.overdue]="client.overdueTasks > 0">
+                      @if (client.overdueTasks > 0) {
+                        <mat-icon aria-hidden="true">warning</mat-icon>
+                      }
+                      {{ client.overdueTasks }}
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </mat-card>
+    </div>
+  }
+</ng-container>

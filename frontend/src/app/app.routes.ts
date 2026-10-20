@@ -28,7 +28,7 @@ export const routes: Routes = [
       {
         path: '',
         pathMatch: 'full',
-        loadComponent: () => import('./features/home/pages/home-page').then((m) => m.HomePage),
+        loadChildren: () => import('./features/dashboard/dashboard.routes').then((m) => m.dashboardRoutes),
       },
       {
         path: 'profile',

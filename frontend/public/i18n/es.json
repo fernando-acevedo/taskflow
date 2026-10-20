@@ -17,9 +17,6 @@
   },
   "home": {
     "greeting": "Hola, {{ name }}",
-    "intro": "Iniciaste sesión en TaskFlow.",
-    "projectsTitle": "Tus proyectos",
-    "projectsText": "Planifica el trabajo de cada proyecto de cliente en un tablero Kanban, compártelo con tu equipo y controla los vencimientos.",
     "openProjects": "Ir a proyectos"
   },
   "auth": {
@@ -233,7 +230,8 @@
       "board": "Tablero",
       "list": "Lista",
       "members": "Miembros",
-      "settings": "Configuración"
+      "settings": "Configuración",
+      "overview": "Resumen"
     }
   },
   "members": {
@@ -311,5 +309,32 @@
     "deleted": "Tarea eliminada",
     "deleteTitle": "¿Eliminar esta tarea?",
     "deleteMessage": "«{{ title }}» se eliminará para siempre."
+  },
+  "dashboard": {
+    "intro": "Esto es lo que necesita tu atención en tus proyectos.",
+    "summary": "Resumen",
+    "myOpen": "Mis tareas abiertas",
+    "openTasks": "Tareas abiertas",
+    "overdue": "Vencidas",
+    "overdueCount": "{{ count }} vencidas",
+    "dueThisWeek": "Vencen esta semana",
+    "next7Days": "Hoy y los próximos 6 días",
+    "done": "Hechas",
+    "ofTotal": "de {{ total }} tareas",
+    "myTasks": "Asignadas a mí",
+    "noTasks": "No tienes nada asignado por ahora.",
+    "noDueDate": "Sin vencimiento",
+    "moreTasks": "Se muestran las primeras {{ shown }} de {{ total }}. Abre un proyecto para ver el resto.",
+    "clients": "Por cliente",
+    "clientsMine": "Proyectos activos de los que eres miembro",
+    "clientsAll": "Todos los proyectos activos",
+    "noClients": "Todavía no hay proyectos activos.",
+    "client": "Cliente",
+    "activeProjects": "Proyectos",
+    "byStatus": "Tareas por estado",
+    "byAssignee": "Carga por responsable",
+    "byPriority": "Tareas abiertas por prioridad",
+    "openOnly": "Tareas todavía no terminadas",
+    "nothingOpen": "Todas las tareas están hechas."
   }
 }

@@ -6,8 +6,8 @@
 Project management for digital agencies: clients, projects, a Kanban board and a workload dashboard,
 in English and Spanish. Built with .NET 10, Angular and NgRx, SQL Server, and deployed to Azure.
 
-> **Status: phase 3 (Angular features).** Authentication, clients, projects with members, and tasks work end
-> to end, including the Kanban board. The dashboard arrives in phase 4; see [Roadmap](#roadmap).
+> **Status: phase 4 (dashboard).** Authentication, clients, projects with members, tasks with the Kanban
+> board, and the dashboards work end to end. Azure deployment and the public demo come next; see [Roadmap](#roadmap).
 
 ## Tech stack
 
@@ -67,6 +67,11 @@ opens on its Kanban board, where dragging a card updates the board at once and p
 API rejects the move. The list view filters tasks by status, priority, assignee, overdue and title, and keeps the
 filters in the URL. Members, roles and archiving are managed from the project's tabs.
 
+The home page is a dashboard: your open, overdue and due-this-week tasks, the tasks assigned to you across
+projects, and per client the active projects, open tasks and overdue tasks. Each project has an Overview tab with
+tasks by status, workload by assignee and open tasks by priority. The figures come from grouped queries
+(`GET /api/dashboard`, `GET /api/projects/{id}/dashboard`), so no task list is loaded to compute them.
+
 Key decisions are written down as ADRs:
 
 1. [Clean Architecture with four projects](docs/adr/0001-clean-architecture.md)
@@ -75,6 +80,7 @@ Key decisions are written down as ADRs:
 4. [Target .NET 10 LTS](docs/adr/0004-dotnet-10.md)
 5. [Reset the public demo from inside the API](docs/adr/0005-demo-reset-inside-api.md)
 6. [Use cases query the DbContext and check project access themselves](docs/adr/0006-dbcontext-and-access-checks-in-use-cases.md)
+7. [Draw the dashboard charts with HTML and CSS instead of a chart library](docs/adr/0007-hand-built-charts.md)
 
 ## Run it locally
 
@@ -140,8 +146,8 @@ otherwise a throwaway LocalDB database. In CI they always use the container.
 | 1 | Authentication with Identity API Endpoints, roles, guards | Done |
 | 2 | Domain and API: clients, projects, members, tasks | Done |
 | 3 | Angular features with NgRx, Kanban with drag and drop | Done |
-| 4 | Dashboard | Next |
-| 5 | Azure deployment and the public demo with nightly reset | Planned |
+| 4 | Dashboard | Done |
+| 5 | Azure deployment and the public demo with nightly reset | Next |
 | 6 | Polish: screenshots, accessibility, docs | Planned |
 
 ## License

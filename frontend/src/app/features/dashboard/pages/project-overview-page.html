@@ -1,0 +1,51 @@
+<ng-container *transloco="let t">
+  @if (error(); as loadError) {
+    <app-empty-state icon="cloud_off" [message]="notifier.errorMessage(loadError)">
+      <button mat-button type="button" (click)="load()">{{ t('projects.retry') }}</button>
+    </app-empty-state>
+  } @else if (dashboard(); as data) {
+    <section class="kpis" [attr.aria-label]="t('dashboard.summary')">
+      <app-stat-tile [label]="t('dashboard.openTasks')" [value]="data.openTasks" />
+      <app-stat-tile [label]="t('dashboard.overdue')" [value]="data.overdueTasks" tone="alert" />
+      <app-stat-tile [label]="t('dashboard.dueThisWeek')" [value]="data.dueThisWeek" [hint]="t('dashboard.next7Days')" />
+      <app-stat-tile [label]="t('dashboard.done')" [value]="doneCount()" [hint]="t('dashboard.ofTotal', { total: data.totalTasks })" />
+    </section>
+
+    <mat-card appearance="outlined">
+      <mat-card-header>
+        <mat-card-title>{{ t('dashboard.byStatus') }}</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <app-status-bar [segments]="statusSegments()" />
+      </mat-card-content>
+    </mat-card>
+
+    <div class="charts">
+      <mat-card appearance="outlined">
+        <mat-card-header>
+          <mat-card-title>{{ t('dashboard.byAssignee') }}</mat-card-title>
+          <mat-card-subtitle>{{ t('dashboard.openOnly') }}</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          @if (assigneeRows().length) {
+            <app-bar-list [rows]="assigneeRows()" />
+          } @else {
+            <p class="none">{{ t('dashboard.nothingOpen') }}</p>
+          }
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card appearance="outlined">
+        <mat-card-header>
+          <mat-card-title>{{ t('dashboard.byPriority') }}</mat-card-title>
+          <mat-card-subtitle>{{ t('dashboard.openOnly') }}</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <app-bar-list [rows]="priorityRows()" />
+        </mat-card-content>
+      </mat-card>
+    </div>
+  } @else if (loading()) {
+    <mat-progress-bar mode="indeterminate" [attr.aria-label]="t('tasks.loading')" />
+  }
+</ng-container>
