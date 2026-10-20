@@ -1,0 +1,78 @@
+<ng-container *transloco="let t; prefix: 'clients'">
+  <header class="page-header">
+    <div>
+      <h1>{{ t('title') }}</h1>
+      <p>{{ t('subtitle') }}</p>
+    </div>
+    <button mat-flat-button type="button" (click)="openForm()">
+      <mat-icon aria-hidden="true">add</mat-icon>
+      {{ t('create') }}
+    </button>
+  </header>
+
+  <div class="filters">
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>{{ t('search') }}</mat-label>
+      <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+      <input #searchBox matInput type="search" [value]="query().search" (keyup.enter)="search(searchBox.value)" (search)="search(searchBox.value)" />
+    </mat-form-field>
+    <mat-slide-toggle [checked]="query().includeArchived" (change)="showArchived($event.checked)">
+      {{ t('showArchived') }}
+    </mat-slide-toggle>
+  </div>
+
+  <mat-card appearance="outlined">
+    @if (loading() || saving()) {
+      <mat-progress-bar mode="indeterminate" />
+    }
+
+    @if (loadError(); as error) {
+      <app-empty-state icon="cloud_off" [message]="notifier.errorMessage(error)">
+        <button mat-button type="button" (click)="search(query().search)">{{ t('retry') }}</button>
+      </app-empty-state>
+    } @else if (!loading() && clients().length === 0) {
+      <app-empty-state icon="business" [message]="query().search ? t('noMatches') : t('empty')" />
+    } @else {
+      <ul class="rows">
+        @for (client of clients(); track client.id) {
+          <li [class.archived]="client.isArchived">
+            <div class="main">
+              <strong>{{ client.name }}</strong>
+              @if (client.isArchived) {
+                <span class="chip">{{ t('archived') }}</span>
+              }
+              <span class="meta">
+                {{ t('activeProjects', { count: client.activeProjectCount }) }}
+                @if (client.contactEmail) {
+                  · {{ client.contactEmail }}
+                }
+              </span>
+            </div>
+            <div class="row-actions">
+              <button mat-icon-button type="button" (click)="openForm(client)" [attr.aria-label]="t('edit')">
+                <mat-icon aria-hidden="true">edit</mat-icon>
+              </button>
+              @if (client.isArchived) {
+                <button mat-icon-button type="button" (click)="restore(client)" [attr.aria-label]="t('restore')">
+                  <mat-icon aria-hidden="true">unarchive</mat-icon>
+                </button>
+              } @else {
+                <button mat-icon-button type="button" (click)="archive(client)" [attr.aria-label]="t('archive')">
+                  <mat-icon aria-hidden="true">archive</mat-icon>
+                </button>
+              }
+            </div>
+          </li>
+        }
+      </ul>
+    }
+
+    <mat-paginator
+      [length]="totalCount()"
+      [pageIndex]="query().page - 1"
+      [pageSize]="query().pageSize"
+      [pageSizeOptions]="[10, 25, 50]"
+      (page)="changePage($event)"
+    />
+  </mat-card>
+</ng-container>

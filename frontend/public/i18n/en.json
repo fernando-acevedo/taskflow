@@ -9,13 +9,18 @@
     "profile": "Profile",
     "status": "System status",
     "logout": "Sign out",
-    "login": "Sign in"
+    "login": "Sign in",
+    "main": "Main sections",
+    "projects": "Projects",
+    "clients": "Clients",
+    "users": "Users"
   },
   "home": {
     "greeting": "Hi, {{ name }}",
     "intro": "You're signed in to TaskFlow.",
-    "comingSoonTitle": "Projects are on the way",
-    "comingSoon": "Clients, projects and the Kanban board arrive in the next phases. For now you can edit your profile or check the system status."
+    "projectsTitle": "Your projects",
+    "projectsText": "Plan the work of each client project on a Kanban board, share it with your team and keep an eye on due dates.",
+    "openProjects": "Go to projects"
   },
   "auth": {
     "email": "Email",
@@ -97,5 +102,214 @@
     "checks": {
       "database": "Database"
     }
+  },
+  "common": {
+    "cancel": "Cancel",
+    "dismiss": "Dismiss"
+  },
+  "apiErrors": {
+    "validation": "Some fields are not valid. Check them and try again.",
+    "forbidden": "You don't have permission to do this.",
+    "network": "Can't reach the server. Check your connection and try again.",
+    "unexpected": "Something went wrong. Try again.",
+    "Users": {
+      "NotFound": "The user was not found.",
+      "EmailNotFound": "No user is registered with that email.",
+      "CannotChangeOwnStatus": "You can't deactivate or reactivate your own account.",
+      "CannotChangeOwnRole": "You can't change your own role."
+    },
+    "Clients": {
+      "NotFound": "The client was not found.",
+      "NameTaken": "Another client already has this name.",
+      "HasActiveProjects": "A client with active projects can't be archived.",
+      "Archived": "The client is archived; restore it first."
+    },
+    "Projects": {
+      "NotFound": "The project was not found.",
+      "Forbidden": "You don't have access to this project.",
+      "NameTaken": "The client already has a project with this name.",
+      "Archived": "The project is archived and read-only.",
+      "AlreadyMember": "That user is already a member of the project.",
+      "MemberNotFound": "That user is not a member of the project.",
+      "LastOwner": "A project needs at least one owner. Make someone else an owner first.",
+      "AssigneeNotMember": "The assignee must be a member of the project."
+    },
+    "Tasks": {
+      "NotFound": "The task was not found. Someone may have deleted it."
+    },
+    "Concurrency": {
+      "Stale": "Someone else changed this in the meantime. We reloaded it; try again."
+    }
+  },
+  "clients": {
+    "title": "Clients",
+    "subtitle": "The agency's clients. Every project belongs to one.",
+    "create": "New client",
+    "createTitle": "New client",
+    "editTitle": "Edit client",
+    "search": "Search by name",
+    "showArchived": "Show archived",
+    "retry": "Try again",
+    "empty": "No clients yet. Add the first one to start creating projects.",
+    "noMatches": "No clients match your search.",
+    "archived": "Archived",
+    "activeProjects": "Active projects: {{ count }}",
+    "edit": "Edit",
+    "archive": "Archive",
+    "restore": "Restore",
+    "archiveTitle": "Archive {{ name }}?",
+    "archiveMessage": "It will no longer be offered for new projects. You can restore it later.",
+    "name": "Name",
+    "nameRule": "Use between 2 and 100 characters.",
+    "contactEmail": "Contact email",
+    "emailRule": "Enter a valid email address.",
+    "notes": "Notes",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saved": "Client saved"
+  },
+  "users": {
+    "title": "Users",
+    "subtitle": "Who can sign in, and who administers TaskFlow.",
+    "search": "Search by name or email",
+    "retry": "Try again",
+    "noMatches": "No users match your search.",
+    "admin": "Admin",
+    "inactive": "Deactivated",
+    "you": "You",
+    "actions": "Actions for {{ name }}",
+    "grantAdmin": "Make admin",
+    "revokeAdmin": "Remove admin role",
+    "activate": "Reactivate",
+    "deactivate": "Deactivate",
+    "deactivateTitle": "Deactivate {{ name }}?",
+    "deactivateMessage": "They will be signed out and won't be able to sign in until you reactivate the account.",
+    "saved": "User updated"
+  },
+  "projects": {
+    "title": "Projects",
+    "subtitle": "The projects you are a member of.",
+    "create": "New project",
+    "createTitle": "New project",
+    "editTitle": "Edit project",
+    "search": "Search by name",
+    "client": "Client",
+    "allClients": "All clients",
+    "showArchived": "Archived projects",
+    "retry": "Try again",
+    "empty": "You aren't in any project yet. Create one, or ask an owner to add you.",
+    "noMatches": "No projects match these filters.",
+    "roles": {
+      "Owner": "Owner",
+      "Member": "Member"
+    },
+    "memberCount": "Members: {{ count }}",
+    "updated": "Updated {{ date }}",
+    "open": "Open {{ name }}",
+    "noClients": "There are no active clients. An admin has to add one first.",
+    "clientRule": "Choose a client.",
+    "name": "Name",
+    "nameRule": "Use between 3 and 100 characters.",
+    "description": "Description",
+    "created": "Created",
+    "cancel": "Cancel",
+    "save": "Save",
+    "edit": "Edit",
+    "archive": "Archive",
+    "restore": "Restore",
+    "archivedChip": "Archived",
+    "archiveTitle": "Archive {{ name }}?",
+    "archiveMessage": "The project becomes read-only and moves to the archived list. Owners can restore it.",
+    "saved": "Project saved",
+    "archived": "Project archived",
+    "restored": "Project restored"
+  },
+  "project": {
+    "back": "All projects",
+    "readOnlyAdmin": "You are viewing this project as an admin. Only its members can change it.",
+    "readOnlyArchived": "This project is archived, so it is read-only.",
+    "tabs": {
+      "label": "Project sections",
+      "board": "Board",
+      "list": "List",
+      "members": "Members",
+      "settings": "Settings"
+    }
+  },
+  "members": {
+    "email": "Email",
+    "emailHint": "The person needs a TaskFlow account.",
+    "emailRule": "Enter a valid email address.",
+    "role": "Role",
+    "roles": {
+      "Owner": "Owner",
+      "Member": "Member"
+    },
+    "add": "Add",
+    "inactive": "Deactivated",
+    "leave": "Leave project",
+    "actions": "Actions for {{ name }}",
+    "makeOwner": "Make owner",
+    "makeMember": "Make member",
+    "remove": "Remove from project",
+    "removeTitle": "Remove {{ name }}?",
+    "removeMessage": "They will lose access to the project. Tasks assigned to them keep their name.",
+    "leaveTitle": "Leave {{ name }}?",
+    "leaveMessage": "You will lose access to the project until an owner adds you again.",
+    "added": "Member added",
+    "roleChanged": "Role changed",
+    "removed": "Member removed",
+    "left": "You left the project"
+  },
+  "tasks": {
+    "create": "New task",
+    "createTitle": "New task",
+    "editTitle": "Edit task",
+    "viewTitle": "Task",
+    "retry": "Try again",
+    "loading": "Loading…",
+    "dragHint": "Drag cards between columns to update their status.",
+    "emptyColumn": "No tasks",
+    "statuses": {
+      "ToDo": "To do",
+      "InProgress": "In progress",
+      "Review": "Review",
+      "Done": "Done"
+    },
+    "priorities": {
+      "Low": "Low",
+      "Medium": "Medium",
+      "High": "High",
+      "Critical": "Critical"
+    },
+    "overdue": "Overdue",
+    "unassigned": "Unassigned",
+    "formerMember": "Former member",
+    "title": "Title",
+    "titleRule": "Enter a title of up to 200 characters.",
+    "description": "Description",
+    "priority": "Priority",
+    "assignee": "Assignee",
+    "status": "Status",
+    "dueDate": "Due date",
+    "dueDateRule": "The due date can't be in the past.",
+    "delete": "Delete",
+    "close": "Close",
+    "cancel": "Cancel",
+    "save": "Save",
+    "search": "Search by title",
+    "any": "Any",
+    "anyone": "Anyone",
+    "me": "Me",
+    "onlyOverdue": "Only overdue",
+    "clearFilters": "Clear filters",
+    "empty": "No tasks yet.",
+    "noMatches": "No tasks match these filters.",
+    "showing": "Showing {{ count }} of {{ total }} tasks",
+    "created": "Task created",
+    "saved": "Task saved",
+    "deleted": "Task deleted",
+    "deleteTitle": "Delete this task?",
+    "deleteMessage": "“{{ title }}” will be deleted permanently."
   }
 }

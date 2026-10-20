@@ -1,0 +1,79 @@
+<ng-container *transloco="let t; prefix: 'projects'">
+  <header class="page-header">
+    <div>
+      <h1>{{ t('title') }}</h1>
+      <p>{{ t('subtitle') }}</p>
+    </div>
+    <button mat-flat-button type="button" (click)="create()" [disabled]="saving()">
+      <mat-icon aria-hidden="true">add</mat-icon>
+      {{ t('create') }}
+    </button>
+  </header>
+
+  <div class="filters">
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>{{ t('search') }}</mat-label>
+      <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+      <input #searchBox matInput type="search" [value]="query().search" (keyup.enter)="search(searchBox.value)" (search)="search(searchBox.value)" />
+    </mat-form-field>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>{{ t('client') }}</mat-label>
+      <mat-select [value]="query().clientId" (selectionChange)="filterByClient($event.value)">
+        <mat-option [value]="null">{{ t('allClients') }}</mat-option>
+        @for (client of clients(); track client.id) {
+          <mat-option [value]="client.id">{{ client.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <mat-slide-toggle [checked]="query().archived" (change)="showArchived($event.checked)">{{ t('showArchived') }}</mat-slide-toggle>
+  </div>
+
+  <mat-card appearance="outlined">
+    @if (loading()) {
+      <mat-progress-bar mode="indeterminate" />
+    }
+
+    @if (loadError(); as error) {
+      <app-empty-state icon="cloud_off" [message]="notifier.errorMessage(error)">
+        <button mat-button type="button" (click)="search(query().search)">{{ t('retry') }}</button>
+      </app-empty-state>
+    } @else if (!loading() && projects().length === 0) {
+      @if (query().search || query().clientId || query().archived) {
+        <app-empty-state icon="search_off" [message]="t('noMatches')" />
+      } @else {
+        <app-empty-state icon="folder_open" [message]="t('empty')">
+          <button mat-button type="button" (click)="create()">{{ t('create') }}</button>
+        </app-empty-state>
+      }
+    } @else {
+      <ul class="rows">
+        @for (project of projects(); track project.id) {
+          <li [class.archived]="project.isArchived">
+            <div class="main">
+              <a [routerLink]="['/projects', project.id]"><strong>{{ project.name }}</strong></a>
+              <span class="chip">{{ project.clientName }}</span>
+              @if (project.myRole) {
+                <span class="chip" [class.primary]="project.myRole === 'Owner'">{{ t('roles.' + project.myRole) }}</span>
+              }
+              <span class="meta">
+                {{ t('memberCount', { count: project.memberCount }) }} ·
+                {{ t('updated', { date: (project.updatedAt | date: 'mediumDate' : undefined : language.current()) }) }}
+              </span>
+            </div>
+            <a mat-icon-button [routerLink]="['/projects', project.id]" [attr.aria-label]="t('open', { name: project.name })">
+              <mat-icon aria-hidden="true">chevron_right</mat-icon>
+            </a>
+          </li>
+        }
+      </ul>
+    }
+
+    <mat-paginator
+      [length]="totalCount()"
+      [pageIndex]="query().page - 1"
+      [pageSize]="query().pageSize"
+      [pageSizeOptions]="[10, 20, 50]"
+      (page)="changePage($event)"
+    />
+  </mat-card>
+</ng-container>

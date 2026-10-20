@@ -1,0 +1,50 @@
+<ng-container *transloco="let t; prefix: 'tasks'">
+  @if (loadError(); as error) {
+    <app-empty-state icon="cloud_off" [message]="notifier.errorMessage(error)">
+      <button mat-button type="button" (click)="retry()">{{ t('retry') }}</button>
+    </app-empty-state>
+  } @else {
+    @if (canEdit()) {
+      <div class="toolbar">
+        <button mat-flat-button type="button" (click)="editor.open()">
+          <mat-icon aria-hidden="true">add</mat-icon>
+          {{ t('create') }}
+        </button>
+        <span class="hint">{{ t('dragHint') }}</span>
+      </div>
+    }
+
+    <div class="board" cdkDropListGroup [attr.aria-busy]="loading() || moving()">
+      @for (status of statuses; track status) {
+        @let column = columns()[status];
+        <section class="column" [attr.data-status]="status" [attr.aria-labelledby]="'column-' + status">
+          <h2 [id]="'column-' + status">
+            {{ t('statuses.' + status) }}
+            <span class="count">{{ column.length }}</span>
+          </h2>
+          <div
+            class="cards"
+            cdkDropList
+            [cdkDropListData]="status"
+            [cdkDropListDisabled]="!canEdit() || moving()"
+            (cdkDropListDropped)="drop($event)"
+          >
+            @for (task of column; track task.id) {
+              <button
+                type="button"
+                class="card"
+                cdkDrag
+                [cdkDragData]="task"
+                (click)="editor.open(task)"
+              >
+                <app-task-card [task]="task" [assignee]="assigneeName(task)" />
+              </button>
+            } @empty {
+              <p class="empty">{{ loading() ? t('loading') : t('emptyColumn') }}</p>
+            }
+          </div>
+        </section>
+      }
+    </div>
+  }
+</ng-container>

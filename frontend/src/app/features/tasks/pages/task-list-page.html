@@ -1,0 +1,107 @@
+<ng-container *transloco="let t; prefix: 'tasks'">
+  @let current = filters();
+
+  <div class="filters">
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>{{ t('search') }}</mat-label>
+      <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+      <input
+        #searchBox
+        matInput
+        type="search"
+        [value]="current.search"
+        (keyup.enter)="setFilter({ search: searchBox.value })"
+        (search)="setFilter({ search: searchBox.value })"
+      />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>{{ t('status') }}</mat-label>
+      <mat-select [value]="current.status" (selectionChange)="setFilter({ status: $event.value })">
+        <mat-option [value]="null">{{ t('any') }}</mat-option>
+        @for (status of statuses; track status) {
+          <mat-option [value]="status">{{ t('statuses.' + status) }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>{{ t('priority') }}</mat-label>
+      <mat-select [value]="current.priority" (selectionChange)="setFilter({ priority: $event.value })">
+        <mat-option [value]="null">{{ t('any') }}</mat-option>
+        @for (priority of priorities; track priority) {
+          <mat-option [value]="priority">{{ t('priorities.' + priority) }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>{{ t('assignee') }}</mat-label>
+      <mat-select [value]="current.assignee" (selectionChange)="setFilter({ assignee: $event.value })">
+        <mat-option [value]="null">{{ t('anyone') }}</mat-option>
+        <mat-option value="me">{{ t('me') }}</mat-option>
+        <mat-option value="none">{{ t('unassigned') }}</mat-option>
+        @for (member of members(); track member.userId) {
+          <mat-option [value]="member.userId">{{ member.displayName }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-slide-toggle [checked]="current.overdue" (change)="setFilter({ overdue: $event.checked })">{{ t('onlyOverdue') }}</mat-slide-toggle>
+
+    @if (filtered()) {
+      <button mat-button type="button" (click)="clearFilters()">{{ t('clearFilters') }}</button>
+    }
+  </div>
+
+  <mat-card appearance="outlined">
+    @if (!loading() && tasks().length === 0) {
+      @if (filtered()) {
+        <app-empty-state icon="filter_alt_off" [message]="t('noMatches')">
+          <button mat-button type="button" (click)="clearFilters()">{{ t('clearFilters') }}</button>
+        </app-empty-state>
+      } @else {
+        <app-empty-state icon="task_alt" [message]="t('empty')">
+          @if (canEdit()) {
+            <button mat-button type="button" (click)="editor.open()">{{ t('create') }}</button>
+          }
+        </app-empty-state>
+      }
+    } @else {
+      <p class="summary" role="status">{{ t('showing', { count: tasks().length, total: total() }) }}</p>
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">{{ t('title') }}</th>
+            <th scope="col">{{ t('status') }}</th>
+            <th scope="col">{{ t('priority') }}</th>
+            <th scope="col">{{ t('assignee') }}</th>
+            <th scope="col">{{ t('dueDate') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (task of tasks(); track task.id) {
+            <tr>
+              <td>
+                <button type="button" class="link" (click)="editor.open(task)">{{ task.title }}</button>
+              </td>
+              <td>{{ t('statuses.' + task.status) }}</td>
+              <td><span class="priority" [attr.data-priority]="task.priority">{{ t('priorities.' + task.priority) }}</span></td>
+              <td>{{ assigneeName(task) ?? (task.assigneeId ? t('formerMember') : '—') }}</td>
+              <td [class.overdue]="task.isOverdue">
+                @if (task.dueDate) {
+                  {{ task.dueDate | date: 'mediumDate' : 'UTC' : language.current() }}
+                  @if (task.isOverdue) {
+                    · {{ t('overdue') }}
+                  }
+                } @else {
+                  —
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </mat-card>
+</ng-container>
