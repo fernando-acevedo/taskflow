@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TaskFlow.Application.Abstractions;
 using TaskFlow.Application.Users;
+using TaskFlow.Infrastructure.Email;
 using TaskFlow.Infrastructure.Identity;
 using TaskFlow.Infrastructure.Persistence;
 
@@ -37,7 +38,11 @@ public static class DependencyInjection
                 options.Lockout.AllowedForNewUsers = true;
             })
             .AddRoles<IdentityRole<Guid>>()
-            .AddEntityFrameworkStores<AppDbContext>();
+            .AddEntityFrameworkStores<AppDbContext>()
+            .AddTokenProvider<InvitationTokenProvider>(InvitationTokenProvider.ProviderName);
+
+        services.Configure<InvitationTokenProviderOptions>(options => options.TokenLifespan =
+            TimeSpan.FromDays(configuration.GetValue("Auth:InvitationDays", InvitationTokenProviderOptions.DefaultLifespanDays)));
 
         services.Configure<BearerTokenOptions>(IdentityConstants.BearerScheme, options =>
         {
@@ -48,6 +53,18 @@ public static class DependencyInjection
         services.Configure<AdminSeedOptions>(configuration.GetSection(AdminSeedOptions.SectionName));
         services.AddScoped<IdentitySeeder>();
         services.AddScoped<IIdentityService, IdentityService>();
+
+        services.Configure<EmailOptions>(configuration.GetSection(EmailOptions.SectionName));
+        if (string.IsNullOrWhiteSpace(configuration[$"{EmailOptions.SectionName}:Smtp:Host"]))
+        {
+            services.AddSingleton<IEmailSender, LoggingEmailSender>();
+        }
+        else
+        {
+            services.AddSingleton<IEmailSender, SmtpEmailSender>();
+        }
+
+        services.AddScoped<IInvitationSender, InvitationSender>();
 
         return services;
     }

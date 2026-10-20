@@ -8,7 +8,8 @@ public sealed record UserDto(
     string DisplayName,
     bool IsActive,
     IReadOnlyList<string> Roles,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt,
+    bool IsInvitationPending = false);
 
 public static class Roles
 {
@@ -22,6 +23,22 @@ public static class UserErrors
 
     public static readonly Error EmailNotFound =
         Error.NotFound("Users.EmailNotFound", "No user is registered with that email.");
+
+    public static readonly Error EmailTaken =
+        Error.Conflict("Users.EmailTaken", "An account with this email already exists.");
+
+    public static readonly Error InvitationNotSent =
+        Error.Conflict(
+            "Users.InvitationNotSent",
+            "The user exists, but the invitation email couldn't be sent. Check the email settings and resend it.");
+
+    public static readonly Error InvitationNotPending =
+        Error.Conflict("Users.InvitationNotPending", "This user has already chosen a password.");
+
+    public static readonly Error InvitationInvalid =
+        Error.Invalid(
+            "Users.InvitationInvalid",
+            "This invitation link is invalid or has expired. Ask an administrator to send you a new one.");
 
     public static readonly Error CannotChangeOwnStatus =
         Error.Conflict("Users.CannotChangeOwnStatus", "You can't deactivate or reactivate your own account.");

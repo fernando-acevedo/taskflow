@@ -55,7 +55,13 @@ public static class AuthApi
 
 public sealed record TokenResponse(string TokenType, string AccessToken, long ExpiresIn, string RefreshToken);
 
-public sealed record UserResponse(Guid Id, string Email, string DisplayName, bool IsActive, IReadOnlyList<string> Roles);
+public sealed record UserResponse(
+    Guid Id,
+    string Email,
+    string DisplayName,
+    bool IsActive,
+    IReadOnlyList<string> Roles,
+    bool IsInvitationPending = false);
 
 public sealed record PagedResponse<T>(IReadOnlyList<T> Items, int Page, int PageSize, int TotalCount);
 

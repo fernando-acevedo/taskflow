@@ -1,8 +1,10 @@
 using System.Runtime.InteropServices;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using TaskFlow.Infrastructure.Email;
 using TaskFlow.Infrastructure.Persistence;
 using Testcontainers.MsSql;
 
@@ -23,6 +25,8 @@ public sealed class SqlServerApiFactory : WebApplicationFactory<Program>, IAsync
     private bool _usesLocalDb;
 
     public string? SkipReason { get; private set; }
+
+    public TestEmailSender Emails { get; } = new();
 
     public async ValueTask InitializeAsync()
     {
@@ -58,6 +62,8 @@ public sealed class SqlServerApiFactory : WebApplicationFactory<Program>, IAsync
         builder.UseSetting("Seed:Admin:Email", AdminEmail);
         builder.UseSetting("Seed:Admin:Password", AdminPassword);
         builder.UseSetting("RateLimiting:Auth:PermitLimit", "10000");
+        builder.UseSetting("Email:FrontendUrl", "http://localhost:4200");
+        builder.ConfigureTestServices(services => services.AddSingleton<IEmailSender>(Emails));
     }
 
     public override async ValueTask DisposeAsync()

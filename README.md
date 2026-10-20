@@ -42,7 +42,9 @@ docs/adr/                    architecture decision records
 - ASP.NET Core Identity API Endpoints under `/api/auth` (`register`, `login`, `refresh`, ...) issue bearer
   tokens: a 1-hour access token and a 14-day refresh token.
 - `GET/PUT /api/users/me` returns and updates the signed-in user's profile and roles.
-- Admin-only endpoints under `/api/admin/users` list, deactivate, reactivate, promote and demote users.
+- Admin-only endpoints under `/api/admin/users` invite (create), list, deactivate, reactivate, promote and
+  demote users. An invited user gets an email with a link to choose their password
+  (`POST /api/invitations/accept`); admins can resend it while it's pending (ADR 0008).
   Deactivating locks the account and invalidates its refresh tokens; admins can't change their own status
   or role.
 - `/api/auth/*` is rate limited to 10 requests per minute per IP.
@@ -119,7 +121,20 @@ npm start
 
 In Development the API seeds an admin account in the local database: **admin@taskflow.local** / **Admin12345**
 (see `appsettings.Development.json`; never used outside local development). Anyone can register a
-standard account from the sign-up page.
+standard account from the sign-up page, and admins can invite people from the Users page.
+
+Invitations are sent by SMTP, configured under `Email` in `appsettings.json`. Until an SMTP host is set, the
+API writes each email, with its link, to its console in Development. To send real email, keep the password
+out of the repo with user-secrets:
+
+```bash
+cd backend
+dotnet user-secrets --project src/TaskFlow.Api set "Email:Smtp:Host" "smtp.example.com"
+dotnet user-secrets --project src/TaskFlow.Api set "Email:Smtp:Port" "587"
+dotnet user-secrets --project src/TaskFlow.Api set "Email:Smtp:Username" "you@example.com"
+dotnet user-secrets --project src/TaskFlow.Api set "Email:Smtp:Password" "<app password>"
+dotnet user-secrets --project src/TaskFlow.Api set "Email:FromAddress" "you@example.com"
+```
 
 Useful URLs while the API runs in Development:
 

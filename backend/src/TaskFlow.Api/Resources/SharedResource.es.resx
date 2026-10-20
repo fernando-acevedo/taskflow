@@ -10,6 +10,10 @@
   <data name="Users.CannotChangeOwnStatus" xml:space="preserve"><value>No puedes desactivar ni reactivar tu propia cuenta.</value></data>
   <data name="Users.CannotChangeOwnRole" xml:space="preserve"><value>No puedes cambiar tu propio rol.</value></data>
   <data name="Users.EmailNotFound" xml:space="preserve"><value>No hay ningún usuario registrado con ese email.</value></data>
+  <data name="Users.EmailTaken" xml:space="preserve"><value>Ya existe una cuenta con ese email.</value></data>
+  <data name="Users.InvitationNotSent" xml:space="preserve"><value>El usuario se creó, pero no se pudo enviar el correo de invitación. Revisa la configuración de email y reenvíala.</value></data>
+  <data name="Users.InvitationNotPending" xml:space="preserve"><value>Este usuario ya eligió su contraseña.</value></data>
+  <data name="Users.InvitationInvalid" xml:space="preserve"><value>Este enlace de invitación no es válido o venció. Pide a un administrador que te envíe uno nuevo.</value></data>
   <data name="Clients.NotFound" xml:space="preserve"><value>No se encontró el cliente.</value></data>
   <data name="Clients.NameTaken" xml:space="preserve"><value>Ya existe otro cliente con ese nombre.</value></data>
   <data name="Clients.HasActiveProjects" xml:space="preserve"><value>No se puede archivar un cliente con proyectos activos.</value></data>
