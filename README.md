@@ -121,7 +121,15 @@ npm start
 
 In Development the API seeds an admin account in the local database: **admin@taskflow.local** / **Admin12345**
 (see `appsettings.Development.json`; never used outside local development). Anyone can register a
-standard account from the sign-up page, and admins can invite people from the Users page.
+standard account from the sign-up page, and admins can invite people from the Users page. Set
+`Auth:AllowSelfRegistration` to `false` to keep only invitations.
+
+Settings that matter when deploying behind a proxy or on more than one instance:
+
+- `ForwardedHeaders:KnownNetworks`: the proxy's address ranges (CIDR), so the API takes the client's IP from
+  `X-Forwarded-For`; the per-IP rate limit on `/api/auth` and `/api/invitations` depends on it.
+- `DataProtection:KeysPath`: a folder that persists and is shared by every instance. The keys protect access,
+  refresh and invitation tokens; without it, a restart signs everyone out and voids pending invitations.
 
 Invitations are sent by SMTP, configured under `Email` in `appsettings.json`. Until an SMTP host is set, the
 API writes each email, with its link, to its console in Development. To send real email, keep the password

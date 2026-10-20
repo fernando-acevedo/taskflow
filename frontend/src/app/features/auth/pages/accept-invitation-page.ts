@@ -1,11 +1,11 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, linkedSignal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslocoDirective } from '@jsverse/transloco';
 import { Store } from '@ngrx/store';
 import { newPasswordGroup } from '../../../core/auth/password-rules';
@@ -34,21 +34,19 @@ import { NewPasswordFields } from '../../../shared/ui/new-password-fields';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AcceptInvitationPage implements OnInit {
-  /** Bound from the ?email= and ?token= query parameters of the emailed link. */
-  readonly email = input<string>();
-  readonly token = input<string>();
-
   private readonly store = inject(Store);
   private readonly router = inject(Router);
   protected readonly pending = this.store.selectSignal(authFeature.selectPending);
   protected readonly errors = this.store.selectSignal(authFeature.selectFormErrors);
 
-  /** The token keeps its first value: it's removed from the address bar on load, which clears the input. */
-  private readonly linkToken = linkedSignal<string | undefined, string | undefined>({
-    source: this.token,
-    computation: (token, previous) => token ?? previous?.value,
-  });
-  protected readonly linkIsComplete = computed(() => !!this.email() && !!this.linkToken());
+  /**
+   * The emailed link is `/accept-invitation#email=…&token=…`. The fragment never reaches a server (no access
+   * logs, no `Referer`); it's read once here and then removed from the address bar.
+   */
+  private readonly link = new URLSearchParams(inject(ActivatedRoute).snapshot.fragment ?? '');
+  protected readonly email = this.link.get('email');
+  private readonly token = this.link.get('token');
+  protected readonly linkIsComplete = !!this.email && !!this.token;
 
   protected readonly form = newPasswordGroup(inject(NonNullableFormBuilder));
 
@@ -58,14 +56,13 @@ export class AcceptInvitationPage implements OnInit {
 
   ngOnInit(): void {
     // The token works like a one-time password: keep it out of the browser history and the router state.
-    if (this.token()) {
-      void this.router.navigate([], { queryParams: { token: null }, queryParamsHandling: 'merge', replaceUrl: true });
+    if (this.token) {
+      void this.router.navigate([], { replaceUrl: true });
     }
   }
 
   protected submit(): void {
-    const email = this.email();
-    const token = this.linkToken();
+    const { email, token } = this;
     if (this.form.invalid || !email || !token) {
       this.form.markAllAsTouched();
       return;

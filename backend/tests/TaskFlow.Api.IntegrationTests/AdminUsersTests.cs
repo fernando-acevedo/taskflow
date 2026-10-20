@@ -34,6 +34,7 @@ public sealed class AdminUsersTests(SqlServerApiFactory factory)
         page!.TotalCount.ShouldBe(1);
         page.Items.Single().Email.ShouldBe(email);
         page.Items.Single().IsActive.ShouldBeTrue();
+        page.Items.Single().CreatedAt.ShouldBeGreaterThan(DateTimeOffset.UtcNow.AddHours(-1));
     }
 
     [Fact]
@@ -45,13 +46,16 @@ public sealed class AdminUsersTests(SqlServerApiFactory factory)
         var email = AuthApi.NewEmail();
 
         using var response = await CreateUserAsync(admin, email, isAdmin: true);
-        var created = await response.Content.ReadFromJsonAsync<UserResponse>(Ct);
+        var body = await response.Content.ReadFromJsonAsync<CreatedUserResponse>(Ct);
+        var created = body!.User;
         using var loginBeforeAccepting = await client.LoginAsync(email);
         using var accept = await AcceptAsync(client, email, factory.Emails.InvitationTokenFor(email), AuthApi.ValidPassword);
         client.UseToken(await client.LoginForTokensAsync(email));
 
         response.StatusCode.ShouldBe(HttpStatusCode.Created);
-        created!.DisplayName.ShouldBe("New Person");
+        response.Headers.Location!.AbsolutePath.ShouldBe($"/api/admin/users/{created.Id}");
+        body.InvitationSent.ShouldBeTrue();
+        created.DisplayName.ShouldBe("New Person");
         created.Roles.ShouldBe(["Admin"]);
         created.IsInvitationPending.ShouldBeTrue();
         loginBeforeAccepting.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
@@ -87,7 +91,7 @@ public sealed class AdminUsersTests(SqlServerApiFactory factory)
         using var client = factory.CreateClient();
         var email = AuthApi.NewEmail();
         using var create = await CreateUserAsync(admin, email);
-        var userId = (await create.Content.ReadFromJsonAsync<UserResponse>(Ct))!.Id;
+        var userId = (await create.Content.ReadFromJsonAsync<CreatedUserResponse>(Ct))!.User.Id;
 
         using var resend = await admin.PostAsync(new Uri($"/api/admin/users/{userId}/invitation", UriKind.Relative), null, Ct);
         using var accept = await AcceptAsync(client, email, factory.Emails.InvitationTokenFor(email), AuthApi.ValidPassword);
@@ -169,6 +173,41 @@ public sealed class AdminUsersTests(SqlServerApiFactory factory)
 
         activate.StatusCode.ShouldBe(HttpStatusCode.NoContent);
         loginAgain.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task DeactivatingRejectsTheUsersCurrentAccessTokenAtOnce()
+    {
+        Assert.SkipWhen(factory.SkipReason is not null, factory.SkipReason ?? string.Empty);
+        using var admin = await factory.CreateAdminClientAsync();
+        var (user, email) = await factory.CreateUserClientAsync();
+        using var _ = user;
+        var userId = await FindUserIdAsync(admin, email);
+        using var before = await user.GetAsync(new Uri("/api/users/me", UriKind.Relative), Ct);
+
+        (await admin.PostAsync(new Uri($"/api/admin/users/{userId}/deactivate", UriKind.Relative), null, Ct)).EnsureSuccessStatusCode();
+        using var after = await user.GetAsync(new Uri("/api/users/me", UriKind.Relative), Ct);
+
+        before.StatusCode.ShouldBe(HttpStatusCode.OK);
+        after.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task RevokingAdminRejectsTheOldAdminTokenAtOnce()
+    {
+        Assert.SkipWhen(factory.SkipReason is not null, factory.SkipReason ?? string.Empty);
+        using var admin = await factory.CreateAdminClientAsync();
+        using var client = factory.CreateClient();
+        var email = AuthApi.NewEmail();
+        (await client.RegisterAsync(email)).EnsureSuccessStatusCode();
+        var userId = await FindUserIdAsync(admin, email);
+        (await admin.PutAsync(new Uri($"/api/admin/users/{userId}/admin", UriKind.Relative), null, Ct)).EnsureSuccessStatusCode();
+        client.UseToken(await client.LoginForTokensAsync(email));
+
+        (await admin.DeleteAsync(new Uri($"/api/admin/users/{userId}/admin", UriKind.Relative), Ct)).EnsureSuccessStatusCode();
+        using var adminEndpoint = await client.GetAsync(new Uri("/api/admin/users", UriKind.Relative), Ct);
+
+        adminEndpoint.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
     }
 
     [Fact]

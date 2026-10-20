@@ -10,7 +10,7 @@ public sealed class ClientsTests(SqlServerApiFactory factory)
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     [Fact]
-    public async Task StandardUserCanListClientsButNotCreateThem()
+    public async Task StandardUserCannotReadClientDetailsOrCreateClients()
     {
         Assert.SkipWhen(factory.SkipReason is not null, factory.SkipReason ?? string.Empty);
         using var admin = await factory.CreateAdminClientAsync();
@@ -18,10 +18,12 @@ public sealed class ClientsTests(SqlServerApiFactory factory)
         var (userClient, _) = await factory.CreateUserClientAsync();
         using var user = userClient;
 
-        var page = await user.GetFromJsonAsync<PagedResponse<ClientResponse>>($"/api/clients?search={created.Name}", Ct);
+        using var list = await user.GetAsync(new Uri($"/api/clients?search={created.Name}", UriKind.Relative), Ct);
+        using var get = await user.GetAsync(new Uri($"/api/clients/{created.Id}", UriKind.Relative), Ct);
         using var create = await user.PostAsJsonAsync("/api/clients", new { name = "Not allowed" }, Ct);
 
-        page!.Items.ShouldHaveSingleItem().Id.ShouldBe(created.Id);
+        list.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        get.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
         create.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 
@@ -45,6 +47,26 @@ public sealed class ClientsTests(SqlServerApiFactory factory)
         options.ShouldContain(option => option.Id == active.Id && option.Name == active.Name);
         options.ShouldNotContain(option => option.Id == archived.Id);
         body.ShouldNotContain("contactEmail");
+    }
+
+    [Fact]
+    public async Task SearchTreatsLikeWildcardsAsPlainText()
+    {
+        Assert.SkipWhen(factory.SkipReason is not null, factory.SkipReason ?? string.Empty);
+        using var admin = await factory.CreateAdminClientAsync();
+        var unique = Guid.NewGuid().ToString("N")[..8];
+        var underscore = await admin.CreateClientAsync($"{unique} a_b");
+        await admin.CreateClientAsync($"{unique} axb");
+        var percent = await admin.CreateClientAsync($"{unique} 100%");
+        await admin.CreateClientAsync($"{unique} 1000");
+
+        var byUnderscore = await admin.GetFromJsonAsync<PagedResponse<ClientResponse>>(
+            $"/api/clients?search={Uri.EscapeDataString($"{unique} a_b")}", Ct);
+        var byPercent = await admin.GetFromJsonAsync<PagedResponse<ClientResponse>>(
+            $"/api/clients?search={Uri.EscapeDataString($"{unique} 100%")}", Ct);
+
+        byUnderscore!.Items.ShouldHaveSingleItem().Id.ShouldBe(underscore.Id);
+        byPercent!.Items.ShouldHaveSingleItem().Id.ShouldBe(percent.Id);
     }
 
     [Fact]

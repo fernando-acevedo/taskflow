@@ -29,8 +29,8 @@ describe('devtools sanitizer', () => {
     const state = {
       router: {
         state: {
-          url: '/accept-invitation?email=ana%40example.com&token=CfDJ8abc',
-          root: { queryParams: { email: 'ana@example.com', token: 'CfDJ8abc' } },
+          url: '/accept-invitation#email=ana%40example.com&token=CfDJ8abc',
+          root: { fragment: 'token=CfDJ8abc&email=ana%40example.com', queryParams: { token: 'CfDJ8abc' } },
         },
       },
     };
@@ -38,8 +38,8 @@ describe('devtools sanitizer', () => {
     expect(hideStateSecrets(state)).toEqual({
       router: {
         state: {
-          url: '/accept-invitation?email=ana%40example.com&token=••••••',
-          root: { queryParams: { email: 'ana@example.com', token: '••••••' } },
+          url: '/accept-invitation#email=ana%40example.com&token=••••••',
+          root: { fragment: 'token=••••••&email=ana%40example.com', queryParams: { token: '••••••' } },
         },
       },
     });

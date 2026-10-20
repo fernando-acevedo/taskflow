@@ -8,7 +8,7 @@
       <mat-card-subtitle>{{ t('auth.invitation.subtitle') }}</mat-card-subtitle>
     </mat-card-header>
 
-    @if (!linkIsComplete()) {
+    @if (!linkIsComplete) {
       <mat-card-content>
         <p class="form-error" role="alert">{{ t('errors.invitationInvalid') }}</p>
       </mat-card-content>
@@ -28,7 +28,7 @@
 
           <mat-form-field appearance="outline">
             <mat-label>{{ t('auth.email') }}</mat-label>
-            <input matInput type="email" [value]="email()" autocomplete="username" readonly />
+            <input matInput type="email" [value]="email" autocomplete="username" readonly />
           </mat-form-field>
 
           <app-new-password-fields [group]="form" [focusOnLoad]="true" />

@@ -2,12 +2,12 @@ import { Action } from '@ngrx/store';
 
 const SECRET_KEYS = new Set(['password', 'token', 'accessToken', 'refreshToken']);
 const MASK = '••••••';
-const TOKEN_IN_URL = /([?&]token=)[^&#]*/g;
+const TOKEN_IN_URL = /((?:^|[?&#])token=)[^&#]*/g;
 
-/** Masks secrets by key at any depth, and the invitation token inside router URLs. */
+/** Masks secrets by key at any depth, and the invitation token inside router URLs and fragments. */
 export function maskSecrets(value: unknown, key?: string): unknown {
   if (typeof value === 'string') {
-    return key === 'url' ? value.replace(TOKEN_IN_URL, `$1${MASK}`) : value;
+    return key === 'url' || key === 'fragment' ? value.replace(TOKEN_IN_URL, `$1${MASK}`) : value;
   }
   if (Array.isArray(value)) {
     return value.map((item) => maskSecrets(item));

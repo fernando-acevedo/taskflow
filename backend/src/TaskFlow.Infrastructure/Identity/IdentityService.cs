@@ -7,7 +7,8 @@ using TaskFlow.Infrastructure.Persistence;
 
 namespace TaskFlow.Infrastructure.Identity;
 
-internal sealed class IdentityService(UserManager<ApplicationUser> userManager, AppDbContext db) : IIdentityService
+internal sealed class IdentityService(UserManager<ApplicationUser> userManager, AppDbContext db, SessionValidator sessions)
+    : IIdentityService
 {
     public async Task<UserDto?> FindByIdAsync(Guid userId, CancellationToken cancellationToken)
     {
@@ -46,30 +47,45 @@ internal sealed class IdentityService(UserManager<ApplicationUser> userManager, 
         return new PagedResult<UserDto>([.. rows.Select(row => row.ToDto())], page, pageSize, totalCount);
     }
 
+    /// <summary>
+    /// The account and its role are saved in one transaction, so a failure can't leave an admin invited as a
+    /// standard user. With retries on transient errors enabled, the transaction runs through the execution strategy.
+    /// </summary>
     public async Task<Result<UserDto>> CreateAsync(NewUser newUser, CancellationToken cancellationToken)
     {
-        var user = new ApplicationUser
+        var strategy = db.Database.CreateExecutionStrategy();
+        var userId = await strategy.ExecuteAsync(async ct =>
         {
-            UserName = newUser.Email,
-            Email = newUser.Email,
-            EmailConfirmed = true,
-            DisplayName = newUser.DisplayName,
-        };
+            // A retry starts over: drop what the failed attempt left in the change tracker.
+            db.ChangeTracker.Clear();
+            await using var transaction = await db.Database.BeginTransactionAsync(ct);
 
-        var created = await userManager.CreateAsync(user);
-        if (created.Errors.Any(error => error.Code is "DuplicateEmail" or "DuplicateUserName"))
-        {
-            return UserErrors.EmailTaken;
-        }
+            var user = new ApplicationUser
+            {
+                UserName = newUser.Email,
+                Email = newUser.Email,
+                EmailConfirmed = true,
+                DisplayName = newUser.DisplayName,
+            };
 
-        EnsureSucceeded(created);
+            var created = await userManager.CreateAsync(user);
+            if (created.Errors.Any(error => error.Code is "DuplicateEmail" or "DuplicateUserName"))
+            {
+                return (Guid?)null;
+            }
 
-        if (newUser.IsAdmin)
-        {
-            EnsureSucceeded(await userManager.AddToRoleAsync(user, Roles.Admin));
-        }
+            EnsureSucceeded(created);
 
-        return (await FindByIdAsync(user.Id, cancellationToken))!;
+            if (newUser.IsAdmin)
+            {
+                EnsureSucceeded(await userManager.AddToRoleAsync(user, Roles.Admin));
+            }
+
+            await transaction.CommitAsync(ct);
+            return user.Id;
+        }, cancellationToken);
+
+        return userId is { } id ? (await FindByIdAsync(id, cancellationToken))! : UserErrors.EmailTaken;
     }
 
     public async Task<string> GenerateInvitationTokenAsync(Guid userId, CancellationToken cancellationToken) =>
@@ -119,6 +135,7 @@ internal sealed class IdentityService(UserManager<ApplicationUser> userManager, 
         else
         {
             EnsureSucceeded(await userManager.UpdateSecurityStampAsync(user));
+            sessions.Forget(userId);
         }
     }
 
@@ -137,6 +154,7 @@ internal sealed class IdentityService(UserManager<ApplicationUser> userManager, 
         }
 
         EnsureSucceeded(await userManager.UpdateSecurityStampAsync(user));
+        sessions.Forget(userId);
     }
 
     private Task<Guid> AdminRoleIdAsync(CancellationToken cancellationToken) =>

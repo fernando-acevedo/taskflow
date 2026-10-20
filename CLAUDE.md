@@ -70,7 +70,11 @@ so a reference added in the wrong direction fails the tests.
   **code** in `Resources/SharedResource{.es}.resx`, and the code is sent as `extensions.code` so the frontend can
   translate it. When you add an error code, add its translations to both `.resx` files.
 - Identity uses ASP.NET Core Identity API Endpoints (`MapIdentityApi`) under `/api/auth` with bearer + refresh
-  tokens, not cookies (ADRs 0002, 0003). That group is rate limited per IP. Everything else is controllers.
+  tokens, not cookies (ADRs 0002, 0003). That group is rate limited per IP (behind a proxy, from
+  `X-Forwarded-For` of the networks in `ForwardedHeaders:KnownNetworks`); `Auth:AllowSelfRegistration` turns
+  `/register` off. Everything else is controllers. `SessionValidationMiddleware` rejects a bearer token whose
+  security stamp is no longer the user's (`SessionValidator`, cached 30 s), so deactivating a user or changing
+  their role takes effect at once: call `SessionValidator.Forget` after renewing a stamp.
 - Admins invite users: the account has no password until the user follows the emailed link (ADR 0008). Email
   goes through `Infrastructure/Email` (`IEmailSender`: MailKit SMTP, or the log in Development when no SMTP host
   is set); integration tests swap in `TestEmailSender` and read the link from it.

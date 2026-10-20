@@ -6,13 +6,17 @@ using TaskFlow.Application.Users;
 
 namespace TaskFlow.Api.Controllers;
 
-/// <summary>The agency's clients. Everyone can read them to pick one for a project; only admins change them.</summary>
+/// <summary>
+/// The agency's clients, with their contact details: admins only. Everyone else gets the pickers' list of names
+/// from <c>GET /api/clients/options</c>.
+/// </summary>
 [Authorize]
 [Route("api/clients")]
 public sealed class ClientsController : ApiControllerBase
 {
     /// <summary>Lists clients by name, active ones only unless <paramref name="includeArchived"/> is set.</summary>
     [HttpGet]
+    [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType<PagedResult<ClientDto>>(StatusCodes.Status200OK)]
     public async Task<ActionResult<PagedResult<ClientDto>>> List(
         [FromQuery] string? search,
@@ -32,6 +36,7 @@ public sealed class ClientsController : ApiControllerBase
         OkOrProblem(await handler.HandleAsync(cancellationToken));
 
     [HttpGet("{clientId:guid}")]
+    [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType<ClientDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ClientDto>> Get(Guid clientId, [FromServices] GetClientHandler handler, CancellationToken cancellationToken) =>

@@ -12,8 +12,10 @@ to send email.
 ## Decision
 
 - `POST /api/admin/users` creates a confirmed account **without a password** and emails the user a link to
-  `/accept-invitation?email=…&token=…` in the frontend. There the user chooses and confirms a password (with a
-  strength meter) and is signed in. `POST /api/admin/users/{id}/invitation` sends a new link while the user
+  `/accept-invitation#email=…&token=…` in the frontend (in the fragment, which browsers never send to a server,
+  so the token stays out of access logs and `Referer` headers; the page also removes it from the address bar).
+  There the user chooses and confirms a password (with a strength meter) and is signed in.
+  `POST /api/admin/users/{id}/invitation` sends a new link while the user
   hasn't chosen a password; `UserDto.IsInvitationPending` is true until then.
 - The token comes from a dedicated Identity token provider (`InvitationTokenProvider`, a
   `DataProtectorTokenProvider`) so it can live longer than password-reset tokens: 7 days by default,
@@ -25,8 +27,10 @@ to send email.
   frontend URL). The SMTP password is a secret: user-secrets locally, app settings in Azure. Without an SMTP
   host, `LoggingEmailSender` writes the email (with its link) to the log when `Email:LogWhenSmtpIsMissing` is
   true, which only `appsettings.Development.json` sets; elsewhere sending fails.
-- If the email can't be sent, the account is still created and the API answers `Users.InvitationNotSent`
-  (409) so the admin can fix the settings and resend.
+- The account and its role are created in one transaction. If the email can't be sent, the account still
+  exists: the API answers 201 with `invitationSent: false` (not an error, since retrying would only find the
+  email taken), the frontend warns with `Users.InvitationNotSent`, and the admin can fix the settings and
+  resend. A failed resend answers `Users.InvitationNotSent` (409).
 
 ## Consequences
 

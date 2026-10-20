@@ -28,7 +28,7 @@ internal sealed partial class InvitationSender(
         catch (Exception exception) when (exception is not OperationCanceledException)
 #pragma warning restore CA1031
         {
-            LogSendFailed(logger, exception, user.Email);
+            LogSendFailed(logger, exception, user.Id);
             return false;
         }
     }
@@ -37,7 +37,7 @@ internal sealed partial class InvitationSender(
     {
         var frontendUrl = emailOptions.Value.FrontendUrl
             ?? throw new InvalidOperationException("Email:FrontendUrl is not configured.");
-        return $"{frontendUrl.TrimEnd('/')}/accept-invitation?email={Uri.EscapeDataString(email)}&token={Uri.EscapeDataString(token)}";
+        return $"{frontendUrl.TrimEnd('/')}/accept-invitation#email={Uri.EscapeDataString(email)}&token={Uri.EscapeDataString(token)}";
     }
 
     private EmailMessage Compose(UserDto user, string link)
@@ -75,6 +75,7 @@ internal sealed partial class InvitationSender(
         "Elegir mi contraseña",
         "El enlace sirve una sola vez y vence en {0} días. Si vence, pide a un administrador que te envíe uno nuevo.");
 
-    [LoggerMessage(Level = LogLevel.Error, Message = "Could not send the invitation email to {Email}")]
-    private static partial void LogSendFailed(ILogger logger, Exception exception, string email);
+    // The user id rather than the email: logs are kept longer and read by more people than the user list.
+    [LoggerMessage(Level = LogLevel.Error, Message = "Could not send the invitation email to user {UserId}")]
+    private static partial void LogSendFailed(ILogger logger, Exception exception, Guid userId);
 }

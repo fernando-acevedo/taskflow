@@ -13,7 +13,8 @@ public sealed class ApplicationUser : IdentityUser<Guid>
 
     public bool IsActive { get; set; } = true;
 
-    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+    /// <summary>Set on insert from the app's <see cref="TimeProvider"/> (see <c>CreationTimeInterceptor</c>).</summary>
+    public DateTimeOffset CreatedAt { get; set; }
 }
 
 internal sealed class ApplicationUserConfiguration : IEntityTypeConfiguration<ApplicationUser>

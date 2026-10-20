@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.HttpOverrides;
 using Scalar.AspNetCore;
 using Serilog;
 using TaskFlow.Api.ErrorHandling;
@@ -55,6 +56,17 @@ builder.Services.AddRateLimiter(options =>
         _ => new FixedWindowRateLimiterOptions { PermitLimit = authPermitLimit, Window = TimeSpan.FromMinutes(1) }));
 });
 
+// Behind a reverse proxy the client's address arrives in X-Forwarded-For, and the auth rate limit partitions by it.
+// Only proxies in ForwardedHeaders:KnownNetworks (plus loopback) are believed, so clients can't pick their own IP.
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    foreach (var network in builder.Configuration.GetSection("ForwardedHeaders:KnownNetworks").Get<string[]>() ?? [])
+    {
+        options.KnownIPNetworks.Add(System.Net.IPNetwork.Parse(network));
+    }
+});
+
 const string FrontendCorsPolicy = "Frontend";
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 builder.Services.AddCors(options => options.AddPolicy(FrontendCorsPolicy, policy => policy
@@ -64,6 +76,7 @@ builder.Services.AddCors(options => options.AddPolicy(FrontendCorsPolicy, policy
 
 var app = builder.Build();
 
+app.UseForwardedHeaders();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 app.UseSerilogRequestLogging();
@@ -79,12 +92,19 @@ if (app.Environment.IsDevelopment())
 
 // HTTPS is enforced by the hosting platform (App Service "HTTPS only"), not by the app.
 app.UseAuthentication();
+app.UseMiddleware<SessionValidationMiddleware>();
 app.UseAuthorization();
 
 app.MapControllers();
+// Self-registration can be turned off (admins still invite people); the rest of the Identity endpoints stay.
+var allowSelfRegistration = app.Configuration.GetValue("Auth:AllowSelfRegistration", true);
 app.MapGroup("/api/auth")
     .WithTags("Auth")
     .RequireRateLimiting(RateLimitPolicies.Auth)
+    .AddEndpointFilter(async (context, next) =>
+        allowSelfRegistration || !context.HttpContext.Request.Path.StartsWithSegments("/api/auth/register", StringComparison.OrdinalIgnoreCase)
+            ? await next(context)
+            : Results.NotFound())
     .MapIdentityApi<ApplicationUser>();
 app.MapHealthChecks("/health", new HealthCheckOptions { ResponseWriter = HealthResponseWriter.WriteAsync });
 
