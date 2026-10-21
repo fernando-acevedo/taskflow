@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.BearerToken;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -20,8 +21,9 @@ public static class DependencyInjection
         var connectionString = configuration.GetConnectionString(ConnectionStringName)
             ?? throw new InvalidOperationException($"Connection string '{ConnectionStringName}' is not configured.");
 
-        services.AddDbContext<AppDbContext>(options =>
-            options.UseSqlServer(connectionString, sql => sql.EnableRetryOnFailure()));
+        services.AddDbContext<AppDbContext>((provider, options) => options
+            .UseSqlServer(connectionString, sql => sql.EnableRetryOnFailure())
+            .AddInterceptors(new CreationTimeInterceptor(provider.GetRequiredService<TimeProvider>())));
         services.AddScoped<IAppDbContext>(provider => provider.GetRequiredService<AppDbContext>());
 
         services.AddHealthChecks()
@@ -41,6 +43,15 @@ public static class DependencyInjection
             .AddEntityFrameworkStores<AppDbContext>()
             .AddTokenProvider<InvitationTokenProvider>(InvitationTokenProvider.ProviderName);
 
+        // These keys protect bearer, refresh and invitation tokens. Kept only in memory or in the container's file
+        // system, a restart or a second instance would invalidate every session and every pending invitation, so
+        // deployments point DataProtection:KeysPath at storage that persists and is shared between instances.
+        var dataProtection = services.AddDataProtection().SetApplicationName("TaskFlow");
+        if (configuration["DataProtection:KeysPath"] is { Length: > 0 } keysPath)
+        {
+            dataProtection.PersistKeysToFileSystem(new DirectoryInfo(keysPath));
+        }
+
         services.Configure<InvitationTokenProviderOptions>(options => options.TokenLifespan =
             TimeSpan.FromDays(configuration.GetValue("Auth:InvitationDays", InvitationTokenProviderOptions.DefaultLifespanDays)));
 
@@ -53,6 +64,8 @@ public static class DependencyInjection
         services.Configure<AdminSeedOptions>(configuration.GetSection(AdminSeedOptions.SectionName));
         services.AddScoped<IdentitySeeder>();
         services.AddScoped<IIdentityService, IdentityService>();
+        services.AddMemoryCache();
+        services.AddScoped<SessionValidator>();
 
         services.Configure<EmailOptions>(configuration.GetSection(EmailOptions.SectionName));
         if (string.IsNullOrWhiteSpace(configuration[$"{EmailOptions.SectionName}:Smtp:Host"]))

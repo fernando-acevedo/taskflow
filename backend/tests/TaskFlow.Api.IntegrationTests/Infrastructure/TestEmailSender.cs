@@ -26,6 +26,6 @@ public sealed partial class TestEmailSender : IEmailSender
         return Uri.UnescapeDataString(match.Groups["token"].Value);
     }
 
-    [GeneratedRegex(@"/accept-invitation\?email=[^&\s]+&token=(?<token>\S+)")]
+    [GeneratedRegex(@"/accept-invitation#email=[^&\s]+&token=(?<token>\S+)")]
     private static partial Regex InvitationLink();
 }

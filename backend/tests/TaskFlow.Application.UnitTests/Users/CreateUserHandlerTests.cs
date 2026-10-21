@@ -48,13 +48,13 @@ public sealed class CreateUserHandlerTests
         var result = await _handler.HandleAsync(
             new CreateUserCommand(" new@tests.local ", " New Person ", true), TestContext.Current.CancellationToken);
 
-        result.Value.ShouldBe(created);
+        result.Value.ShouldBe(new CreatedUserDto(created, InvitationSent: true));
         await _identity.Received(1).CreateAsync(new NewUser("new@tests.local", "New Person", true), Arg.Any<CancellationToken>());
         await _invitations.Received(1).SendAsync(created, "token", Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task ReportsAnInvitationThatCouldNotBeSent()
+    public async Task KeepsTheUserWhenTheInvitationCouldNotBeSent()
     {
         var created = NewPendingUser();
         _identity.CreateAsync(Arg.Any<NewUser>(), Arg.Any<CancellationToken>()).Returns(created);
@@ -64,7 +64,7 @@ public sealed class CreateUserHandlerTests
         var result = await _handler.HandleAsync(
             new CreateUserCommand("new@tests.local", "New Person", false), TestContext.Current.CancellationToken);
 
-        result.Error.ShouldBe(UserErrors.InvitationNotSent);
+        result.Value.ShouldBe(new CreatedUserDto(created, InvitationSent: false));
     }
 
     private static UserDto NewPendingUser() =>

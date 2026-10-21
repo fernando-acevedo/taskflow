@@ -21,7 +21,7 @@ export const AdminUsersApiActions = createActionGroup({
   events: {
     'Users Loaded': props<{ page: PagedResult<User> }>(),
     'Users Load Failed': props<{ error: ApiError }>(),
-    'User Created': props<Submission>(),
+    'User Created': props<{ invitationSent: boolean } & Submission>(),
     'Invitation Sent': emptyProps(),
     'User Updated': emptyProps(),
     'User Update Failed': props<{ error: ApiError } & Submission>(),

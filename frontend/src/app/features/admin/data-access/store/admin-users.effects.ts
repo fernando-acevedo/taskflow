@@ -16,7 +16,7 @@ export const loadUsers = createEffect(
         UsersPageActions.queryChanged,
         AdminUsersApiActions.userCreated,
         AdminUsersApiActions.userUpdated,
-        // A user can exist even when creating failed (the invitation email couldn't be sent).
+        // A failure can mean the list is out of date (another admin changed the user), so it reloads too.
         AdminUsersApiActions.userUpdateFailed,
       ),
       withLatestFrom(store.select(adminUsersFeature.selectQuery)),
@@ -38,7 +38,7 @@ export const createUser = createEffect(
       ofType(UsersPageActions.createSubmitted),
       concatMap(({ user, submissionId }) =>
         api.create(user).pipe(
-          map(() => AdminUsersApiActions.userCreated({ submissionId })),
+          map((created) => AdminUsersApiActions.userCreated({ invitationSent: created.invitationSent, submissionId })),
           catchError((error: unknown) =>
             of(AdminUsersApiActions.userUpdateFailed({ error: toApiError(error), submissionId })),
           ),
@@ -91,7 +91,11 @@ export const notify = createEffect(
       tap((action) => {
         switch (action.type) {
           case AdminUsersApiActions.userCreated.type:
-            notifier.success('users.created');
+            if (action.invitationSent) {
+              notifier.success('users.created');
+            } else {
+              notifier.error({ code: 'Users.InvitationNotSent', fields: {} });
+            }
             break;
           case AdminUsersApiActions.invitationSent.type:
             notifier.success('users.invitationSent');

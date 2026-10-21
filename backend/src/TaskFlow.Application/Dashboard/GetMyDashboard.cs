@@ -55,10 +55,19 @@ public sealed class GetMyDashboardHandler(IAppDbContext db, ICurrentUser current
                 && project.Members.Any(member => member.UserId == userId)
             select new { task, project, client };
 
-        var openCount = await myTasks.CountAsync(cancellationToken);
-        var overdueCount = await myTasks.CountAsync(row => row.task.DueDate < today, cancellationToken);
-        var dueThisWeek = await myTasks.CountAsync(
-            row => row.task.DueDate >= today && row.task.DueDate <= weekEnd, cancellationToken);
+        // The three counters in one round trip: a single group over all of my open tasks.
+        var counts = await myTasks
+            .GroupBy(_ => 1)
+            .Select(group => new
+            {
+                Open = group.Count(),
+                Overdue = group.Count(row => row.task.DueDate < today),
+                DueThisWeek = group.Count(row => row.task.DueDate >= today && row.task.DueDate <= weekEnd),
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+        var openCount = counts?.Open ?? 0;
+        var overdueCount = counts?.Overdue ?? 0;
+        var dueThisWeek = counts?.DueThisWeek ?? 0;
 
         var tasks = await myTasks
             .OrderBy(row => row.task.DueDate == null)

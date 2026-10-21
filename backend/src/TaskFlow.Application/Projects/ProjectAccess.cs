@@ -23,9 +23,14 @@ public enum ProjectAccessLevel
 /// </summary>
 public sealed class ProjectAccess(IAppDbContext db, ICurrentUser currentUser)
 {
+    /// <summary>
+    /// <see cref="ProjectAccessLevel.View"/> is only used by reads, so that project comes untracked; the levels
+    /// that allow changes return a tracked project for the handler to modify and save.
+    /// </summary>
     public async Task<Result<Project>> GetAsync(Guid projectId, ProjectAccessLevel level, CancellationToken cancellationToken)
     {
-        var project = await db.Projects
+        var projects = level == ProjectAccessLevel.View ? db.Projects.AsNoTracking() : db.Projects;
+        var project = await projects
             .Include(project => project.Members)
             .FirstOrDefaultAsync(project => project.Id == projectId, cancellationToken);
 

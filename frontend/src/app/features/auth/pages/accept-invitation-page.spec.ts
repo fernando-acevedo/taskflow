@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { Router, provideRouter, withComponentInputBinding } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 import { provideMockStore } from '@ngrx/store/testing';
@@ -13,7 +13,7 @@ describe('AcceptInvitationPage', () => {
         TranslocoTestingModule.forRoot({ langs: { en: {} }, translocoConfig: { availableLangs: ['en'], defaultLang: 'en' } }),
       ],
       providers: [
-        provideRouter([{ path: 'accept-invitation', component: AcceptInvitationPage }], withComponentInputBinding()),
+        provideRouter([{ path: 'accept-invitation', component: AcceptInvitationPage }]),
         provideMockStore({
           selectors: [
             { selector: authFeature.selectPending, value: false },
@@ -25,17 +25,18 @@ describe('AcceptInvitationPage', () => {
   });
 
   it('explains that a link without its token is invalid', async () => {
-    const harness = await RouterTestingHarness.create('/accept-invitation?email=ana%40example.com');
+    const harness = await RouterTestingHarness.create('/accept-invitation#email=ana%40example.com');
 
     expect(harness.routeNativeElement?.textContent).toContain('errors.invitationInvalid');
     expect(harness.routeNativeElement?.querySelector('form')).toBeNull();
   });
 
-  it('removes the token from the address bar but keeps it for the form', async () => {
-    const harness = await RouterTestingHarness.create('/accept-invitation?email=ana%40example.com&token=CfDJ8abc');
+  it('removes the link from the address bar but keeps it for the form', async () => {
+    const harness = await RouterTestingHarness.create('/accept-invitation#email=ana%40example.com&token=CfDJ8abc');
     await harness.fixture.whenStable();
 
-    expect(TestBed.inject(Router).url).toBe('/accept-invitation?email=ana@example.com');
+    expect(TestBed.inject(Router).url).toBe('/accept-invitation');
     expect(harness.routeNativeElement?.querySelector('form')).not.toBeNull();
+    expect(harness.routeNativeElement?.querySelector<HTMLInputElement>('input[type=email]')?.value).toBe('ana@example.com');
   });
 });

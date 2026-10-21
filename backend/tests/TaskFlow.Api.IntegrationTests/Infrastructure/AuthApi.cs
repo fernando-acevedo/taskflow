@@ -61,7 +61,10 @@ public sealed record UserResponse(
     string DisplayName,
     bool IsActive,
     IReadOnlyList<string> Roles,
-    bool IsInvitationPending = false);
+    bool IsInvitationPending = false,
+    DateTimeOffset CreatedAt = default);
+
+public sealed record CreatedUserResponse(UserResponse User, bool InvitationSent);
 
 public sealed record PagedResponse<T>(IReadOnlyList<T> Items, int Page, int PageSize, int TotalCount);
 
