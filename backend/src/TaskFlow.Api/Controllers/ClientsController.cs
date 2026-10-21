@@ -23,6 +23,14 @@ public sealed class ClientsController : ApiControllerBase
         [FromQuery] int pageSize = 50) =>
         OkOrProblem(await handler.HandleAsync(new ListClientsQuery(search, includeArchived, page, pageSize), cancellationToken));
 
+    /// <summary>All active clients, id and name only, for pickers.</summary>
+    [HttpGet("options")]
+    [ProducesResponseType<IReadOnlyList<ClientOptionDto>>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyList<ClientOptionDto>>> Options(
+        [FromServices] ListClientOptionsHandler handler,
+        CancellationToken cancellationToken) =>
+        OkOrProblem(await handler.HandleAsync(cancellationToken));
+
     [HttpGet("{clientId:guid}")]
     [ProducesResponseType<ClientDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]

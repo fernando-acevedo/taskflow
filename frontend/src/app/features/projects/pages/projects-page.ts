@@ -1,22 +1,20 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { PageEvent } from '@angular/material/paginator';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { RouterLink } from '@angular/router';
 import { TranslocoDirective } from '@jsverse/transloco';
 import { Store } from '@ngrx/store';
-import { filter } from 'rxjs';
 import { LanguageService } from '../../../core/i18n/language.service';
-import { Notifier } from '../../../core/notifications/notifier';
+import { SaveFn, Submissions, nextSubmissionId } from '../../../shared/data-access/submission';
 import { EmptyState } from '../../../shared/ui/empty-state';
+import { PagedList } from '../../../shared/ui/paged-list';
+import { SearchField } from '../../../shared/ui/search-field';
 import { ProjectInput } from '../data-access/projects-api.service';
 import { ProjectsPageActions } from '../data-access/store/projects.actions';
 import { projectsFeature } from '../data-access/store/projects.feature';
@@ -28,16 +26,14 @@ import { ProjectFormData, ProjectFormDialog } from '../ui/project-form-dialog';
     DatePipe,
     RouterLink,
     MatButtonModule,
-    MatCardModule,
     MatFormFieldModule,
     MatIconModule,
-    MatInputModule,
-    MatPaginatorModule,
-    MatProgressBarModule,
     MatSelectModule,
     MatSlideToggleModule,
     TranslocoDirective,
     EmptyState,
+    PagedList,
+    SearchField,
   ],
   templateUrl: './projects-page.html',
   styles: `
@@ -52,8 +48,8 @@ import { ProjectFormData, ProjectFormDialog } from '../ui/project-form-dialog';
 })
 export class ProjectsPage {
   private readonly store = inject(Store);
+  private readonly submissions = inject(Submissions);
   private readonly dialog = inject(MatDialog);
-  protected readonly notifier = inject(Notifier);
   protected readonly language = inject(LanguageService);
 
   protected readonly projects = this.store.selectSignal(projectsFeature.selectAll);
@@ -69,7 +65,11 @@ export class ProjectsPage {
   }
 
   protected search(search: string): void {
-    this.store.dispatch(ProjectsPageActions.queryChanged({ query: { search: search.trim() } }));
+    this.store.dispatch(ProjectsPageActions.queryChanged({ query: { search } }));
+  }
+
+  protected retry(): void {
+    this.store.dispatch(ProjectsPageActions.opened());
   }
 
   protected filterByClient(clientId: string | null): void {
@@ -84,14 +84,13 @@ export class ProjectsPage {
     this.store.dispatch(ProjectsPageActions.queryChanged({ query: { page: event.pageIndex + 1, pageSize: event.pageSize } }));
   }
 
+  /** On success the dialog closes and the new project opens (see openCreatedProject). */
   protected create(): void {
-    this.dialog
-      .open<ProjectFormDialog, ProjectFormData, ProjectInput>(ProjectFormDialog, {
-        data: { project: null, clients: this.clients() },
-        width: '520px',
-      })
-      .afterClosed()
-      .pipe(filter((project) => project !== undefined))
-      .subscribe((project) => this.store.dispatch(ProjectsPageActions.createSubmitted({ project })));
+    const save: SaveFn<ProjectInput> = (project) =>
+      this.submissions.dispatchAndWait(ProjectsPageActions.createSubmitted({ project, submissionId: nextSubmissionId() }));
+    this.dialog.open<ProjectFormDialog, ProjectFormData>(ProjectFormDialog, {
+      data: { project: null, clients: this.clients(), save },
+      width: '520px',
+    });
   }
 }

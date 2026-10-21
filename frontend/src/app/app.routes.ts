@@ -17,6 +17,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/auth/pages/register-page').then((m) => m.RegisterPage),
   },
   {
+    // No guard: the invited user may open the link in a browser where someone else is signed in.
+    path: 'accept-invitation',
+    loadComponent: () => import('./features/auth/pages/accept-invitation-page').then((m) => m.AcceptInvitationPage),
+  },
+  {
     path: 'status',
     loadComponent: () => import('./features/status/pages/status-page').then((m) => m.StatusPage),
     providers: [provideState(statusFeature), provideEffects(statusEffects)],

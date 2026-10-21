@@ -14,16 +14,26 @@ export interface TaskFilters {
 export const NO_FILTERS: TaskFilters = { status: null, priority: null, assignee: null, overdue: false, search: '' };
 
 export function hasActiveFilters(filters: TaskFilters): boolean {
-  return !!(filters.status || filters.priority || filters.assignee || filters.overdue || filters.search.trim());
+  return (
+    filters.status !== null ||
+    filters.priority !== null ||
+    filters.assignee !== null ||
+    filters.overdue ||
+    filters.search.trim() !== ''
+  );
+}
+
+/** Narrows a query parameter (anything the user typed in the URL) to one of the allowed values. */
+function oneOf<T extends string>(values: readonly T[], value: unknown): T | null {
+  return values.find((allowed) => allowed === value) ?? null;
 }
 
 export function parseTaskFilters(params: Params): TaskFilters {
-  const status = params['status'];
-  const priority = params['priority'];
+  const assignee: unknown = params['assignee'];
   return {
-    status: TASK_STATUSES.includes(status) ? status : null,
-    priority: TASK_PRIORITIES.includes(priority) ? priority : null,
-    assignee: typeof params['assignee'] === 'string' && params['assignee'] ? params['assignee'] : null,
+    status: oneOf(TASK_STATUSES, params['status']),
+    priority: oneOf(TASK_PRIORITIES, params['priority']),
+    assignee: typeof assignee === 'string' && assignee ? assignee : null,
     overdue: params['overdue'] === 'true',
     search: typeof params['q'] === 'string' ? params['q'] : '',
   };

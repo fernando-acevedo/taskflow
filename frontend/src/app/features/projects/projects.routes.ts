@@ -5,6 +5,7 @@ import * as projectDashboardEffects from '../dashboard/data-access/store/project
 import { projectDashboardFeature } from '../dashboard/data-access/store/project-dashboard.feature';
 import * as tasksEffects from '../tasks/data-access/store/tasks.effects';
 import { tasksFeature } from '../tasks/data-access/store/tasks.feature';
+import { TaskEditor } from '../tasks/ui/task-editor';
 import * as projectsEffects from './data-access/store/projects.effects';
 import { projectsFeature } from './data-access/store/projects.feature';
 
@@ -19,6 +20,7 @@ export const projectsRoutes: Routes = [
       provideEffects(tasksEffects),
       provideState(projectDashboardFeature),
       provideEffects(projectDashboardEffects),
+      TaskEditor,
     ],
     children: [
       { path: '', loadComponent: () => import('./pages/projects-page').then((m) => m.ProjectsPage) },

@@ -13,7 +13,7 @@ import { provideStore } from '@ngrx/store';
 import { provideStoreDevtools } from '@ngrx/store-devtools';
 import { routes } from './app.routes';
 import { authInterceptor } from './core/auth/auth.interceptor';
-import { hidePasswords } from './core/auth/devtools-sanitizer';
+import { hideSecrets, hideStateSecrets } from './core/auth/devtools-sanitizer';
 import { restoreSession } from './core/auth/session';
 import * as authEffects from './core/auth/store/auth.effects';
 import { authFeature } from './core/auth/store/auth.feature';
@@ -34,7 +34,10 @@ export const appConfig: ApplicationConfig = {
     provideStore({ router: routerReducer, [authFeature.name]: authFeature.reducer }),
     provideEffects(authEffects),
     provideRouterStore(),
-    provideStoreDevtools({ maxAge: 25, logOnly: !isDevMode(), actionSanitizer: hidePasswords }),
+    // Development only: in production anyone with the extension could read every action and the state.
+    ...(isDevMode()
+      ? [provideStoreDevtools({ maxAge: 25, actionSanitizer: hideSecrets, stateSanitizer: hideStateSecrets })]
+      : []),
     provideTransloco({
       config: {
         availableLangs: [...SUPPORTED_LANGUAGES],

@@ -1,5 +1,5 @@
 import { createActionGroup, emptyProps, props } from '@ngrx/store';
-import { Credentials, LoginErrorCode, User } from '../auth.models';
+import { Credentials, InvitationAcceptance, LoginErrorCode, User } from '../auth.models';
 
 export const LoginPageActions = createActionGroup({
   source: 'Login Page',
@@ -14,6 +14,14 @@ export const RegisterPageActions = createActionGroup({
   events: {
     Opened: emptyProps(),
     'Register Submitted': props<{ credentials: Credentials }>(),
+  },
+});
+
+export const InvitationPageActions = createActionGroup({
+  source: 'Invitation Page',
+  events: {
+    Opened: emptyProps(),
+    'Password Submitted': props<{ acceptance: InvitationAcceptance }>(),
   },
 });
 
@@ -40,6 +48,7 @@ export const AuthApiActions = createActionGroup({
     'Login Succeeded': props<{ user: User; returnUrl: string }>(),
     'Login Failed': props<{ error: LoginErrorCode }>(),
     'Register Failed': props<{ errors: string[] }>(),
+    'Invitation Accept Failed': props<{ errors: string[] }>(),
     'Profile Updated': props<{ displayName: string }>(),
     'Profile Update Failed': props<{ errors: string[] }>(),
     'Session Expired': emptyProps(),

@@ -9,6 +9,7 @@ import { TranslocoDirective } from '@jsverse/transloco';
 import { Store } from '@ngrx/store';
 import { ProfilePageActions } from '../../../core/auth/store/auth.actions';
 import { authFeature } from '../../../core/auth/store/auth.feature';
+import { ErrorTextPipe } from '../../../core/i18n/error-text.pipe';
 
 @Component({
   selector: 'app-profile-page',
@@ -20,6 +21,7 @@ import { authFeature } from '../../../core/auth/store/auth.feature';
     MatInputModule,
     MatProgressBarModule,
     TranslocoDirective,
+    ErrorTextPipe,
   ],
   templateUrl: './profile-page.html',
   styleUrl: './profile-page.scss',
@@ -28,6 +30,7 @@ import { authFeature } from '../../../core/auth/store/auth.feature';
 export class ProfilePage {
   private readonly store = inject(Store);
   protected readonly user = this.store.selectSignal(authFeature.selectUser);
+  protected readonly isAdmin = this.store.selectSignal(authFeature.selectIsAdmin);
   protected readonly pending = this.store.selectSignal(authFeature.selectPending);
   protected readonly errors = this.store.selectSignal(authFeature.selectFormErrors);
   protected readonly saved = this.store.selectSignal(authFeature.selectProfileSaved);

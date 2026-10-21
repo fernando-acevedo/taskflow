@@ -10,6 +10,10 @@
   <data name="Users.CannotChangeOwnStatus" xml:space="preserve"><value>You can't deactivate or reactivate your own account.</value></data>
   <data name="Users.CannotChangeOwnRole" xml:space="preserve"><value>You can't change your own role.</value></data>
   <data name="Users.EmailNotFound" xml:space="preserve"><value>No user is registered with that email.</value></data>
+  <data name="Users.EmailTaken" xml:space="preserve"><value>An account with this email already exists.</value></data>
+  <data name="Users.InvitationNotSent" xml:space="preserve"><value>The user exists, but the invitation email couldn't be sent. Check the email settings and resend it.</value></data>
+  <data name="Users.InvitationNotPending" xml:space="preserve"><value>This user has already chosen a password.</value></data>
+  <data name="Users.InvitationInvalid" xml:space="preserve"><value>This invitation link is invalid or has expired. Ask an administrator to send you a new one.</value></data>
   <data name="Clients.NotFound" xml:space="preserve"><value>The client was not found.</value></data>
   <data name="Clients.NameTaken" xml:space="preserve"><value>Another client already has this name.</value></data>
   <data name="Clients.HasActiveProjects" xml:space="preserve"><value>A client with active projects can't be archived.</value></data>

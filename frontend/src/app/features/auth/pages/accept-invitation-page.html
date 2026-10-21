@@ -1,0 +1,43 @@
+<ng-container *transloco="let t">
+  <mat-card appearance="outlined" class="auth-card">
+    @if (pending()) {
+      <mat-progress-bar mode="indeterminate" />
+    }
+    <mat-card-header>
+      <mat-card-title><h1>{{ t('auth.invitation.title') }}</h1></mat-card-title>
+      <mat-card-subtitle>{{ t('auth.invitation.subtitle') }}</mat-card-subtitle>
+    </mat-card-header>
+
+    @if (!linkIsComplete()) {
+      <mat-card-content>
+        <p class="form-error" role="alert">{{ t('errors.invitationInvalid') }}</p>
+      </mat-card-content>
+      <mat-card-actions class="actions">
+        <a mat-button routerLink="/login">{{ t('auth.register.signIn') }}</a>
+      </mat-card-actions>
+    } @else {
+      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <mat-card-content>
+          @if (errors().length) {
+            <div class="form-error" role="alert">
+              @for (code of errors(); track code) {
+                <div>{{ code | errorText }}</div>
+              }
+            </div>
+          }
+
+          <mat-form-field appearance="outline">
+            <mat-label>{{ t('auth.email') }}</mat-label>
+            <input matInput type="email" [value]="email()" autocomplete="username" readonly />
+          </mat-form-field>
+
+          <app-new-password-fields [group]="form" [focusOnLoad]="true" />
+        </mat-card-content>
+
+        <mat-card-actions class="actions">
+          <button mat-flat-button type="submit" [disabled]="pending()">{{ t('auth.invitation.submit') }}</button>
+        </mat-card-actions>
+      </form>
+    }
+  </mat-card>
+</ng-container>

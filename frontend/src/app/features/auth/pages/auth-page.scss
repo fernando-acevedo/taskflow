@@ -28,13 +28,6 @@ form mat-card-content {
   color: var(--mat-sys-on-error-container);
 }
 
-.rules {
-  margin: 0 0 16px;
-  padding-left: 20px;
-  color: var(--mat-sys-on-surface-variant);
-  font: var(--mat-sys-body-small);
-}
-
 .actions {
   display: flex;
   flex-wrap: wrap;

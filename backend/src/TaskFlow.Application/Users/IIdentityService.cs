@@ -1,4 +1,5 @@
 using TaskFlow.Application.Common;
+using TaskFlow.Domain.Common;
 
 namespace TaskFlow.Application.Users;
 
@@ -14,6 +15,22 @@ public interface IIdentityService
 
     Task<PagedResult<UserDto>> ListAsync(string? search, int page, int pageSize, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Creates a confirmed, active account without a password; the user chooses one by accepting the invitation.
+    /// Fails with <see cref="UserErrors.EmailTaken"/>.
+    /// </summary>
+    Task<Result<UserDto>> CreateAsync(NewUser user, CancellationToken cancellationToken);
+
+    /// <summary>A single-use token for <see cref="AcceptInvitationAsync"/>; it stops working once a password is set.</summary>
+    Task<string> GenerateInvitationTokenAsync(Guid userId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Sets the first password of an invited user. Fails with <see cref="UserErrors.InvitationInvalid"/> for an
+    /// unknown email, a wrong or expired token or an account that already has a password, and with a validation
+    /// error keyed by Identity error code when the password doesn't meet the policy.
+    /// </summary>
+    Task<Result> AcceptInvitationAsync(string email, string token, string password, CancellationToken cancellationToken);
+
     Task UpdateDisplayNameAsync(Guid userId, string displayName, CancellationToken cancellationToken);
 
     /// <summary>Deactivating also locks the account and ends its sessions (refresh tokens stop working).</summary>
@@ -22,3 +39,5 @@ public interface IIdentityService
     /// <summary>Changing the role ends the user's sessions so the next login carries the new role.</summary>
     Task SetAdminAsync(Guid userId, bool isAdmin, CancellationToken cancellationToken);
 }
+
+public sealed record NewUser(string Email, string DisplayName, bool IsAdmin);

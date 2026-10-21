@@ -1,38 +1,27 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { PageEvent } from '@angular/material/paginator';
 import { TranslocoDirective } from '@jsverse/transloco';
 import { Store } from '@ngrx/store';
 import { filter } from 'rxjs';
 import { ADMIN_ROLE, User } from '../../../core/auth/auth.models';
 import { authFeature } from '../../../core/auth/store/auth.feature';
-import { Notifier } from '../../../core/notifications/notifier';
+import { SaveFn, Submissions, nextSubmissionId } from '../../../shared/data-access/submission';
 import { confirm } from '../../../shared/ui/confirm-dialog';
 import { EmptyState } from '../../../shared/ui/empty-state';
+import { PagedList } from '../../../shared/ui/paged-list';
+import { SearchField } from '../../../shared/ui/search-field';
+import { NewUserInput } from '../data-access/admin-users-api.service';
 import { UsersPageActions } from '../data-access/store/admin-users.actions';
 import { adminUsersFeature } from '../data-access/store/admin-users.feature';
+import { UserFormDialog } from '../ui/user-form-dialog';
 
 @Component({
   selector: 'app-users-page',
-  imports: [
-    MatButtonModule,
-    MatCardModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
-    MatMenuModule,
-    MatPaginatorModule,
-    MatProgressBarModule,
-    TranslocoDirective,
-    EmptyState,
-  ],
+  imports: [MatButtonModule, MatIconModule, MatMenuModule, TranslocoDirective, EmptyState, PagedList, SearchField],
   templateUrl: './users-page.html',
   styles: `
     :host {
@@ -46,8 +35,8 @@ import { adminUsersFeature } from '../data-access/store/admin-users.feature';
 })
 export class UsersPage {
   private readonly store = inject(Store);
+  private readonly submissions = inject(Submissions);
   private readonly dialog = inject(MatDialog);
-  protected readonly notifier = inject(Notifier);
 
   protected readonly users = this.store.selectSignal(adminUsersFeature.selectAll);
   protected readonly query = this.store.selectSignal(adminUsersFeature.selectQuery);
@@ -66,11 +55,25 @@ export class UsersPage {
   }
 
   protected search(search: string): void {
-    this.store.dispatch(UsersPageActions.queryChanged({ query: { search: search.trim() } }));
+    this.store.dispatch(UsersPageActions.queryChanged({ query: { search } }));
+  }
+
+  protected retry(): void {
+    this.store.dispatch(UsersPageActions.opened());
   }
 
   protected changePage(event: PageEvent): void {
     this.store.dispatch(UsersPageActions.queryChanged({ query: { page: event.pageIndex + 1, pageSize: event.pageSize } }));
+  }
+
+  protected openForm(): void {
+    const save: SaveFn<NewUserInput> = (user) =>
+      this.submissions.dispatchAndWait(UsersPageActions.createSubmitted({ user, submissionId: nextSubmissionId() }));
+    this.dialog.open<UserFormDialog, SaveFn<NewUserInput>>(UserFormDialog, { data: save, width: '480px' });
+  }
+
+  protected resendInvitation(user: User): void {
+    this.store.dispatch(UsersPageActions.invitationResendClicked({ id: user.id }));
   }
 
   protected setActive(user: User, active: boolean): void {

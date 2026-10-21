@@ -52,6 +52,11 @@
       "lockedOut": "This account is locked. If it was deactivated, ask an administrator to reactivate it; otherwise try again in a few minutes.",
       "tooManyAttempts": "Too many attempts. Wait a minute and try again.",
       "unexpected": "We couldn't sign you in. Check your connection and try again."
+    },
+    "invitation": {
+      "title": "Choose your password",
+      "subtitle": "You were invited to TaskFlow. Set a password to sign in.",
+      "submit": "Save password and sign in"
     }
   },
   "profile": {
@@ -77,7 +82,8 @@
     "PasswordRequiresDigit": "The password needs a number.",
     "displayName": "Use between 2 and 100 characters.",
     "tooManyAttempts": "Too many attempts. Wait a minute and try again.",
-    "unexpected": "Something went wrong. Try again."
+    "unexpected": "Something went wrong. Try again.",
+    "invitationInvalid": "This invitation link is invalid or has expired. Ask an administrator to send you a new one."
   },
   "status": {
     "title": "System status",
@@ -102,7 +108,8 @@
   },
   "common": {
     "cancel": "Cancel",
-    "dismiss": "Dismiss"
+    "dismiss": "Dismiss",
+    "retry": "Try again"
   },
   "apiErrors": {
     "validation": "Some fields are not valid. Check them and try again.",
@@ -112,8 +119,12 @@
     "Users": {
       "NotFound": "The user was not found.",
       "EmailNotFound": "No user is registered with that email.",
+      "EmailTaken": "An account with this email already exists.",
       "CannotChangeOwnStatus": "You can't deactivate or reactivate your own account.",
-      "CannotChangeOwnRole": "You can't change your own role."
+      "CannotChangeOwnRole": "You can't change your own role.",
+      "InvitationNotSent": "The user was created, but the invitation email couldn't be sent. Check the email settings and resend it.",
+      "InvitationNotPending": "This user has already chosen a password.",
+      "InvitationInvalid": "This invitation link is invalid or has expired. Ask an administrator to send you a new one."
     },
     "Clients": {
       "NotFound": "The client was not found.",
@@ -154,6 +165,9 @@
     "edit": "Edit",
     "archive": "Archive",
     "restore": "Restore",
+    "editNamed": "Edit {{ name }}",
+    "archiveNamed": "Archive {{ name }}",
+    "restoreNamed": "Restore {{ name }}",
     "archiveTitle": "Archive {{ name }}?",
     "archiveMessage": "It will no longer be offered for new projects. You can restore it later.",
     "name": "Name",
@@ -181,7 +195,21 @@
     "deactivate": "Deactivate",
     "deactivateTitle": "Deactivate {{ name }}?",
     "deactivateMessage": "They will be signed out and won't be able to sign in until you reactivate the account.",
-    "saved": "User updated"
+    "create": "New user",
+    "createTitle": "New user",
+    "email": "Email",
+    "emailRule": "Enter a valid email address.",
+    "displayName": "Display name",
+    "displayNameRule": "Use between 2 and 100 characters.",
+    "createAsAdmin": "Make this user an admin",
+    "cancel": "Cancel",
+    "createSubmit": "Create user",
+    "created": "User created. We emailed them an invitation.",
+    "saved": "User updated",
+    "createHint": "We'll email them a link to choose their password.",
+    "invitationPending": "Invitation pending",
+    "resendInvitation": "Resend invitation",
+    "invitationSent": "Invitation sent"
   },
   "projects": {
     "title": "Projects",
@@ -266,7 +294,10 @@
     "viewTitle": "Task",
     "retry": "Try again",
     "loading": "Loading…",
-    "dragHint": "Drag cards between columns to update their status.",
+    "dragHint": "Drag cards between columns, or use a card’s move button, to update their status.",
+    "moveTo": "Move “{{ title }}”",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
     "emptyColumn": "No tasks",
     "statuses": {
       "ToDo": "To do",
@@ -336,5 +367,12 @@
     "byPriority": "Open tasks by priority",
     "openOnly": "Tasks not done yet",
     "nothingOpen": "Every task is done."
+  },
+  "passwordStrength": {
+    "label": "Strength",
+    "weak": "Weak",
+    "fair": "Fair",
+    "good": "Good",
+    "strong": "Strong"
   }
 }

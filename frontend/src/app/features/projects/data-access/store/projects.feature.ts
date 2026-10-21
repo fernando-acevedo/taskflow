@@ -64,7 +64,7 @@ export const projectsFeature = createFeature({
     on(
       ProjectsApiActions.projectsLoaded,
       (state, { page }): ProjectsState =>
-        adapter.setAll(page.items, { ...state, totalCount: page.totalCount, loading: false }),
+        adapter.setAll([...page.items], { ...state, totalCount: page.totalCount, loading: false }),
     ),
     on(ProjectsApiActions.projectsLoadFailed, (state, { error }): ProjectsState => ({ ...state, loading: false, loadError: error })),
     on(ProjectsApiActions.clientOptionsLoaded, (state, { clients }): ProjectsState => ({ ...state, clientOptions: clients })),
@@ -101,8 +101,13 @@ export const projectsFeature = createFeature({
       (state): ProjectsState => ({ ...state, saving: false }),
     ),
   ),
-  extraSelectors: ({ selectProjectsState, selectCurrent }) => ({
+  extraSelectors: ({ selectProjectsState, selectCurrent, selectMembers }) => ({
     ...adapter.getSelectors(selectProjectsState),
+    /** Display names by user id, for showing assignees on the board and in the list. */
+    selectMemberNames: createSelector(
+      selectMembers,
+      (members): ReadonlyMap<string, string> => new Map(members.map((member) => [member.userId, member.displayName])),
+    ),
     selectIsOwner: createSelector(selectCurrent, (project) => project?.myRole === 'Owner'),
     /** Members can change tasks; admins who are not members only read, and archived projects are read-only. */
     selectCanEditTasks: createSelector(selectCurrent, (project) => !!project && project.myRole !== null && !project.isArchived),

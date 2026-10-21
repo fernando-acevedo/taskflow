@@ -20,6 +20,27 @@ public sealed class AdminUsersController : ApiControllerBase
         [FromQuery] int pageSize = 20) =>
         OkOrProblem(await handler.HandleAsync(new ListUsersQuery(search, page, pageSize), cancellationToken));
 
+    /// <summary>Creates an account, optionally as an admin, and emails the user a link to choose their password.</summary>
+    [HttpPost]
+    [ProducesResponseType<UserDto>(StatusCodes.Status201Created)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<UserDto>> Create(
+        CreateUserCommand command,
+        [FromServices] CreateUserHandler handler,
+        CancellationToken cancellationToken)
+    {
+        var result = await handler.HandleAsync(command, cancellationToken);
+        return result.IsSuccess ? Created((string?)null, result.Value) : ProblemFrom(result.Error);
+    }
+
+    /// <summary>Emails a new invitation link to a user who hasn't chosen a password yet.</summary>
+    [HttpPost("{userId:guid}/invitation")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult> ResendInvitation(Guid userId, [FromServices] ResendInvitationHandler handler, CancellationToken cancellationToken) =>
+        NoContentOrProblem(await handler.HandleAsync(new ResendInvitationCommand(userId), cancellationToken));
+
     /// <summary>Lets a deactivated user sign in again.</summary>
     [HttpPost("{userId:guid}/activate")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

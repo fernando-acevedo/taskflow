@@ -4,71 +4,68 @@
       <h1>{{ t('title') }}</h1>
       <p>{{ t('subtitle') }}</p>
     </div>
+    <button mat-flat-button type="button" (click)="openForm()">
+      <mat-icon aria-hidden="true">person_add</mat-icon>
+      {{ t('create') }}
+    </button>
   </header>
 
   <div class="filters">
-    <mat-form-field appearance="outline" subscriptSizing="dynamic">
-      <mat-label>{{ t('search') }}</mat-label>
-      <mat-icon matPrefix aria-hidden="true">search</mat-icon>
-      <input #searchBox matInput type="search" [value]="query().search" (keyup.enter)="search(searchBox.value)" (search)="search(searchBox.value)" />
-    </mat-form-field>
+    <app-search-field [label]="t('search')" [value]="query().search" (searched)="search($event)" />
   </div>
 
-  <mat-card appearance="outlined">
-    @if (loading() || saving()) {
-      <mat-progress-bar mode="indeterminate" />
-    }
-
-    @if (loadError(); as error) {
-      <app-empty-state icon="cloud_off" [message]="notifier.errorMessage(error)">
-        <button mat-button type="button" (click)="search(query().search)">{{ t('retry') }}</button>
-      </app-empty-state>
-    } @else if (!loading() && users().length === 0) {
-      <app-empty-state icon="group" [message]="t('noMatches')" />
-    } @else {
-      <ul class="rows">
-        @for (user of users(); track user.id) {
-          <li [class.archived]="!user.isActive">
-            <div class="main">
-              <strong>{{ user.displayName }}</strong>
-              @if (isAdmin(user)) {
-                <span class="chip primary">{{ t('admin') }}</span>
-              }
-              @if (!user.isActive) {
-                <span class="chip error">{{ t('inactive') }}</span>
-              }
-              <span class="meta">{{ user.email }}</span>
-            </div>
-            @if (user.id !== me()?.id) {
-              <button mat-icon-button type="button" [matMenuTriggerFor]="actions" [attr.aria-label]="t('actions', { name: user.displayName })">
-                <mat-icon aria-hidden="true">more_vert</mat-icon>
-              </button>
-              <mat-menu #actions="matMenu" xPosition="before">
-                @if (isAdmin(user)) {
-                  <button mat-menu-item type="button" (click)="setAdmin(user, false)">{{ t('revokeAdmin') }}</button>
-                } @else {
-                  <button mat-menu-item type="button" (click)="setAdmin(user, true)">{{ t('grantAdmin') }}</button>
-                }
-                @if (user.isActive) {
-                  <button mat-menu-item type="button" (click)="setActive(user, false)">{{ t('deactivate') }}</button>
-                } @else {
-                  <button mat-menu-item type="button" (click)="setActive(user, true)">{{ t('activate') }}</button>
-                }
-              </mat-menu>
-            } @else {
-              <span class="chip">{{ t('you') }}</span>
+  <app-paged-list
+    [loading]="loading()"
+    [busy]="loading() || saving()"
+    [loadError]="loadError()"
+    [empty]="users().length === 0"
+    [totalCount]="totalCount()"
+    [page]="query().page"
+    [pageSize]="query().pageSize"
+    (retry)="retry()"
+    (pageChange)="changePage($event)"
+  >
+    <app-empty-state empty icon="group" [message]="t('noMatches')" />
+    <ul class="rows">
+      @for (user of users(); track user.id) {
+        <li [class.archived]="!user.isActive">
+          <div class="main">
+            <strong>{{ user.displayName }}</strong>
+            @if (isAdmin(user)) {
+              <span class="chip primary">{{ t('admin') }}</span>
             }
-          </li>
-        }
-      </ul>
-    }
-
-    <mat-paginator
-      [length]="totalCount()"
-      [pageIndex]="query().page - 1"
-      [pageSize]="query().pageSize"
-      [pageSizeOptions]="[10, 25, 50]"
-      (page)="changePage($event)"
-    />
-  </mat-card>
+            @if (!user.isActive) {
+              <span class="chip error">{{ t('inactive') }}</span>
+            }
+            @if (user.isInvitationPending) {
+              <span class="chip">{{ t('invitationPending') }}</span>
+            }
+            <span class="meta">{{ user.email }}</span>
+          </div>
+          @if (user.id !== me()?.id) {
+            <button mat-icon-button type="button" [matMenuTriggerFor]="actions" [attr.aria-label]="t('actions', { name: user.displayName })">
+              <mat-icon aria-hidden="true">more_vert</mat-icon>
+            </button>
+            <mat-menu #actions="matMenu" xPosition="before">
+              @if (user.isInvitationPending) {
+                <button mat-menu-item type="button" (click)="resendInvitation(user)">{{ t('resendInvitation') }}</button>
+              }
+              @if (isAdmin(user)) {
+                <button mat-menu-item type="button" (click)="setAdmin(user, false)">{{ t('revokeAdmin') }}</button>
+              } @else {
+                <button mat-menu-item type="button" (click)="setAdmin(user, true)">{{ t('grantAdmin') }}</button>
+              }
+              @if (user.isActive) {
+                <button mat-menu-item type="button" (click)="setActive(user, false)">{{ t('deactivate') }}</button>
+              } @else {
+                <button mat-menu-item type="button" (click)="setActive(user, true)">{{ t('activate') }}</button>
+              }
+            </mat-menu>
+          } @else {
+            <span class="chip">{{ t('you') }}</span>
+          }
+        </li>
+      }
+    </ul>
+  </app-paged-list>
 </ng-container>

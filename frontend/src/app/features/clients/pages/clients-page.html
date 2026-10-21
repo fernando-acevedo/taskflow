@@ -11,68 +11,61 @@
   </header>
 
   <div class="filters">
-    <mat-form-field appearance="outline" subscriptSizing="dynamic">
-      <mat-label>{{ t('search') }}</mat-label>
-      <mat-icon matPrefix aria-hidden="true">search</mat-icon>
-      <input #searchBox matInput type="search" [value]="query().search" (keyup.enter)="search(searchBox.value)" (search)="search(searchBox.value)" />
-    </mat-form-field>
+    <app-search-field [label]="t('search')" [value]="query().search" (searched)="search($event)" />
     <mat-slide-toggle [checked]="query().includeArchived" (change)="showArchived($event.checked)">
       {{ t('showArchived') }}
     </mat-slide-toggle>
   </div>
 
-  <mat-card appearance="outlined">
-    @if (loading() || saving()) {
-      <mat-progress-bar mode="indeterminate" />
-    }
-
-    @if (loadError(); as error) {
-      <app-empty-state icon="cloud_off" [message]="notifier.errorMessage(error)">
-        <button mat-button type="button" (click)="search(query().search)">{{ t('retry') }}</button>
-      </app-empty-state>
-    } @else if (!loading() && clients().length === 0) {
-      <app-empty-state icon="business" [message]="query().search ? t('noMatches') : t('empty')" />
-    } @else {
-      <ul class="rows">
-        @for (client of clients(); track client.id) {
-          <li [class.archived]="client.isArchived">
-            <div class="main">
-              <strong>{{ client.name }}</strong>
-              @if (client.isArchived) {
-                <span class="chip">{{ t('archived') }}</span>
+  <app-paged-list
+    [loading]="loading()"
+    [busy]="loading() || saving()"
+    [loadError]="loadError()"
+    [empty]="clients().length === 0"
+    [totalCount]="totalCount()"
+    [page]="query().page"
+    [pageSize]="query().pageSize"
+    (retry)="retry()"
+    (pageChange)="changePage($event)"
+  >
+    <app-empty-state empty icon="business" [message]="query().search ? t('noMatches') : t('empty')" />
+    <ul class="rows">
+      @for (client of clients(); track client.id) {
+        <li [class.archived]="client.isArchived">
+          <div class="main">
+            <strong>{{ client.name }}</strong>
+            @if (client.isArchived) {
+              <span class="chip">{{ t('archived') }}</span>
+            }
+            <span class="meta">
+              {{ t('activeProjects', { count: client.activeProjectCount }) }}
+              @if (client.contactEmail) {
+                · {{ client.contactEmail }}
               }
-              <span class="meta">
-                {{ t('activeProjects', { count: client.activeProjectCount }) }}
-                @if (client.contactEmail) {
-                  · {{ client.contactEmail }}
-                }
-              </span>
-            </div>
-            <div class="row-actions">
-              <button mat-icon-button type="button" (click)="openForm(client)" [attr.aria-label]="t('edit')">
-                <mat-icon aria-hidden="true">edit</mat-icon>
+            </span>
+          </div>
+          <div class="row-actions">
+            <button mat-icon-button type="button" (click)="openForm(client)" [attr.aria-label]="t('editNamed', { name: client.name })">
+              <mat-icon aria-hidden="true">edit</mat-icon>
+            </button>
+            @if (client.isArchived) {
+              <button
+                mat-icon-button
+                type="button"
+                (click)="restore(client)"
+                [disabled]="saving()"
+                [attr.aria-label]="t('restoreNamed', { name: client.name })"
+              >
+                <mat-icon aria-hidden="true">unarchive</mat-icon>
               </button>
-              @if (client.isArchived) {
-                <button mat-icon-button type="button" (click)="restore(client)" [attr.aria-label]="t('restore')">
-                  <mat-icon aria-hidden="true">unarchive</mat-icon>
-                </button>
-              } @else {
-                <button mat-icon-button type="button" (click)="archive(client)" [attr.aria-label]="t('archive')">
-                  <mat-icon aria-hidden="true">archive</mat-icon>
-                </button>
-              }
-            </div>
-          </li>
-        }
-      </ul>
-    }
-
-    <mat-paginator
-      [length]="totalCount()"
-      [pageIndex]="query().page - 1"
-      [pageSize]="query().pageSize"
-      [pageSizeOptions]="[10, 25, 50]"
-      (page)="changePage($event)"
-    />
-  </mat-card>
+            } @else {
+              <button mat-icon-button type="button" (click)="archive(client)" [attr.aria-label]="t('archiveNamed', { name: client.name })">
+                <mat-icon aria-hidden="true">archive</mat-icon>
+              </button>
+            }
+          </div>
+        </li>
+      }
+    </ul>
+  </app-paged-list>
 </ng-container>

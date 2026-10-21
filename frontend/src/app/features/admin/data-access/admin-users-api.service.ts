@@ -6,9 +6,15 @@ import { User } from '../../../core/auth/auth.models';
 import { PagedResult } from '../../../core/http/api-error';
 
 export interface UserQuery {
-  search: string;
-  page: number;
-  pageSize: number;
+  readonly search: string;
+  readonly page: number;
+  readonly pageSize: number;
+}
+
+export interface NewUserInput {
+  readonly email: string;
+  readonly displayName: string;
+  readonly isAdmin: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -19,6 +25,14 @@ export class AdminUsersApiService {
   list(query: UserQuery): Observable<PagedResult<User>> {
     const params = new HttpParams({ fromObject: { search: query.search, page: query.page, pageSize: query.pageSize } });
     return this.http.get<PagedResult<User>>(this.baseUrl, { params });
+  }
+
+  create(user: NewUserInput): Observable<User> {
+    return this.http.post<User>(this.baseUrl, user);
+  }
+
+  resendInvitation(id: string): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/${id}/invitation`, null);
   }
 
   setActive(id: string, active: boolean): Observable<void> {

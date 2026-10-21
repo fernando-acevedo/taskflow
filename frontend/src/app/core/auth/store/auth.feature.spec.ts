@@ -1,10 +1,16 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { toFormErrors, toLoginError } from '../auth-errors';
 import { User } from '../auth.models';
-import { AuthApiActions, LoginPageActions, ProfilePageActions, ShellActions } from './auth.actions';
+import {
+  AuthApiActions,
+  InvitationPageActions,
+  LoginPageActions,
+  ProfilePageActions,
+  ShellActions,
+} from './auth.actions';
 import { authFeature, initialAuthState } from './auth.feature';
 
-const admin: User = { id: '1', email: 'ada@tests.local', displayName: 'Ada', isActive: true, roles: ['Admin'] };
+const admin: User = { id: '1', email: 'ada@tests.local', displayName: 'Ada', isActive: true, roles: ['Admin'], isInvitationPending: false };
 const credentials = { email: admin.email, password: 'Passw0rd!' };
 
 describe('authFeature', () => {
@@ -40,6 +46,17 @@ describe('authFeature', () => {
       expect(state.user).toBeNull();
       expect(state.status).toBe('anonymous');
     }
+  });
+
+  it('shows invitation errors until the page is opened again', () => {
+    const acceptance = { email: admin.email, token: 'token', password: 'Passw0rd!' };
+    const pending = reducer(initialAuthState, InvitationPageActions.passwordSubmitted({ acceptance }));
+    const failed = reducer(pending, AuthApiActions.invitationAcceptFailed({ errors: ['invitationInvalid'] }));
+
+    expect(pending.pending).toBe(true);
+    expect(failed.pending).toBe(false);
+    expect(failed.formErrors).toEqual(['invitationInvalid']);
+    expect(reducer(failed, InvitationPageActions.opened()).formErrors).toEqual([]);
   });
 
   it('updates the display name after a successful save', () => {

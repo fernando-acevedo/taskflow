@@ -4,6 +4,7 @@ import { Store } from '@ngrx/store';
 import { catchError, switchMap, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { AUTH_ENDPOINTS_PREFIX } from './auth-api.service';
+import { isTokenRejected } from './auth-errors';
 import { AuthApiActions } from './store/auth.actions';
 import { TokenRefresher } from './token-refresher';
 import { TokenStorage } from './token-storage';
@@ -17,7 +18,8 @@ function withToken(request: HttpRequest<unknown>, accessToken: string | null): H
 
 /**
  * Adds the access token to API calls. On a 401 it refreshes the token once (shared by concurrent requests)
- * and retries; if the refresh fails too, the session is over and the user is sent to the login page.
+ * and retries. Only an API that rejects the refresh token ends the session; when the refresh fails because the
+ * API can't be reached (network, cold start), the tokens are kept and the request just fails.
  */
 export const authInterceptor: HttpInterceptorFn = (request, next) => {
   if (!request.url.startsWith(apiPrefix) || request.url.startsWith(authPrefix)) {
@@ -36,7 +38,9 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
 
       return refresher.refresh().pipe(
         catchError((refreshError: unknown) => {
-          store.dispatch(AuthApiActions.sessionExpired());
+          if (isTokenRejected(refreshError)) {
+            store.dispatch(AuthApiActions.sessionExpired());
+          }
           return throwError(() => refreshError);
         }),
         switchMap((accessToken) => next(withToken(request, accessToken))),

@@ -52,6 +52,11 @@
       "lockedOut": "Esta cuenta está bloqueada. Si fue desactivada, pide a un administrador que la reactive; si no, vuelve a intentarlo en unos minutos.",
       "tooManyAttempts": "Demasiados intentos. Espera un minuto y vuelve a intentarlo.",
       "unexpected": "No pudimos iniciar tu sesión. Revisa tu conexión y vuelve a intentarlo."
+    },
+    "invitation": {
+      "title": "Elige tu contraseña",
+      "subtitle": "Te invitaron a TaskFlow. Crea una contraseña para iniciar sesión.",
+      "submit": "Guardar contraseña e iniciar sesión"
     }
   },
   "profile": {
@@ -77,7 +82,8 @@
     "PasswordRequiresDigit": "La contraseña necesita un número.",
     "displayName": "Usa entre 2 y 100 caracteres.",
     "tooManyAttempts": "Demasiados intentos. Espera un minuto y vuelve a intentarlo.",
-    "unexpected": "Algo salió mal. Vuelve a intentarlo."
+    "unexpected": "Algo salió mal. Vuelve a intentarlo.",
+    "invitationInvalid": "Este enlace de invitación no es válido o venció. Pide a un administrador que te envíe uno nuevo."
   },
   "status": {
     "title": "Estado del sistema",
@@ -102,7 +108,8 @@
   },
   "common": {
     "cancel": "Cancelar",
-    "dismiss": "Cerrar"
+    "dismiss": "Cerrar",
+    "retry": "Reintentar"
   },
   "apiErrors": {
     "validation": "Algunos campos no son válidos. Revísalos e inténtalo de nuevo.",
@@ -112,8 +119,12 @@
     "Users": {
       "NotFound": "No se encontró el usuario.",
       "EmailNotFound": "No hay ningún usuario registrado con ese email.",
+      "EmailTaken": "Ya existe una cuenta con ese email.",
       "CannotChangeOwnStatus": "No puedes desactivar ni reactivar tu propia cuenta.",
-      "CannotChangeOwnRole": "No puedes cambiar tu propio rol."
+      "CannotChangeOwnRole": "No puedes cambiar tu propio rol.",
+      "InvitationNotSent": "El usuario se creó, pero no se pudo enviar el correo de invitación. Revisa la configuración de email y reenvíala.",
+      "InvitationNotPending": "Este usuario ya eligió su contraseña.",
+      "InvitationInvalid": "Este enlace de invitación no es válido o venció. Pide a un administrador que te envíe uno nuevo."
     },
     "Clients": {
       "NotFound": "No se encontró el cliente.",
@@ -154,6 +165,9 @@
     "edit": "Editar",
     "archive": "Archivar",
     "restore": "Restaurar",
+    "editNamed": "Editar {{ name }}",
+    "archiveNamed": "Archivar {{ name }}",
+    "restoreNamed": "Restaurar {{ name }}",
     "archiveTitle": "¿Archivar {{ name }}?",
     "archiveMessage": "Dejará de ofrecerse para proyectos nuevos. Puedes restaurarlo más adelante.",
     "name": "Nombre",
@@ -181,7 +195,21 @@
     "deactivate": "Desactivar",
     "deactivateTitle": "¿Desactivar a {{ name }}?",
     "deactivateMessage": "Se cerrará su sesión y no podrá volver a entrar hasta que reactives la cuenta.",
-    "saved": "Usuario actualizado"
+    "create": "Nuevo usuario",
+    "createTitle": "Nuevo usuario",
+    "email": "Email",
+    "emailRule": "Ingresa un email válido.",
+    "displayName": "Nombre visible",
+    "displayNameRule": "Usa entre 2 y 100 caracteres.",
+    "createAsAdmin": "Hacer admin a este usuario",
+    "cancel": "Cancelar",
+    "createSubmit": "Crear usuario",
+    "created": "Usuario creado. Le enviamos una invitación por correo.",
+    "saved": "Usuario actualizado",
+    "createHint": "Le enviaremos un correo con un enlace para que elija su contraseña.",
+    "invitationPending": "Invitación pendiente",
+    "resendInvitation": "Reenviar invitación",
+    "invitationSent": "Invitación enviada"
   },
   "projects": {
     "title": "Proyectos",
@@ -266,7 +294,10 @@
     "viewTitle": "Tarea",
     "retry": "Reintentar",
     "loading": "Cargando…",
-    "dragHint": "Arrastra las tarjetas entre columnas para cambiar su estado.",
+    "dragHint": "Arrastra las tarjetas entre columnas, o usa el botón de mover de cada tarjeta, para cambiar su estado.",
+    "moveTo": "Mover “{{ title }}”",
+    "moveUp": "Subir",
+    "moveDown": "Bajar",
     "emptyColumn": "Sin tareas",
     "statuses": {
       "ToDo": "Por hacer",
@@ -336,5 +367,12 @@
     "byPriority": "Tareas abiertas por prioridad",
     "openOnly": "Tareas todavía no terminadas",
     "nothingOpen": "Todas las tareas están hechas."
+  },
+  "passwordStrength": {
+    "label": "Fortaleza",
+    "weak": "Débil",
+    "fair": "Aceptable",
+    "good": "Buena",
+    "strong": "Fuerte"
   }
 }

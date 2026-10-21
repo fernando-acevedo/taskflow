@@ -1,46 +1,33 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { PageEvent } from '@angular/material/paginator';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { TranslocoDirective } from '@jsverse/transloco';
 import { Store } from '@ngrx/store';
 import { filter } from 'rxjs';
-import { Notifier } from '../../../core/notifications/notifier';
+import { SaveFn, Submissions, nextSubmissionId } from '../../../shared/data-access/submission';
 import { confirm } from '../../../shared/ui/confirm-dialog';
 import { EmptyState } from '../../../shared/ui/empty-state';
+import { PagedList } from '../../../shared/ui/paged-list';
+import { SearchField } from '../../../shared/ui/search-field';
 import { Client, ClientInput } from '../data-access/clients-api.service';
 import { ClientsPageActions } from '../data-access/store/clients.actions';
 import { clientsFeature } from '../data-access/store/clients.feature';
-import { ClientFormDialog } from '../ui/client-form-dialog';
+import { ClientFormData, ClientFormDialog } from '../ui/client-form-dialog';
 
 @Component({
   selector: 'app-clients-page',
-  imports: [
-    MatButtonModule,
-    MatCardModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
-    MatPaginatorModule,
-    MatProgressBarModule,
-    MatSlideToggleModule,
-    TranslocoDirective,
-    EmptyState,
-  ],
+  imports: [MatButtonModule, MatIconModule, MatSlideToggleModule, TranslocoDirective, EmptyState, PagedList, SearchField],
   templateUrl: './clients-page.html',
   styleUrl: './clients-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ClientsPage {
   private readonly store = inject(Store);
+  private readonly submissions = inject(Submissions);
   private readonly dialog = inject(MatDialog);
-  protected readonly notifier = inject(Notifier);
 
   protected readonly clients = this.store.selectSignal(clientsFeature.selectAll);
   protected readonly query = this.store.selectSignal(clientsFeature.selectQuery);
@@ -54,7 +41,11 @@ export class ClientsPage {
   }
 
   protected search(search: string): void {
-    this.store.dispatch(ClientsPageActions.queryChanged({ query: { search: search.trim() } }));
+    this.store.dispatch(ClientsPageActions.queryChanged({ query: { search } }));
+  }
+
+  protected retry(): void {
+    this.store.dispatch(ClientsPageActions.opened());
   }
 
   protected showArchived(includeArchived: boolean): void {
@@ -66,17 +57,13 @@ export class ClientsPage {
   }
 
   protected openForm(client: Client | null = null): void {
-    this.dialog
-      .open<ClientFormDialog, Client | null, ClientInput>(ClientFormDialog, { data: client, width: '480px' })
-      .afterClosed()
-      .pipe(filter((input) => input !== undefined))
-      .subscribe((input) =>
-        this.store.dispatch(
-          client
-            ? ClientsPageActions.updateSubmitted({ id: client.id, client: input })
-            : ClientsPageActions.createSubmitted({ client: input }),
-        ),
+    const save: SaveFn<ClientInput> = (input) =>
+      this.submissions.dispatchAndWait(
+        client
+          ? ClientsPageActions.updateSubmitted({ id: client.id, client: input, submissionId: nextSubmissionId() })
+          : ClientsPageActions.createSubmitted({ client: input, submissionId: nextSubmissionId() }),
       );
+    this.dialog.open<ClientFormDialog, ClientFormData>(ClientFormDialog, { data: { client, save }, width: '480px' });
   }
 
   protected archive(client: Client): void {

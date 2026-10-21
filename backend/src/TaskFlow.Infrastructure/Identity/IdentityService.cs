@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using TaskFlow.Application.Common;
 using TaskFlow.Application.Users;
+using TaskFlow.Domain.Common;
 using TaskFlow.Infrastructure.Persistence;
 
 namespace TaskFlow.Infrastructure.Identity;
@@ -43,6 +44,57 @@ internal sealed class IdentityService(UserManager<ApplicationUser> userManager, 
             .ToListAsync(cancellationToken);
 
         return new PagedResult<UserDto>([.. rows.Select(row => row.ToDto())], page, pageSize, totalCount);
+    }
+
+    public async Task<Result<UserDto>> CreateAsync(NewUser newUser, CancellationToken cancellationToken)
+    {
+        var user = new ApplicationUser
+        {
+            UserName = newUser.Email,
+            Email = newUser.Email,
+            EmailConfirmed = true,
+            DisplayName = newUser.DisplayName,
+        };
+
+        var created = await userManager.CreateAsync(user);
+        if (created.Errors.Any(error => error.Code is "DuplicateEmail" or "DuplicateUserName"))
+        {
+            return UserErrors.EmailTaken;
+        }
+
+        EnsureSucceeded(created);
+
+        if (newUser.IsAdmin)
+        {
+            EnsureSucceeded(await userManager.AddToRoleAsync(user, Roles.Admin));
+        }
+
+        return (await FindByIdAsync(user.Id, cancellationToken))!;
+    }
+
+    public async Task<string> GenerateInvitationTokenAsync(Guid userId, CancellationToken cancellationToken) =>
+        await userManager.GenerateUserTokenAsync(await GetUserAsync(userId), InvitationTokenProvider.ProviderName, InvitationTokenProvider.Purpose);
+
+    public async Task<Result> AcceptInvitationAsync(string email, string token, string password, CancellationToken cancellationToken)
+    {
+        var user = await userManager.FindByEmailAsync(email);
+        if (user is null
+            || user.PasswordHash is not null
+            || !await userManager.VerifyUserTokenAsync(user, InvitationTokenProvider.ProviderName, InvitationTokenProvider.Purpose, token))
+        {
+            return UserErrors.InvitationInvalid;
+        }
+
+        // Adding the password also renews the security stamp, which makes the token unusable a second time.
+        var added = await userManager.AddPasswordAsync(user, password);
+        if (!added.Succeeded)
+        {
+            return Error.Validation(added.Errors
+                .GroupBy(error => error.Code)
+                .ToDictionary(group => group.Key, group => group.Select(error => error.Description).ToArray()));
+        }
+
+        return Result.Success();
     }
 
     public async Task UpdateDisplayNameAsync(Guid userId, string displayName, CancellationToken cancellationToken)
@@ -97,6 +149,7 @@ internal sealed class IdentityService(UserManager<ApplicationUser> userManager, 
             user.DisplayName,
             user.IsActive,
             user.CreatedAt,
+            user.PasswordHash == null,
             db.UserRoles.Any(userRole => userRole.UserId == user.Id && userRole.RoleId == adminRoleId)));
 
     private async Task<ApplicationUser> GetUserAsync(Guid userId) =>
@@ -112,7 +165,14 @@ internal sealed class IdentityService(UserManager<ApplicationUser> userManager, 
         }
     }
 
-    private sealed record UserRow(Guid Id, string Email, string? DisplayName, bool IsActive, DateTimeOffset CreatedAt, bool IsAdmin)
+    private sealed record UserRow(
+        Guid Id,
+        string Email,
+        string? DisplayName,
+        bool IsActive,
+        DateTimeOffset CreatedAt,
+        bool HasNoPassword,
+        bool IsAdmin)
     {
         public UserDto ToDto() => new(
             Id,
@@ -120,6 +180,7 @@ internal sealed class IdentityService(UserManager<ApplicationUser> userManager, 
             string.IsNullOrWhiteSpace(DisplayName) ? Email.Split('@')[0] : DisplayName,
             IsActive,
             IsAdmin ? [Roles.Admin] : [],
-            CreatedAt);
+            CreatedAt,
+            IsInvitationPending: HasNoPassword);
     }
 }

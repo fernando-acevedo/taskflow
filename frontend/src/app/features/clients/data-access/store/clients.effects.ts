@@ -1,7 +1,7 @@
 import { inject } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
-import { Observable, catchError, exhaustMap, map, of, switchMap, tap, withLatestFrom } from 'rxjs';
+import { Observable, catchError, concatMap, map, of, switchMap, tap, withLatestFrom } from 'rxjs';
 import { toApiError } from '../../../../core/http/api-error';
 import { Notifier } from '../../../../core/notifications/notifier';
 import { ClientsApiService } from '../clients-api.service';
@@ -32,21 +32,27 @@ export const saveClient = createEffect(
         ClientsPageActions.archiveConfirmed,
         ClientsPageActions.restoreClicked,
       ),
-      exhaustMap((action) => {
+      // One at a time, none dropped: archiving one client while another is saved must not get lost.
+      concatMap((action) => {
         let request: Observable<unknown>;
+        let submissionId: number | undefined;
         switch (action.type) {
           case ClientsPageActions.createSubmitted.type:
             request = api.create(action.client);
+            submissionId = action.submissionId;
             break;
           case ClientsPageActions.updateSubmitted.type:
             request = api.update(action.id, action.client);
+            submissionId = action.submissionId;
             break;
           default:
             request = api.setArchived(action.id, action.type === ClientsPageActions.archiveConfirmed.type);
         }
         return request.pipe(
-          map(() => ClientsApiActions.clientSaved()),
-          catchError((error: unknown) => of(ClientsApiActions.clientSaveFailed({ error: toApiError(error) }))),
+          map(() => ClientsApiActions.clientSaved({ submissionId })),
+          catchError((error: unknown) =>
+            of(ClientsApiActions.clientSaveFailed({ error: toApiError(error), submissionId })),
+          ),
         );
       }),
     ),

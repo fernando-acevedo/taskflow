@@ -1,8 +1,8 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { catchError, firstValueFrom, map, of, switchMap, tap } from 'rxjs';
 import { AuthApiService } from './auth-api.service';
+import { isTokenRejected } from './auth-errors';
 import { AuthApiActions } from './store/auth.actions';
 import { TokenStorage } from './token-storage';
 
@@ -28,7 +28,7 @@ export function restoreSession(): Promise<void> {
       switchMap(() => api.me()),
       map((user) => AuthApiActions.sessionRestored({ user })),
       catchError((error: unknown) => {
-        if (error instanceof HttpErrorResponse && (error.status === 400 || error.status === 401)) {
+        if (isTokenRejected(error)) {
           tokens.clear();
         }
         return of(AuthApiActions.noSession());

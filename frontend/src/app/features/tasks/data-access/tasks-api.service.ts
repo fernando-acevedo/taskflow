@@ -10,30 +10,30 @@ export const TASK_PRIORITIES = ['Low', 'Medium', 'High', 'Critical'] as const;
 export type TaskPriority = (typeof TASK_PRIORITIES)[number];
 
 export interface Task {
-  id: string;
-  projectId: string;
-  title: string;
-  description: string | null;
-  status: TaskStatus;
-  priority: TaskPriority;
-  assigneeId: string | null;
+  readonly id: string;
+  readonly projectId: string;
+  readonly title: string;
+  readonly description: string | null;
+  readonly status: TaskStatus;
+  readonly priority: TaskPriority;
+  readonly assigneeId: string | null;
   /** `yyyy-MM-dd`. */
-  dueDate: string | null;
-  isOverdue: boolean;
-  position: number;
-  createdById: string;
-  createdAt: string;
-  updatedAt: string;
-  completedAt: string | null;
-  rowVersion: string;
+  readonly dueDate: string | null;
+  readonly isOverdue: boolean;
+  readonly position: number;
+  readonly createdById: string;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+  readonly completedAt: string | null;
+  readonly rowVersion: string;
 }
 
 export interface TaskInput {
-  title: string;
-  description: string | null;
-  priority: TaskPriority;
-  assigneeId: string | null;
-  dueDate: string | null;
+  readonly title: string;
+  readonly description: string | null;
+  readonly priority: TaskPriority;
+  readonly assigneeId: string | null;
+  readonly dueDate: string | null;
 }
 
 @Injectable({ providedIn: 'root' })

@@ -3,8 +3,6 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -12,6 +10,7 @@ import { TranslocoDirective } from '@jsverse/transloco';
 import { Store } from '@ngrx/store';
 import { LanguageService } from '../../../core/i18n/language.service';
 import { EmptyState } from '../../../shared/ui/empty-state';
+import { SearchField } from '../../../shared/ui/search-field';
 import { projectsFeature } from '../../projects/data-access/store/projects.feature';
 import { TASK_PRIORITIES, TASK_STATUSES, Task } from '../data-access/tasks-api.service';
 import { TaskFilters, hasActiveFilters, toQueryParams } from '../data-access/store/task-filters';
@@ -26,12 +25,11 @@ import { TaskEditor } from '../ui/task-editor';
     MatButtonModule,
     MatCardModule,
     MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
     MatSelectModule,
     MatSlideToggleModule,
     TranslocoDirective,
     EmptyState,
+    SearchField,
   ],
   templateUrl: './task-list-page.html',
   styleUrl: './task-list-page.scss',
@@ -54,16 +52,14 @@ export class TaskListPage {
   protected readonly members = this.store.selectSignal(projectsFeature.selectMembers);
 
   protected readonly filtered = computed(() => hasActiveFilters(this.filters()));
-  private readonly memberNames = computed(
-    () => new Map(this.members().map((member) => [member.userId, member.displayName] as const)),
-  );
+  private readonly memberNames = this.store.selectSignal(projectsFeature.selectMemberNames);
 
   protected assigneeName(task: Task): string | null {
     return task.assigneeId ? (this.memberNames().get(task.assigneeId) ?? null) : null;
   }
 
   protected setFilter(changes: Partial<TaskFilters>): void {
-    this.router.navigate([], {
+    void this.router.navigate([], {
       relativeTo: this.route,
       queryParams: toQueryParams({ ...this.filters(), ...changes }),
       replaceUrl: true,
@@ -71,6 +67,6 @@ export class TaskListPage {
   }
 
   protected clearFilters(): void {
-    this.router.navigate([], { relativeTo: this.route, queryParams: {}, replaceUrl: true });
+    void this.router.navigate([], { relativeTo: this.route, queryParams: {}, replaceUrl: true });
   }
 }

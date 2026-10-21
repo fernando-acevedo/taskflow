@@ -8,6 +8,7 @@ import { TranslocoDirective } from '@jsverse/transloco';
 import { Store } from '@ngrx/store';
 import { filter } from 'rxjs';
 import { LanguageService } from '../../../core/i18n/language.service';
+import { SaveFn, Submissions, nextSubmissionId } from '../../../shared/data-access/submission';
 import { confirm } from '../../../shared/ui/confirm-dialog';
 import { ProjectInput } from '../data-access/projects-api.service';
 import { ProjectPageActions } from '../data-access/store/projects.actions';
@@ -81,6 +82,7 @@ import { ProjectFormData, ProjectFormDialog } from '../ui/project-form-dialog';
 })
 export class SettingsPage {
   private readonly store = inject(Store);
+  private readonly submissions = inject(Submissions);
   private readonly dialog = inject(MatDialog);
   protected readonly language = inject(LanguageService);
 
@@ -90,14 +92,12 @@ export class SettingsPage {
   private readonly clients = this.store.selectSignal(projectsFeature.selectClientOptions);
 
   protected edit(): void {
-    this.dialog
-      .open<ProjectFormDialog, ProjectFormData, ProjectInput>(ProjectFormDialog, {
-        data: { project: this.project(), clients: this.clients() },
-        width: '520px',
-      })
-      .afterClosed()
-      .pipe(filter((project) => project !== undefined))
-      .subscribe((project) => this.store.dispatch(ProjectPageActions.updateSubmitted({ project })));
+    const save: SaveFn<ProjectInput> = (project) =>
+      this.submissions.dispatchAndWait(ProjectPageActions.updateSubmitted({ project, submissionId: nextSubmissionId() }));
+    this.dialog.open<ProjectFormDialog, ProjectFormData>(ProjectFormDialog, {
+      data: { project: this.project(), clients: this.clients(), save },
+      width: '520px',
+    });
   }
 
   protected archive(): void {
