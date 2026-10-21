@@ -11,14 +11,17 @@ public static class ProjectApi
     {
         using var response = await admin.PostAsJsonAsync("/api/clients", new { name = name ?? $"Client {Guid.NewGuid():N}" }, Ct);
         response.EnsureSuccessStatusCode();
-        return (await response.Content.ReadFromJsonAsync<ClientResponse>(Ct))!;
+        return await response.ReadAsync<ClientResponse>();
     }
+
+    public static Task<HttpResponseMessage> ArchiveClientAsync(this HttpClient admin, Guid clientId) =>
+        admin.PostAsync(new Uri($"/api/clients/{clientId}/archive", UriKind.Relative), null, Ct);
 
     public static async Task<ProjectResponse> CreateProjectAsync(this HttpClient client, Guid clientId, string name = "Website redesign")
     {
         using var response = await client.PostAsJsonAsync("/api/projects", new { clientId, name }, Ct);
         response.EnsureSuccessStatusCode();
-        return (await response.Content.ReadFromJsonAsync<ProjectResponse>(Ct))!;
+        return await response.ReadAsync<ProjectResponse>();
     }
 
     /// <summary>Creates a client as the admin and a project in it as <paramref name="owner"/>.</summary>
@@ -29,22 +32,41 @@ public static class ProjectApi
         return await owner.CreateProjectAsync(client.Id);
     }
 
+    public static Task<HttpResponseMessage> ArchiveProjectAsync(this HttpClient client, Guid projectId) =>
+        client.PostAsync(new Uri($"/api/projects/{projectId}/archive", UriKind.Relative), null, Ct);
+
+    public static Task<HttpResponseMessage> RestoreProjectAsync(this HttpClient client, Guid projectId) =>
+        client.PostAsync(new Uri($"/api/projects/{projectId}/restore", UriKind.Relative), null, Ct);
+
     /// <summary>Posts <paramref name="task"/> (at least a <c>title</c>) and returns the created task.</summary>
     public static async Task<TaskResponse> CreateTaskAsync(this HttpClient client, Guid projectId, object task)
     {
         using var response = await client.PostAsJsonAsync($"/api/projects/{projectId}/tasks", task, Ct);
         response.EnsureSuccessStatusCode();
-        return (await response.Content.ReadFromJsonAsync<TaskResponse>(Ct))!;
+        return await response.ReadAsync<TaskResponse>();
+    }
+
+    public static Task<HttpResponseMessage> TryMoveTaskAsync(
+        this HttpClient client, Guid projectId, TaskResponse task, string status, int position) =>
+        client.PutAsJsonAsync($"/api/projects/{projectId}/tasks/{task.Id}/position", new { status, position, task.RowVersion }, Ct);
+
+    public static async Task<TaskResponse> MoveTaskAsync(this HttpClient client, Guid projectId, TaskResponse task, string status, int position)
+    {
+        using var response = await client.TryMoveTaskAsync(projectId, task, status, position);
+        response.EnsureSuccessStatusCode();
+        return await response.ReadAsync<TaskResponse>();
     }
 
     public static async Task<HttpResponseMessage> AddMemberAsync(this HttpClient owner, Guid projectId, string email, string role = "Member") =>
         await owner.PostAsJsonAsync($"/api/projects/{projectId}/members", new { email, role }, Ct);
 
     public static async Task<Guid> GetMyIdAsync(this HttpClient client) =>
-        (await client.GetFromJsonAsync<UserResponse>("/api/users/me", Ct))!.Id;
+        (await client.GetJsonAsync<UserResponse>("/api/users/me")).Id;
 }
 
 public sealed record ClientResponse(Guid Id, string Name, string? ContactEmail, bool IsArchived, int ActiveProjectCount);
+
+public sealed record ClientOptionResponse(Guid Id, string Name);
 
 public sealed record ProjectResponse(
     Guid Id,

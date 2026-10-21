@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 using TaskFlow.Api.IntegrationTests.Infrastructure;
 
 namespace TaskFlow.Api.IntegrationTests;
@@ -12,199 +11,199 @@ public sealed class AdminUsersTests(SqlServerApiFactory factory)
     [Fact]
     public async Task StandardUserCannotUseAdminEndpoints()
     {
-        Assert.SkipWhen(factory.SkipReason is not null, factory.SkipReason ?? string.Empty);
-        var (client, _) = await factory.CreateUserClientAsync();
+        var (userClient, _) = await factory.CreateUserClientAsync();
+        using var user = userClient;
 
-        using var response = await client.GetAsync(new Uri("/api/admin/users", UriKind.Relative), Ct);
+        using var list = await user.GetAsync(new Uri("/api/admin/users", UriKind.Relative), Ct);
+        using var invite = await user.InviteUserAsync(AuthApi.NewEmail());
+        using var deactivate = await user.DeactivateUserAsync(await user.GetMyIdAsync());
 
-        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
-        client.Dispose();
+        list.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        invite.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        deactivate.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 
     [Fact]
     public async Task SeededAdminCanSearchUsers()
     {
-        Assert.SkipWhen(factory.SkipReason is not null, factory.SkipReason ?? string.Empty);
         var (userClient, email) = await factory.CreateUserClientAsync();
         userClient.Dispose();
         using var admin = await factory.CreateAdminClientAsync();
 
-        var page = await admin.GetFromJsonAsync<PagedResponse<UserResponse>>($"/api/admin/users?search={email}", Ct);
+        var page = await admin.GetJsonAsync<PagedResponse<UserResponse>>($"/api/admin/users?search={email}");
 
-        page!.TotalCount.ShouldBe(1);
-        page.Items.Single().Email.ShouldBe(email);
-        page.Items.Single().IsActive.ShouldBeTrue();
-        page.Items.Single().CreatedAt.ShouldBeGreaterThan(DateTimeOffset.UtcNow.AddHours(-1));
+        page.TotalCount.ShouldBe(1);
+        var user = page.Items.ShouldHaveSingleItem();
+        user.Email.ShouldBe(email);
+        user.IsActive.ShouldBeTrue();
+        user.IsInvitationPending.ShouldBeFalse();
+        user.CreatedAt.ShouldBe(factory.Time.GetUtcNow());
     }
 
     [Fact]
     public async Task InvitedUserChoosesAPasswordAndLogsIn()
     {
-        Assert.SkipWhen(factory.SkipReason is not null, factory.SkipReason ?? string.Empty);
         using var admin = await factory.CreateAdminClientAsync();
         using var client = factory.CreateClient();
         var email = AuthApi.NewEmail();
 
-        using var response = await CreateUserAsync(admin, email, isAdmin: true);
-        var body = await response.Content.ReadFromJsonAsync<CreatedUserResponse>(Ct);
-        var created = body!.User;
-        using var loginBeforeAccepting = await client.LoginAsync(email);
-        using var accept = await AcceptAsync(client, email, factory.Emails.InvitationTokenFor(email), AuthApi.ValidPassword);
-        client.UseToken(await client.LoginForTokensAsync(email));
-
+        using var response = await admin.InviteUserAsync(email, isAdmin: true);
         response.StatusCode.ShouldBe(HttpStatusCode.Created);
+        var body = await response.ReadAsync<CreatedUserResponse>();
+        var created = body.User;
         response.Headers.Location!.AbsolutePath.ShouldBe($"/api/admin/users/{created.Id}");
         body.InvitationSent.ShouldBeTrue();
         created.DisplayName.ShouldBe("New Person");
         created.Roles.ShouldBe(["Admin"]);
         created.IsInvitationPending.ShouldBeTrue();
+
+        using var loginBeforeAccepting = await client.LoginAsync(email);
         loginBeforeAccepting.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+
+        using var accept = await client.AcceptInvitationAsync(email, factory.Emails.InvitationTokenFor(email), AuthApi.ValidPassword);
         accept.StatusCode.ShouldBe(HttpStatusCode.NoContent);
-        var me = await client.GetFromJsonAsync<UserResponse>("/api/users/me", Ct);
-        me!.Id.ShouldBe(created.Id);
+
+        client.UseToken(await client.LoginForTokensAsync(email));
+        var me = await client.GetJsonAsync<UserResponse>("/api/users/me");
+        me.Id.ShouldBe(created.Id);
         me.IsInvitationPending.ShouldBeFalse();
     }
 
     [Fact]
     public async Task InvitationLinkWorksOnlyOnce()
     {
-        Assert.SkipWhen(factory.SkipReason is not null, factory.SkipReason ?? string.Empty);
         using var admin = await factory.CreateAdminClientAsync();
         using var client = factory.CreateClient();
         var email = AuthApi.NewEmail();
-        (await CreateUserAsync(admin, email)).Dispose();
+        (await admin.InviteUserAsync(email)).EnsureSuccessStatusCode();
         var token = factory.Emails.InvitationTokenFor(email);
 
-        using var first = await AcceptAsync(client, email, token, AuthApi.ValidPassword);
-        using var second = await AcceptAsync(client, email, token, "An0therPassword");
-
+        using var first = await client.AcceptInvitationAsync(email, token, AuthApi.ValidPassword);
         first.StatusCode.ShouldBe(HttpStatusCode.NoContent);
+
+        using var second = await client.AcceptInvitationAsync(email, token, "An0therPassword");
         second.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        (await second.Content.ReadFromJsonAsync<ProblemResponse>(Ct))!.Code.ShouldBe("Users.InvitationInvalid");
+        (await second.ReadAsync<ProblemResponse>()).Code.ShouldBe("Users.InvitationInvalid");
     }
 
     [Fact]
     public async Task ResentInvitationCanBeAcceptedAndThenNoLongerResent()
     {
-        Assert.SkipWhen(factory.SkipReason is not null, factory.SkipReason ?? string.Empty);
         using var admin = await factory.CreateAdminClientAsync();
         using var client = factory.CreateClient();
         var email = AuthApi.NewEmail();
-        using var create = await CreateUserAsync(admin, email);
-        var userId = (await create.Content.ReadFromJsonAsync<CreatedUserResponse>(Ct))!.User.Id;
+        using var create = await admin.InviteUserAsync(email);
+        create.EnsureSuccessStatusCode();
+        var userId = (await create.ReadAsync<CreatedUserResponse>()).User.Id;
 
-        using var resend = await admin.PostAsync(new Uri($"/api/admin/users/{userId}/invitation", UriKind.Relative), null, Ct);
-        using var accept = await AcceptAsync(client, email, factory.Emails.InvitationTokenFor(email), AuthApi.ValidPassword);
-        using var resendAfterAccepting = await admin.PostAsync(new Uri($"/api/admin/users/{userId}/invitation", UriKind.Relative), null, Ct);
-
+        using var resend = await admin.ResendInvitationAsync(userId);
         resend.StatusCode.ShouldBe(HttpStatusCode.NoContent);
         factory.Emails.SentTo(email).Count.ShouldBe(2);
+
+        using var accept = await client.AcceptInvitationAsync(email, factory.Emails.InvitationTokenFor(email), AuthApi.ValidPassword);
         accept.StatusCode.ShouldBe(HttpStatusCode.NoContent);
+
+        using var resendAfterAccepting = await admin.ResendInvitationAsync(userId);
         resendAfterAccepting.StatusCode.ShouldBe(HttpStatusCode.Conflict);
-        (await resendAfterAccepting.Content.ReadFromJsonAsync<ProblemResponse>(Ct))!.Code.ShouldBe("Users.InvitationNotPending");
+        (await resendAfterAccepting.ReadAsync<ProblemResponse>()).Code.ShouldBe("Users.InvitationNotPending");
     }
 
     [Fact]
     public async Task AcceptingWithAWeakPasswordReturnsIdentityErrorCodes()
     {
-        Assert.SkipWhen(factory.SkipReason is not null, factory.SkipReason ?? string.Empty);
         using var admin = await factory.CreateAdminClientAsync();
         using var client = factory.CreateClient();
         var email = AuthApi.NewEmail();
-        (await CreateUserAsync(admin, email)).Dispose();
+        (await admin.InviteUserAsync(email)).EnsureSuccessStatusCode();
 
-        using var response = await AcceptAsync(client, email, factory.Emails.InvitationTokenFor(email), "short");
+        using var response = await client.AcceptInvitationAsync(email, factory.Emails.InvitationTokenFor(email), "short");
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        (await response.Content.ReadFromJsonAsync<ProblemResponse>(Ct))!.Errors!.ShouldContainKey("PasswordTooShort");
+        (await response.ReadAsync<ProblemResponse>()).Errors!.ShouldContainKey("PasswordTooShort");
     }
 
     [Fact]
     public async Task AcceptingWithAWrongTokenFails()
     {
-        Assert.SkipWhen(factory.SkipReason is not null, factory.SkipReason ?? string.Empty);
         using var admin = await factory.CreateAdminClientAsync();
         using var client = factory.CreateClient();
         var email = AuthApi.NewEmail();
-        (await CreateUserAsync(admin, email)).Dispose();
+        (await admin.InviteUserAsync(email)).EnsureSuccessStatusCode();
 
-        using var response = await AcceptAsync(client, email, "not-a-token", AuthApi.ValidPassword);
+        using var response = await client.AcceptInvitationAsync(email, "not-a-token", AuthApi.ValidPassword);
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        (await response.Content.ReadFromJsonAsync<ProblemResponse>(Ct))!.Code.ShouldBe("Users.InvitationInvalid");
+        (await response.ReadAsync<ProblemResponse>()).Code.ShouldBe("Users.InvitationInvalid");
     }
 
     [Fact]
     public async Task CreatingAUserWithATakenEmailReturnsConflict()
     {
-        Assert.SkipWhen(factory.SkipReason is not null, factory.SkipReason ?? string.Empty);
         var (userClient, email) = await factory.CreateUserClientAsync();
         userClient.Dispose();
         using var admin = await factory.CreateAdminClientAsync();
 
-        using var response = await CreateUserAsync(admin, email);
+        using var response = await admin.InviteUserAsync(email);
 
         response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
-        (await response.Content.ReadFromJsonAsync<ProblemResponse>(Ct))!.Code.ShouldBe("Users.EmailTaken");
+        (await response.ReadAsync<ProblemResponse>()).Code.ShouldBe("Users.EmailTaken");
     }
 
     [Fact]
     public async Task DeactivatedUserCannotLogInOrRefreshUntilReactivated()
     {
-        Assert.SkipWhen(factory.SkipReason is not null, factory.SkipReason ?? string.Empty);
         using var admin = await factory.CreateAdminClientAsync();
         using var client = factory.CreateClient();
         var email = AuthApi.NewEmail();
         (await client.RegisterAsync(email)).EnsureSuccessStatusCode();
         var tokens = await client.LoginForTokensAsync(email);
-        var userId = await FindUserIdAsync(admin, email);
+        var userId = await admin.FindUserIdAsync(email);
 
-        using var deactivate = await admin.PostAsync(new Uri($"/api/admin/users/{userId}/deactivate", UriKind.Relative), null, Ct);
-        using var loginWhileInactive = await client.LoginAsync(email);
-        using var refreshWhileInactive = await client.RefreshAsync(tokens.RefreshToken);
-
+        using var deactivate = await admin.DeactivateUserAsync(userId);
         deactivate.StatusCode.ShouldBe(HttpStatusCode.NoContent);
+
+        using var loginWhileInactive = await client.LoginAsync(email);
         loginWhileInactive.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
-        (await loginWhileInactive.Content.ReadFromJsonAsync<ProblemResponse>(Ct))!.Detail.ShouldBe("LockedOut");
+        (await loginWhileInactive.ReadAsync<ProblemResponse>()).Detail.ShouldBe("LockedOut");
+
+        using var refreshWhileInactive = await client.RefreshAsync(tokens.RefreshToken);
         refreshWhileInactive.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
 
-        using var activate = await admin.PostAsync(new Uri($"/api/admin/users/{userId}/activate", UriKind.Relative), null, Ct);
-        using var loginAgain = await client.LoginAsync(email);
-
+        using var activate = await admin.ActivateUserAsync(userId);
         activate.StatusCode.ShouldBe(HttpStatusCode.NoContent);
+
+        using var loginAgain = await client.LoginAsync(email);
         loginAgain.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
     [Fact]
     public async Task DeactivatingRejectsTheUsersCurrentAccessTokenAtOnce()
     {
-        Assert.SkipWhen(factory.SkipReason is not null, factory.SkipReason ?? string.Empty);
         using var admin = await factory.CreateAdminClientAsync();
-        var (user, email) = await factory.CreateUserClientAsync();
-        using var _ = user;
-        var userId = await FindUserIdAsync(admin, email);
+        var (userClient, email) = await factory.CreateUserClientAsync();
+        using var user = userClient;
+        var userId = await admin.FindUserIdAsync(email);
         using var before = await user.GetAsync(new Uri("/api/users/me", UriKind.Relative), Ct);
+        before.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        (await admin.PostAsync(new Uri($"/api/admin/users/{userId}/deactivate", UriKind.Relative), null, Ct)).EnsureSuccessStatusCode();
+        (await admin.DeactivateUserAsync(userId)).EnsureSuccessStatusCode();
         using var after = await user.GetAsync(new Uri("/api/users/me", UriKind.Relative), Ct);
 
-        before.StatusCode.ShouldBe(HttpStatusCode.OK);
         after.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
     public async Task RevokingAdminRejectsTheOldAdminTokenAtOnce()
     {
-        Assert.SkipWhen(factory.SkipReason is not null, factory.SkipReason ?? string.Empty);
         using var admin = await factory.CreateAdminClientAsync();
         using var client = factory.CreateClient();
         var email = AuthApi.NewEmail();
         (await client.RegisterAsync(email)).EnsureSuccessStatusCode();
-        var userId = await FindUserIdAsync(admin, email);
-        (await admin.PutAsync(new Uri($"/api/admin/users/{userId}/admin", UriKind.Relative), null, Ct)).EnsureSuccessStatusCode();
+        var userId = await admin.FindUserIdAsync(email);
+        (await admin.GrantAdminAsync(userId)).EnsureSuccessStatusCode();
         client.UseToken(await client.LoginForTokensAsync(email));
 
-        (await admin.DeleteAsync(new Uri($"/api/admin/users/{userId}/admin", UriKind.Relative), Ct)).EnsureSuccessStatusCode();
+        (await admin.RevokeAdminAsync(userId)).EnsureSuccessStatusCode();
         using var adminEndpoint = await client.GetAsync(new Uri("/api/admin/users", UriKind.Relative), Ct);
 
         adminEndpoint.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
@@ -213,19 +212,19 @@ public sealed class AdminUsersTests(SqlServerApiFactory factory)
     [Fact]
     public async Task PromotedUserGetsAdminRoleOnNextLogin()
     {
-        Assert.SkipWhen(factory.SkipReason is not null, factory.SkipReason ?? string.Empty);
         using var admin = await factory.CreateAdminClientAsync();
         using var client = factory.CreateClient();
         var email = AuthApi.NewEmail();
         (await client.RegisterAsync(email)).EnsureSuccessStatusCode();
-        var userId = await FindUserIdAsync(admin, email);
+        var userId = await admin.FindUserIdAsync(email);
 
-        using var promote = await admin.PutAsync(new Uri($"/api/admin/users/{userId}/admin", UriKind.Relative), null, Ct);
+        using var promote = await admin.GrantAdminAsync(userId);
+        promote.StatusCode.ShouldBe(HttpStatusCode.NoContent);
+
         client.UseToken(await client.LoginForTokensAsync(email));
         using var adminEndpoint = await client.GetAsync(new Uri("/api/admin/users", UriKind.Relative), Ct);
 
-        promote.StatusCode.ShouldBe(HttpStatusCode.NoContent);
-        (await client.GetFromJsonAsync<UserResponse>("/api/users/me", Ct))!.Roles.ShouldBe(["Admin"]);
+        (await client.GetJsonAsync<UserResponse>("/api/users/me")).Roles.ShouldBe(["Admin"]);
         adminEndpoint.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
@@ -234,40 +233,26 @@ public sealed class AdminUsersTests(SqlServerApiFactory factory)
     [InlineData("es", "No puedes desactivar ni reactivar tu propia cuenta.")]
     public async Task AdminCannotDeactivateThemselves(string language, string expectedTitle)
     {
-        Assert.SkipWhen(factory.SkipReason is not null, factory.SkipReason ?? string.Empty);
         using var admin = await factory.CreateAdminClientAsync();
         admin.DefaultRequestHeaders.AcceptLanguage.ParseAdd(language);
-        var adminId = (await admin.GetFromJsonAsync<UserResponse>("/api/users/me", Ct))!.Id;
+        var adminId = await admin.GetMyIdAsync();
 
-        using var response = await admin.PostAsync(new Uri($"/api/admin/users/{adminId}/deactivate", UriKind.Relative), null, Ct);
-        var problem = await response.Content.ReadFromJsonAsync<ProblemResponse>(Ct);
+        using var response = await admin.DeactivateUserAsync(adminId);
+        var problem = await response.ReadAsync<ProblemResponse>();
 
         response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
-        problem!.Code.ShouldBe("Users.CannotChangeOwnStatus");
+        problem.Code.ShouldBe("Users.CannotChangeOwnStatus");
         problem.Title.ShouldBe(expectedTitle);
     }
 
     [Fact]
     public async Task UnknownUserReturnsNotFound()
     {
-        Assert.SkipWhen(factory.SkipReason is not null, factory.SkipReason ?? string.Empty);
         using var admin = await factory.CreateAdminClientAsync();
 
-        using var response = await admin.PostAsync(new Uri($"/api/admin/users/{Guid.NewGuid()}/deactivate", UriKind.Relative), null, Ct);
+        using var response = await admin.DeactivateUserAsync(Guid.NewGuid());
 
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
-        (await response.Content.ReadFromJsonAsync<ProblemResponse>(Ct))!.Code.ShouldBe("Users.NotFound");
-    }
-
-    private static Task<HttpResponseMessage> CreateUserAsync(HttpClient admin, string email, bool isAdmin = false) =>
-        admin.PostAsJsonAsync("/api/admin/users", new { email, displayName = "New Person", isAdmin }, Ct);
-
-    private static Task<HttpResponseMessage> AcceptAsync(HttpClient client, string email, string token, string password) =>
-        client.PostAsJsonAsync("/api/invitations/accept", new { email, token, password }, Ct);
-
-    private static async Task<Guid> FindUserIdAsync(HttpClient admin, string email)
-    {
-        var page = await admin.GetFromJsonAsync<PagedResponse<UserResponse>>($"/api/admin/users?search={email}", Ct);
-        return page!.Items.Single().Id;
+        (await response.ReadAsync<ProblemResponse>()).Code.ShouldBe("Users.NotFound");
     }
 }

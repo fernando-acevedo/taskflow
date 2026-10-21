@@ -88,7 +88,9 @@ xUnit v3 + Shouldly + NSubstitute. `TaskFlow.Api.IntegrationTests` hosts the API
 skips when neither is available. When `CI` is set, a missing Docker fails the run instead. All database test
 classes share one instance through `[Collection(SqlServerTestGroup.Name)]`, so new ones should join that
 collection rather than start another container. The factory seeds its own admin (`admin@tests.local`) and lifts
-the auth rate limit. `ProjectApi` sets up clients, projects and tasks. `NoDatabaseApiFactory` covers endpoints
+the auth rate limit. It also freezes the API's clock (`factory.Time`, a `FakeTimeProvider`), so tests take dates
+from `factory.Today`, never `DateTime.UtcNow`. Read responses with `ReadAsync<T>` / `GetJsonAsync<T>` (`ApiJson`),
+which fail on a missing field instead of defaulting it. `ProjectApi` sets up clients, projects and tasks. `NoDatabaseApiFactory` covers endpoints
 that don't need a database. `AuthApi` contains helpers for registering and logging in. Use-case unit tests live in
 `TaskFlow.Application.UnitTests`, mirroring the Application folders (`Users/SetUserActiveHandlerTests.cs`).
 
