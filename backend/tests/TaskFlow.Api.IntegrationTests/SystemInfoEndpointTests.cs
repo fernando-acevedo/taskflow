@@ -19,11 +19,10 @@ public sealed class SystemInfoEndpointTests(NoDatabaseApiFactory factory) : ICla
         using var request = new HttpRequestMessage(HttpMethod.Get, InfoUri);
         request.Headers.AcceptLanguage.ParseAdd(acceptLanguage);
 
-        var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
-        var body = await response.Content.ReadFromJsonAsync<SystemInfoResponse>(TestContext.Current.CancellationToken);
+        using var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
+        var body = await response.ReadAsync<SystemInfoResponse>();
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        body.ShouldNotBeNull();
         body.Culture.ShouldBe(expectedCulture);
         body.Message.ShouldBe(expectedMessage);
     }

@@ -1,9 +1,12 @@
 using System.Runtime.InteropServices;
+using DotNet.Testcontainers.Builders;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Time.Testing;
 using TaskFlow.Infrastructure.Email;
 using TaskFlow.Infrastructure.Persistence;
 using Testcontainers.MsSql;
@@ -20,6 +23,9 @@ public sealed class SqlServerApiFactory : WebApplicationFactory<Program>, IAsync
     public const string AdminEmail = "admin@tests.local";
     public const string AdminPassword = "Admin12345";
 
+    // Pinned so a new cumulative update can't change behavior between two runs of the same commit.
+    private const string SqlServerImage = "mcr.microsoft.com/mssql/server:2022-CU27-ubuntu-22.04";
+
     private MsSqlContainer? _container;
     private string? _connectionString;
     private bool _usesLocalDb;
@@ -28,17 +34,27 @@ public sealed class SqlServerApiFactory : WebApplicationFactory<Program>, IAsync
 
     public TestEmailSender Emails { get; } = new();
 
+    /// <summary>
+    /// The API's clock, frozen at midday UTC so "today" is the same for the tests and the API and never crosses
+    /// midnight during a run.
+    /// </summary>
+    public FakeTimeProvider Time { get; } = new(new DateTimeOffset(DateTime.UtcNow.Date.AddHours(12), TimeSpan.Zero));
+
+    public DateOnly Today => DateOnly.FromDateTime(Time.GetUtcNow().UtcDateTime);
+
     public async ValueTask InitializeAsync()
     {
         try
         {
-            _container = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-latest").Build();
+            _container = new MsSqlBuilder(SqlServerImage).Build();
             await _container.StartAsync();
             _connectionString = _container.GetConnectionString();
             return;
         }
-        catch (Exception) when (Environment.GetEnvironmentVariable("CI") is null)
+        catch (DockerUnavailableException exception) when (Environment.GetEnvironmentVariable("CI") is null)
         {
+            // Only a missing Docker falls back; any other container failure should fail the run loudly.
+            TestContext.Current.SendDiagnosticMessage($"Docker is unavailable ({exception.Message}); trying LocalDB.");
             _container = null;
         }
 
@@ -53,6 +69,15 @@ public sealed class SqlServerApiFactory : WebApplicationFactory<Program>, IAsync
         SkipReason = "Neither Docker nor LocalDB is available. These tests always run in CI.";
     }
 
+    /// <summary>Changes a task's due date directly, for overdue tasks the API refuses to create.</summary>
+    public async Task SetTaskDueDateAsync(Guid taskId, DateOnly dueDate)
+    {
+        await using var scope = Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        await db.Tasks.Where(task => task.Id == taskId)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(task => task.DueDate, dueDate), TestContext.Current.CancellationToken);
+    }
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
@@ -63,7 +88,18 @@ public sealed class SqlServerApiFactory : WebApplicationFactory<Program>, IAsync
         builder.UseSetting("Seed:Admin:Password", AdminPassword);
         builder.UseSetting("RateLimiting:Auth:PermitLimit", "10000");
         builder.UseSetting("Email:FrontendUrl", "http://localhost:4200");
-        builder.ConfigureTestServices(services => services.AddSingleton<IEmailSender>(Emails));
+        builder.ConfigureTestServices(services =>
+        {
+            services.AddSingleton<IEmailSender>(Emails);
+            services.AddSingleton<TimeProvider>(Time);
+        });
+    }
+
+    /// <summary>Every test reaches the host through here first, so this is where the whole suite is skipped.</summary>
+    protected override IHost CreateHost(IHostBuilder builder)
+    {
+        Assert.SkipWhen(SkipReason is not null, SkipReason ?? string.Empty);
+        return base.CreateHost(builder);
     }
 
     public override async ValueTask DisposeAsync()

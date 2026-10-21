@@ -25,7 +25,7 @@ public static class AuthApi
     {
         using var response = await client.LoginAsync(email, password);
         response.EnsureSuccessStatusCode();
-        return (await response.Content.ReadFromJsonAsync<TokenResponse>(Ct))!;
+        return await response.ReadAsync<TokenResponse>();
     }
 
     /// <summary>Registers a new user and returns a client that sends that user's access token.</summary>
@@ -53,6 +53,39 @@ public static class AuthApi
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokens.AccessToken);
 }
 
+/// <summary>Helpers around the admin user endpoints and invitations.</summary>
+public static class AdminApi
+{
+    private static CancellationToken Ct => TestContext.Current.CancellationToken;
+
+    public static Task<HttpResponseMessage> InviteUserAsync(this HttpClient admin, string email, bool isAdmin = false) =>
+        admin.PostAsJsonAsync("/api/admin/users", new { email, displayName = "New Person", isAdmin }, Ct);
+
+    public static Task<HttpResponseMessage> AcceptInvitationAsync(this HttpClient client, string email, string token, string password) =>
+        client.PostAsJsonAsync("/api/invitations/accept", new { email, token, password }, Ct);
+
+    public static Task<HttpResponseMessage> ResendInvitationAsync(this HttpClient admin, Guid userId) =>
+        admin.PostAsync(new Uri($"/api/admin/users/{userId}/invitation", UriKind.Relative), null, Ct);
+
+    public static Task<HttpResponseMessage> DeactivateUserAsync(this HttpClient admin, Guid userId) =>
+        admin.PostAsync(new Uri($"/api/admin/users/{userId}/deactivate", UriKind.Relative), null, Ct);
+
+    public static Task<HttpResponseMessage> ActivateUserAsync(this HttpClient admin, Guid userId) =>
+        admin.PostAsync(new Uri($"/api/admin/users/{userId}/activate", UriKind.Relative), null, Ct);
+
+    public static Task<HttpResponseMessage> GrantAdminAsync(this HttpClient admin, Guid userId) =>
+        admin.PutAsync(new Uri($"/api/admin/users/{userId}/admin", UriKind.Relative), null, Ct);
+
+    public static Task<HttpResponseMessage> RevokeAdminAsync(this HttpClient admin, Guid userId) =>
+        admin.DeleteAsync(new Uri($"/api/admin/users/{userId}/admin", UriKind.Relative), Ct);
+
+    public static async Task<Guid> FindUserIdAsync(this HttpClient admin, string email)
+    {
+        var page = await admin.GetJsonAsync<PagedResponse<UserResponse>>($"/api/admin/users?search={email}");
+        return page.Items.Single().Id;
+    }
+}
+
 public sealed record TokenResponse(string TokenType, string AccessToken, long ExpiresIn, string RefreshToken);
 
 public sealed record UserResponse(
@@ -61,11 +94,17 @@ public sealed record UserResponse(
     string DisplayName,
     bool IsActive,
     IReadOnlyList<string> Roles,
-    bool IsInvitationPending = false,
-    DateTimeOffset CreatedAt = default);
+    DateTimeOffset CreatedAt,
+    bool IsInvitationPending);
 
 public sealed record CreatedUserResponse(UserResponse User, bool InvitationSent);
 
 public sealed record PagedResponse<T>(IReadOnlyList<T> Items, int Page, int PageSize, int TotalCount);
 
-public sealed record ProblemResponse(int Status, string? Title, string? Detail, string? Code, Dictionary<string, string[]>? Errors);
+/// <summary>A ProblemDetails body. Only <c>status</c> is always sent; the rest depends on the kind of error.</summary>
+public sealed record ProblemResponse(
+    int Status,
+    string? Title = null,
+    string? Detail = null,
+    string? Code = null,
+    Dictionary<string, string[]>? Errors = null);
