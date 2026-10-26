@@ -27,7 +27,8 @@
       "subtitle": "Welcome back to TaskFlow",
       "submit": "Sign in",
       "noAccount": "New to TaskFlow?",
-      "createAccount": "Create an account"
+      "createAccount": "Create an account",
+      "forgotPassword": "Forgot your password?"
     },
     "register": {
       "title": "Create your account",
@@ -57,6 +58,25 @@
       "title": "Choose your password",
       "subtitle": "You were invited to TaskFlow. Set a password to sign in.",
       "submit": "Save password and sign in"
+    },
+    "forgotPassword": {
+      "title": "Reset your password",
+      "subtitle": "We'll email you a link to choose a new one.",
+      "submit": "Send link",
+      "sent": "If there's a TaskFlow account for {{email}}, we sent it a link to choose a new password. Check your inbox and spam folder.",
+      "backToSignIn": "Back to sign in"
+    },
+    "resetPassword": {
+      "title": "Choose a new password",
+      "subtitle": "Set a new password to sign in to TaskFlow.",
+      "submit": "Save password and sign in",
+      "requestNewLink": "Request a new link"
+    },
+    "confirmEmail": {
+      "title": "Confirm your email",
+      "confirming": "Confirming your email…",
+      "confirmed": "Your email is confirmed. If you ever forget your password, you can reset it from the sign-in page.",
+      "goToApp": "Go to TaskFlow"
     }
   },
   "profile": {
@@ -69,7 +89,10 @@
     },
     "displayName": "Display name",
     "save": "Save",
-    "saved": "Saved"
+    "saved": "Saved",
+    "emailNotConfirmed": "Your email isn't confirmed yet. Confirm it so you can reset your password if you forget it.",
+    "resendConfirmation": "Send confirmation email",
+    "confirmationSent": "We sent a confirmation link to {{email}}. Check your inbox and spam folder."
   },
   "errors": {
     "DuplicateUserName": "An account with this email already exists.",
@@ -83,7 +106,9 @@
     "displayName": "Use between 2 and 100 characters.",
     "tooManyAttempts": "Too many attempts. Wait a minute and try again.",
     "unexpected": "Something went wrong. Try again.",
-    "invitationInvalid": "This invitation link is invalid or has expired. Ask an administrator to send you a new one."
+    "invitationInvalid": "This invitation link is invalid or has expired. Ask an administrator to send you a new one.",
+    "resetLinkInvalid": "This password reset link is invalid, was already used or has expired. Request a new one.",
+    "confirmationLinkInvalid": "This confirmation link is invalid or has expired."
   },
   "status": {
     "title": "System status",

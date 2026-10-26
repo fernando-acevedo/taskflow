@@ -1,0 +1,32 @@
+<ng-container *transloco="let t">
+  <mat-card appearance="outlined" class="auth-card">
+    @if (pending()) {
+      <mat-progress-bar mode="indeterminate" />
+    }
+    <mat-card-header>
+      <mat-card-title><h1>{{ t('auth.confirmEmail.title') }}</h1></mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content class="status">
+      @if (!linkIsComplete || status() === 'invalid') {
+        <p class="form-error" role="alert">{{ t('errors.confirmationLinkInvalid') }}</p>
+      } @else if (status() === 'unexpected') {
+        <p class="form-error" role="alert">{{ t('errors.unexpected') }}</p>
+      } @else if (status() === 'confirmed') {
+        <p class="form-notice" role="status">{{ t('auth.confirmEmail.confirmed') }}</p>
+      } @else {
+        <p>{{ t('auth.confirmEmail.confirming') }}</p>
+      }
+    </mat-card-content>
+
+    @if (!pending()) {
+      <mat-card-actions class="actions">
+        @if (signedIn()) {
+          <a mat-flat-button routerLink="/">{{ t('auth.confirmEmail.goToApp') }}</a>
+        } @else {
+          <a mat-flat-button routerLink="/login">{{ t('auth.register.signIn') }}</a>
+        }
+      </mat-card-actions>
+    }
+  </mat-card>
+</ng-container>

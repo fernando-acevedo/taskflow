@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Net;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using TaskFlow.Application.Users;
@@ -33,30 +32,21 @@ internal sealed partial class InvitationSender(
         }
     }
 
-    private string BuildLink(string email, string token)
-    {
-        var frontendUrl = emailOptions.Value.FrontendUrl
-            ?? throw new InvalidOperationException("Email:FrontendUrl is not configured.");
-        return $"{frontendUrl.TrimEnd('/')}/accept-invitation#email={Uri.EscapeDataString(email)}&token={Uri.EscapeDataString(token)}";
-    }
+    private string BuildLink(string email, string token) =>
+        LinkEmail.FrontendLink(emailOptions.Value, "accept-invitation", ("email", email), ("token", token));
 
     private EmailMessage Compose(UserDto user, string link)
     {
         var days = (int)tokenOptions.Value.TokenLifespan.TotalDays;
         var text = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "es" ? Spanish : English;
-        var greeting = string.Format(CultureInfo.InvariantCulture, text.Greeting, user.DisplayName);
-        var intro = string.Format(CultureInfo.InvariantCulture, text.Intro, user.Email);
-        var expiry = string.Format(CultureInfo.InvariantCulture, text.Expiry, days);
-
-        var textBody = $"{greeting}\n\n{intro}\n\n{link}\n\n{expiry}\n";
-        var htmlBody = $"""
-            <p>{WebUtility.HtmlEncode(greeting)}</p>
-            <p>{WebUtility.HtmlEncode(intro)}</p>
-            <p><a href="{WebUtility.HtmlEncode(link)}">{WebUtility.HtmlEncode(text.Button)}</a></p>
-            <p>{WebUtility.HtmlEncode(expiry)}</p>
-            """;
-
-        return new EmailMessage(user.Email, text.Subject, textBody, htmlBody);
+        return LinkEmail.Compose(
+            user.Email,
+            text.Subject,
+            string.Format(CultureInfo.InvariantCulture, text.Greeting, user.DisplayName),
+            string.Format(CultureInfo.InvariantCulture, text.Intro, user.Email),
+            text.Button,
+            link,
+            string.Format(CultureInfo.InvariantCulture, text.Expiry, days));
     }
 
     private sealed record InvitationText(string Subject, string Greeting, string Intro, string Button, string Expiry);

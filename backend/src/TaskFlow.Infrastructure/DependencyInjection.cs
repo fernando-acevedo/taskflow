@@ -79,6 +79,9 @@ public static class DependencyInjection
 
         services.AddScoped<IInvitationSender, InvitationSender>();
 
+        // MapIdentityApi resolves it once, from the root provider, so it must not depend on scoped services.
+        services.AddSingleton<IEmailSender<ApplicationUser>, IdentityEmailSender>();
+
         return services;
     }
 

@@ -8,6 +8,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslocoDirective } from '@jsverse/transloco';
 import { Store } from '@ngrx/store';
+import { readEmailedLink } from '../../../core/auth/emailed-link';
 import { newPasswordGroup } from '../../../core/auth/password-rules';
 import { InvitationPageActions } from '../../../core/auth/store/auth.actions';
 import { authFeature } from '../../../core/auth/store/auth.feature';
@@ -43,7 +44,7 @@ export class AcceptInvitationPage implements OnInit {
    * The emailed link is `/accept-invitation#email=…&token=…`. The fragment never reaches a server (no access
    * logs, no `Referer`); it's read once here and then removed from the address bar.
    */
-  private readonly link = new URLSearchParams(inject(ActivatedRoute).snapshot.fragment ?? '');
+  private readonly link = readEmailedLink(inject(ActivatedRoute).snapshot.fragment);
   protected readonly email = this.link.get('email');
   private readonly token = this.link.get('token');
   protected readonly linkIsComplete = !!this.email && !!this.token;

@@ -10,7 +10,7 @@ import {
 } from './auth.actions';
 import { authFeature, initialAuthState } from './auth.feature';
 
-const admin: User = { id: '1', email: 'ada@tests.local', displayName: 'Ada', isActive: true, roles: ['Admin'], isInvitationPending: false };
+const admin: User = { id: '1', email: 'ada@tests.local', displayName: 'Ada', isActive: true, roles: ['Admin'], isInvitationPending: false, isEmailConfirmed: true };
 const credentials = { email: admin.email, password: 'Passw0rd!' };
 
 describe('authFeature', () => {
@@ -66,6 +66,27 @@ describe('authFeature', () => {
 
     expect(saved.user?.displayName).toBe('Ada L.');
     expect(saved.profileSaved).toBe(true);
+  });
+
+  it('marks the signed-in user as confirmed only when the link was theirs', () => {
+    const signedIn = reducer(
+      initialAuthState,
+      AuthApiActions.sessionRestored({ user: { ...admin, isEmailConfirmed: false } }),
+    );
+
+    const someoneElse = reducer(signedIn, AuthApiActions.emailConfirmed({ userId: 'other' }));
+    const theirs = reducer(signedIn, AuthApiActions.emailConfirmed({ userId: admin.id }));
+
+    expect(someoneElse.user?.isEmailConfirmed).toBe(false);
+    expect(someoneElse.emailConfirmation).toBe('confirmed');
+    expect(theirs.user?.isEmailConfirmed).toBe(true);
+  });
+
+  it('shows the resent confirmation until the profile is opened again', () => {
+    const sent = reducer(initialAuthState, AuthApiActions.confirmationEmailSent());
+
+    expect(sent.confirmationEmailSent).toBe(true);
+    expect(reducer(sent, ProfilePageActions.opened()).confirmationEmailSent).toBe(false);
   });
 });
 

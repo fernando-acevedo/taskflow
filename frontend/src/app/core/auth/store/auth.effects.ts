@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
@@ -10,10 +11,13 @@ import { safeReturnUrl } from '../return-url';
 import { TokenStorage } from '../token-storage';
 import {
   AuthApiActions,
+  ConfirmEmailPageActions,
+  ForgotPasswordPageActions,
   InvitationPageActions,
   LoginPageActions,
   ProfilePageActions,
   RegisterPageActions,
+  ResetPasswordPageActions,
   ShellActions,
 } from './auth.actions';
 
@@ -69,6 +73,77 @@ export const acceptInvitation = createEffect(
               }),
             ),
           ),
+        ),
+      ),
+    ),
+  { functional: true },
+);
+
+/** Identity answers a wrong or expired confirmation code with 401; anything else (network, 5xx) is unexpected. */
+export const confirmEmail = createEffect(
+  (actions$ = inject(Actions), api = inject(AuthApiService)) =>
+    actions$.pipe(
+      ofType(ConfirmEmailPageActions.linkOpened),
+      exhaustMap(({ confirmation }) =>
+        api.confirmEmail(confirmation).pipe(
+          map(() => AuthApiActions.emailConfirmed({ userId: confirmation.userId })),
+          catchError((error: unknown) =>
+            of(
+              AuthApiActions.emailConfirmationFailed({
+                status: error instanceof HttpErrorResponse && error.status === 401 ? 'invalid' : 'unexpected',
+              }),
+            ),
+          ),
+        ),
+      ),
+    ),
+  { functional: true },
+);
+
+export const resendConfirmationEmail = createEffect(
+  (actions$ = inject(Actions), api = inject(AuthApiService)) =>
+    actions$.pipe(
+      ofType(ProfilePageActions.confirmationEmailRequested),
+      exhaustMap(({ email }) =>
+        api.resendConfirmationEmail(email).pipe(
+          map(() => AuthApiActions.confirmationEmailSent()),
+          catchError((error: unknown) => of(AuthApiActions.confirmationEmailFailed({ errors: toFormErrors(error) }))),
+        ),
+      ),
+    ),
+  { functional: true },
+);
+
+export const requestResetLink = createEffect(
+  (actions$ = inject(Actions), api = inject(AuthApiService)) =>
+    actions$.pipe(
+      ofType(ForgotPasswordPageActions.emailSubmitted),
+      exhaustMap(({ email }) =>
+        api.forgotPassword(email).pipe(
+          map(() => AuthApiActions.resetLinkRequested()),
+          catchError((error: unknown) => of(AuthApiActions.resetLinkRequestFailed({ errors: toFormErrors(error) }))),
+        ),
+      ),
+    ),
+  { functional: true },
+);
+
+/** Like accepting an invitation: the new password signs the user in right away. */
+export const resetPassword = createEffect(
+  (actions$ = inject(Actions), api = inject(AuthApiService), tokens = inject(TokenStorage)) =>
+    actions$.pipe(
+      ofType(ResetPasswordPageActions.passwordSubmitted),
+      exhaustMap(({ reset }) =>
+        api.resetPassword(reset).pipe(
+          switchMap(() => signIn(api, tokens, { email: reset.email, password: reset.newPassword })),
+          map((user) => AuthApiActions.loginSucceeded({ user, returnUrl: '/' })),
+          catchError((error: unknown) => {
+            // Identity answers a wrong, used or expired code with the InvalidToken validation error.
+            const errors = toFormErrors(error);
+            return of(
+              AuthApiActions.passwordResetFailed({ errors: errors.includes('InvalidToken') ? ['resetLinkInvalid'] : errors }),
+            );
+          }),
         ),
       ),
     ),
