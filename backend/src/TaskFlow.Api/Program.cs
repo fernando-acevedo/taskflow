@@ -105,6 +105,7 @@ app.MapGroup("/api/auth")
         allowSelfRegistration || !context.HttpContext.Request.Path.StartsWithSegments("/api/auth/register", StringComparison.OrdinalIgnoreCase)
             ? await next(context)
             : Results.NotFound())
+    .AddEndpointFilter<ForgetSessionsOnPasswordReset>()
     .MapIdentityApi<ApplicationUser>();
 app.MapHealthChecks("/health", new HealthCheckOptions { ResponseWriter = HealthResponseWriter.WriteAsync });
 

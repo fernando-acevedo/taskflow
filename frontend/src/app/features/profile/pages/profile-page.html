@@ -14,6 +14,19 @@
           <dd>{{ isAdmin() ? t('profile.roles.admin') : t('profile.roles.member') }}</dd>
         </dl>
 
+        @if (!current.isEmailConfirmed) {
+          <div class="unconfirmed">
+            @if (confirmationEmailSent()) {
+              <p role="status">{{ t('profile.confirmationSent', { email: current.email }) }}</p>
+            } @else {
+              <p>{{ t('profile.emailNotConfirmed') }}</p>
+              <button mat-stroked-button type="button" [disabled]="pending()" (click)="resendConfirmation(current.email)">
+                {{ t('profile.resendConfirmation') }}
+              </button>
+            }
+          </div>
+        }
+
         <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
           @if (errors().length) {
             <div class="form-error" role="alert">

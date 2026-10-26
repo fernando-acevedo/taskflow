@@ -77,7 +77,11 @@ so a reference added in the wrong direction fails the tests.
   their role takes effect at once: call `SessionValidator.Forget` after renewing a stamp.
 - Admins invite users: the account has no password until the user follows the emailed link (ADR 0008). Email
   goes through `Infrastructure/Email` (`IEmailSender`: MailKit SMTP, or the log in Development when no SMTP host
-  is set); integration tests swap in `TestEmailSender` and read the link from it.
+  is set); integration tests swap in `TestEmailSender` and read the link from it. Identity's own emails go
+  through `IdentityEmailSender`: `/register` sends an email confirmation and `/forgotPassword` a reset link (only
+  to confirmed emails; `ForgetSessionsOnPasswordReset` drops the cached stamp after `/resetPassword`). Every
+  emailed link points to a frontend page and carries its values in the fragment (`LinkEmail.FrontendLink`); the
+  pages read it with `readEmailedLink`, because the router has already decoded it once.
 - Request localization supports `en` (default) and `es` from `Accept-Language`.
 - Central package management: add NuGet versions to `backend/Directory.Packages.props`, not to the csproj files.
 

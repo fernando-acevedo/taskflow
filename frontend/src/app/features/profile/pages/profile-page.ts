@@ -34,6 +34,7 @@ export class ProfilePage {
   protected readonly pending = this.store.selectSignal(authFeature.selectPending);
   protected readonly errors = this.store.selectSignal(authFeature.selectFormErrors);
   protected readonly saved = this.store.selectSignal(authFeature.selectProfileSaved);
+  protected readonly confirmationEmailSent = this.store.selectSignal(authFeature.selectConfirmationEmailSent);
 
   protected readonly form = inject(NonNullableFormBuilder).group({
     displayName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
@@ -58,5 +59,9 @@ export class ProfilePage {
       return;
     }
     this.store.dispatch(ProfilePageActions.displayNameSubmitted({ displayName: this.form.controls.displayName.value }));
+  }
+
+  protected resendConfirmation(email: string): void {
+    this.store.dispatch(ProfilePageActions.confirmationEmailRequested({ email }));
   }
 }

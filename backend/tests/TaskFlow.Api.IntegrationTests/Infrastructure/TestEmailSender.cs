@@ -26,6 +26,28 @@ public sealed partial class TestEmailSender : IEmailSender
         return Uri.UnescapeDataString(match.Groups["token"].Value);
     }
 
+    /// <summary>The code from the newest password reset link sent to <paramref name="email"/>.</summary>
+    public string ResetCodeFor(string email)
+    {
+        var match = ResetLink().Match(SentTo(email)[^1].TextBody);
+        match.Success.ShouldBeTrue($"No password reset link in the email to {email}.");
+        return Uri.UnescapeDataString(match.Groups["code"].Value);
+    }
+
+    /// <summary>The user id and code from the newest email confirmation link sent to <paramref name="email"/>.</summary>
+    public (string UserId, string Code) ConfirmationFor(string email)
+    {
+        var match = ConfirmationLink().Match(SentTo(email)[^1].TextBody);
+        match.Success.ShouldBeTrue($"No email confirmation link in the email to {email}.");
+        return (Uri.UnescapeDataString(match.Groups["userId"].Value), Uri.UnescapeDataString(match.Groups["code"].Value));
+    }
+
+    [GeneratedRegex(@"/confirm-email#userId=(?<userId>[^&\s]+)&code=(?<code>\S+)")]
+    private static partial Regex ConfirmationLink();
+
     [GeneratedRegex(@"/accept-invitation#email=[^&\s]+&token=(?<token>\S+)")]
     private static partial Regex InvitationLink();
+
+    [GeneratedRegex(@"/reset-password#email=[^&\s]+&code=(?<code>\S+)")]
+    private static partial Regex ResetLink();
 }

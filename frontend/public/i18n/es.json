@@ -27,7 +27,8 @@
       "subtitle": "Te damos la bienvenida a TaskFlow",
       "submit": "Iniciar sesión",
       "noAccount": "¿Eres nuevo en TaskFlow?",
-      "createAccount": "Crea una cuenta"
+      "createAccount": "Crea una cuenta",
+      "forgotPassword": "¿Olvidaste tu contraseña?"
     },
     "register": {
       "title": "Crea tu cuenta",
@@ -57,6 +58,25 @@
       "title": "Elige tu contraseña",
       "subtitle": "Te invitaron a TaskFlow. Crea una contraseña para iniciar sesión.",
       "submit": "Guardar contraseña e iniciar sesión"
+    },
+    "forgotPassword": {
+      "title": "Restablece tu contraseña",
+      "subtitle": "Te enviaremos por email un enlace para elegir una nueva.",
+      "submit": "Enviar enlace",
+      "sent": "Si existe una cuenta de TaskFlow para {{email}}, le enviamos un enlace para elegir una contraseña nueva. Revisa tu bandeja de entrada y la carpeta de spam.",
+      "backToSignIn": "Volver a iniciar sesión"
+    },
+    "resetPassword": {
+      "title": "Elige una contraseña nueva",
+      "subtitle": "Crea una contraseña nueva para iniciar sesión en TaskFlow.",
+      "submit": "Guardar contraseña e iniciar sesión",
+      "requestNewLink": "Pedir un enlace nuevo"
+    },
+    "confirmEmail": {
+      "title": "Confirma tu email",
+      "confirming": "Confirmando tu email…",
+      "confirmed": "Tu email está confirmado. Si alguna vez olvidas tu contraseña, puedes restablecerla desde la página de inicio de sesión.",
+      "goToApp": "Ir a TaskFlow"
     }
   },
   "profile": {
@@ -69,7 +89,10 @@
     },
     "displayName": "Nombre visible",
     "save": "Guardar",
-    "saved": "Guardado"
+    "saved": "Guardado",
+    "emailNotConfirmed": "Tu email todavía no está confirmado. Confírmalo para poder restablecer tu contraseña si la olvidas.",
+    "resendConfirmation": "Enviar email de confirmación",
+    "confirmationSent": "Enviamos un enlace de confirmación a {{email}}. Revisa tu bandeja de entrada y la carpeta de spam."
   },
   "errors": {
     "DuplicateUserName": "Ya existe una cuenta con este email.",
@@ -83,7 +106,9 @@
     "displayName": "Usa entre 2 y 100 caracteres.",
     "tooManyAttempts": "Demasiados intentos. Espera un minuto y vuelve a intentarlo.",
     "unexpected": "Algo salió mal. Vuelve a intentarlo.",
-    "invitationInvalid": "Este enlace de invitación no es válido o venció. Pide a un administrador que te envíe uno nuevo."
+    "invitationInvalid": "Este enlace de invitación no es válido o venció. Pide a un administrador que te envíe uno nuevo.",
+    "resetLinkInvalid": "Este enlace para restablecer la contraseña no es válido, ya se usó o venció. Pide uno nuevo.",
+    "confirmationLinkInvalid": "Este enlace de confirmación no es válido o venció."
   },
   "status": {
     "title": "Estado del sistema",

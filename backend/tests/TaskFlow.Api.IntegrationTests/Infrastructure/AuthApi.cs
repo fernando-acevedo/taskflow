@@ -21,6 +21,18 @@ public static class AuthApi
     public static Task<HttpResponseMessage> RefreshAsync(this HttpClient client, string refreshToken) =>
         client.PostAsJsonAsync("/api/auth/refresh", new { refreshToken }, Ct);
 
+    public static Task<HttpResponseMessage> ConfirmEmailAsync(this HttpClient client, string userId, string code) =>
+        client.GetAsync(new Uri($"/api/auth/confirmEmail?userId={Uri.EscapeDataString(userId)}&code={Uri.EscapeDataString(code)}", UriKind.Relative), Ct);
+
+    public static Task<HttpResponseMessage> ResendConfirmationEmailAsync(this HttpClient client, string email) =>
+        client.PostAsJsonAsync("/api/auth/resendConfirmationEmail", new { email }, Ct);
+
+    public static Task<HttpResponseMessage> ForgotPasswordAsync(this HttpClient client, string email) =>
+        client.PostAsJsonAsync("/api/auth/forgotPassword", new { email }, Ct);
+
+    public static Task<HttpResponseMessage> ResetPasswordAsync(this HttpClient client, string email, string resetCode, string newPassword) =>
+        client.PostAsJsonAsync("/api/auth/resetPassword", new { email, resetCode, newPassword }, Ct);
+
     public static async Task<TokenResponse> LoginForTokensAsync(this HttpClient client, string email, string password = ValidPassword)
     {
         using var response = await client.LoginAsync(email, password);
@@ -95,7 +107,8 @@ public sealed record UserResponse(
     bool IsActive,
     IReadOnlyList<string> Roles,
     DateTimeOffset CreatedAt,
-    bool IsInvitationPending);
+    bool IsInvitationPending,
+    bool IsEmailConfirmed);
 
 public sealed record CreatedUserResponse(UserResponse User, bool InvitationSent);
 

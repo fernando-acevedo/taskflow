@@ -168,6 +168,7 @@ internal sealed class IdentityService(UserManager<ApplicationUser> userManager, 
             user.IsActive,
             user.CreatedAt,
             user.PasswordHash == null,
+            user.EmailConfirmed,
             db.UserRoles.Any(userRole => userRole.UserId == user.Id && userRole.RoleId == adminRoleId)));
 
     private async Task<ApplicationUser> GetUserAsync(Guid userId) =>
@@ -190,6 +191,7 @@ internal sealed class IdentityService(UserManager<ApplicationUser> userManager, 
         bool IsActive,
         DateTimeOffset CreatedAt,
         bool HasNoPassword,
+        bool EmailConfirmed,
         bool IsAdmin)
     {
         public UserDto ToDto() => new(
@@ -199,6 +201,7 @@ internal sealed class IdentityService(UserManager<ApplicationUser> userManager, 
             IsActive,
             IsAdmin ? [Roles.Admin] : [],
             CreatedAt,
-            IsInvitationPending: HasNoPassword);
+            IsInvitationPending: HasNoPassword,
+            IsEmailConfirmed: EmailConfirmed);
     }
 }

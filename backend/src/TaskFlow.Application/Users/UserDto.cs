@@ -9,7 +9,8 @@ public sealed record UserDto(
     bool IsActive,
     IReadOnlyList<string> Roles,
     DateTimeOffset CreatedAt,
-    bool IsInvitationPending = false);
+    bool IsInvitationPending = false,
+    bool IsEmailConfirmed = false);
 
 public static class Roles
 {

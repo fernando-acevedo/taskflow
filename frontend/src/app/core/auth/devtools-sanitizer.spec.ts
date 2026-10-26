@@ -1,4 +1,4 @@
-import { InvitationPageActions, LoginPageActions } from './store/auth.actions';
+import { InvitationPageActions, LoginPageActions, ResetPasswordPageActions } from './store/auth.actions';
 import { hideSecrets, hideStateSecrets } from './devtools-sanitizer';
 
 describe('devtools sanitizer', () => {
@@ -22,6 +22,21 @@ describe('devtools sanitizer', () => {
     expect(hideSecrets(action)).toEqual({
       ...action,
       acceptance: { email: 'ana@example.com', token: '••••••', password: '••••••' },
+    });
+  });
+
+  it('masks the new password and the code of a password reset, also in the URL', () => {
+    const action = ResetPasswordPageActions.passwordSubmitted({
+      reset: { email: 'ana@example.com', resetCode: 'Q2ZESjh', newPassword: 'Secret123' },
+    });
+    const state = { router: { state: { url: '/reset-password#email=ana%40example.com&code=Q2ZESjh' } } };
+
+    expect(hideSecrets(action)).toEqual({
+      ...action,
+      reset: { email: 'ana@example.com', resetCode: '••••••', newPassword: '••••••' },
+    });
+    expect(hideStateSecrets(state)).toEqual({
+      router: { state: { url: '/reset-password#email=ana%40example.com&code=••••••' } },
     });
   });
 
