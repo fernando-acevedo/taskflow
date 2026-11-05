@@ -430,6 +430,18 @@
     "deleted": "Etiqueta eliminada",
     "deleteTitle": "¿Eliminar esta etiqueta?",
     "deleteMessage": "«{{ name }}» se quitará de todas las tareas que la tengan.",
-    "deleteConfirm": "Eliminar"
+    "deleteConfirm": "Eliminar",
+    "colors": {
+      "red": "Rojo",
+      "orange": "Naranja",
+      "amber": "Ámbar",
+      "green": "Verde",
+      "teal": "Verde azulado",
+      "lightBlue": "Celeste",
+      "blue": "Azul",
+      "purple": "Morado",
+      "pink": "Rosa",
+      "gray": "Gris"
+    }
   }
 }

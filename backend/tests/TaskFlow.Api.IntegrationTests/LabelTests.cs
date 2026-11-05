@@ -88,6 +88,59 @@ public sealed class LabelTests(SqlServerApiFactory factory)
     }
 
     [Fact]
+    public async Task InvalidColorIsReportedInTheRequestLanguage()
+    {
+        var (ownerClient, _) = await factory.CreateUserClientAsync();
+        using var owner = ownerClient;
+        owner.DefaultRequestHeaders.AcceptLanguage.ParseAdd("es");
+        var project = await factory.CreateProjectAsync(owner);
+
+        using var response = await owner.PostAsJsonAsync($"/api/projects/{project.Id}/labels", new { name = "Bug", color = "red" }, Ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        var problem = await response.ReadAsync<ProblemResponse>();
+        problem.Code.ShouldBe("Labels.InvalidColor");
+        problem.Title.ShouldBe("El color debe ser un valor hexadecimal como #1A2B3C.");
+    }
+
+    [Fact]
+    public async Task MembersCannotRenameOrDeleteLabels()
+    {
+        var (ownerClient, _) = await factory.CreateUserClientAsync();
+        var (memberClient, memberEmail) = await factory.CreateUserClientAsync();
+        using var owner = ownerClient;
+        using var member = memberClient;
+        var project = await factory.CreateProjectAsync(owner);
+        (await owner.AddMemberAsync(project.Id, memberEmail)).EnsureSuccessStatusCode();
+        var bug = await CreateLabelAsync(owner, project.Id, "Bug", "#FF0000");
+
+        using var put = await member.PutAsJsonAsync($"/api/projects/{project.Id}/labels/{bug.Id}", new { name = "Defect", color = "#00FF00" }, Ct);
+        using var delete = await member.DeleteAsync(new Uri($"/api/projects/{project.Id}/labels/{bug.Id}", UriKind.Relative), Ct);
+
+        put.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        delete.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task UpdatingATaskWithLabelsOfAnotherProjectIsRejected()
+    {
+        var (ownerClient, _) = await factory.CreateUserClientAsync();
+        using var owner = ownerClient;
+        var project = await factory.CreateProjectAsync(owner);
+        var other = await factory.CreateProjectAsync(owner);
+        var foreign = await CreateLabelAsync(owner, other.Id, "Bug", "#FF0000");
+        var task = await CreateTaskAsync(owner, project.Id, "Fix it", null);
+
+        using var response = await owner.PutAsJsonAsync(
+            $"/api/projects/{project.Id}/tasks/{task.Id}",
+            new { title = "Fix it", priority = "Medium", labelIds = new[] { foreign.Id }, rowVersion = task.RowVersion },
+            Ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await response.ReadAsync<ProblemResponse>()).Code.ShouldBe("Labels.NotInProject");
+    }
+
+    [Fact]
     public async Task DeletingALabelRemovesItFromTasks()
     {
         var (ownerClient, _) = await factory.CreateUserClientAsync();

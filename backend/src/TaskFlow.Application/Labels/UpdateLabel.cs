@@ -15,14 +15,15 @@ public sealed class UpdateLabelValidator : AbstractValidator<UpdateLabelCommand>
     public UpdateLabelValidator()
     {
         RuleFor(command => command.Name).NotEmpty().MaximumLength(Label.NameMaxLength);
-        RuleFor(command => command.Color).Must(Label.IsValidColor).WithMessage("The color must be a hex value like #1A2B3C.");
+        // The color is checked by the domain (LabelErrors.InvalidColor), which the API localizes by code.
     }
 }
 
 public sealed class UpdateLabelHandler(
     IAppDbContext db,
     ProjectAccess access,
-    IValidator<UpdateLabelCommand> validator)
+    IValidator<UpdateLabelCommand> validator,
+    IUniqueViolationDetector uniqueViolations)
 {
     public async Task<Result<LabelDto>> HandleAsync(UpdateLabelCommand command, CancellationToken cancellationToken)
     {
@@ -51,7 +52,15 @@ public sealed class UpdateLabelHandler(
             return updated.Error;
         }
 
-        await db.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await db.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException exception) when (uniqueViolations.IsUniqueViolation(exception))
+        {
+            return LabelErrors.NameTaken;
+        }
+
         return label.ToDto();
     }
 }

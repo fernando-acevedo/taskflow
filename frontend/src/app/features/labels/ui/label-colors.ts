@@ -12,6 +12,20 @@ export const LABEL_COLORS = [
   '#616161',
 ] as const;
 
+/** Translation key (under `labels.colors`) with the readable name of each palette color. */
+export const LABEL_COLOR_NAMES: Readonly<Record<(typeof LABEL_COLORS)[number], string>> = {
+  '#D32F2F': 'red',
+  '#E64A19': 'orange',
+  '#F9A825': 'amber',
+  '#388E3C': 'green',
+  '#00796B': 'teal',
+  '#0288D1': 'lightBlue',
+  '#1976D2': 'blue',
+  '#512DA8': 'purple',
+  '#C2185B': 'pink',
+  '#616161': 'gray',
+};
+
 function channel(value: number): number {
   const c = value / 255;
   return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
