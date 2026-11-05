@@ -7,12 +7,12 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { TranslocoDirective } from '@jsverse/transloco';
+import { TranslocoDirective, TranslocoService } from '@jsverse/transloco';
 import { applyApiFieldErrors } from '../../../shared/data-access/api-field-errors';
 import { SaveFn } from '../../../shared/data-access/submission';
 import { Label, LabelInput } from '../data-access/labels-api.service';
 import { LabelChip } from './label-chip';
-import { LABEL_COLORS, textColorFor } from './label-colors';
+import { LABEL_COLORS, LABEL_COLOR_NAMES, textColorFor } from './label-colors';
 
 export interface LabelFormData {
   readonly label: Label | null;
@@ -53,20 +53,19 @@ export interface LabelFormData {
 
           <div role="radiogroup" [attr.aria-label]="t('color')" class="palette">
             @for (color of colors; track color) {
-              <button
-                type="button"
-                role="radio"
-                class="swatch"
-                [style.background-color]="color"
-                [style.color]="textColor(color)"
-                [attr.aria-checked]="form.controls.color.value === color"
-                [attr.aria-label]="color"
-                (click)="form.controls.color.setValue(color)"
-              >
+              <label class="swatch" [style.background-color]="color" [style.color]="textColor(color)">
+                <input
+                  type="radio"
+                  name="label-color"
+                  [value]="color"
+                  [checked]="form.controls.color.value === color"
+                  [attr.aria-label]="t('colors.' + colorNames[color])"
+                  (change)="form.controls.color.setValue(color)"
+                />
                 @if (form.controls.color.value === color) {
                   <mat-icon aria-hidden="true">check</mat-icon>
                 }
-              </button>
+              </label>
             }
           </div>
           @if (form.controls.color.getError('api'); as message) {
@@ -103,8 +102,18 @@ export interface LabelFormData {
       align-items: center;
       justify-content: center;
       padding: 0;
+      position: relative;
     }
-    .swatch:focus-visible {
+    .swatch input {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+    .swatch:has(input:focus-visible) {
       outline: 3px solid var(--mat-sys-primary);
       outline-offset: 2px;
     }
@@ -124,8 +133,10 @@ export class LabelFormDialog {
   private readonly dialogRef = inject<MatDialogRef<LabelFormDialog, true>>(MatDialogRef);
   protected readonly data = inject<LabelFormData>(MAT_DIALOG_DATA);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly transloco = inject(TranslocoService);
   protected readonly saving = signal(false);
   protected readonly colors = LABEL_COLORS;
+  protected readonly colorNames = LABEL_COLOR_NAMES;
   protected readonly textColor = textColorFor;
 
   protected readonly form = inject(NonNullableFormBuilder).group({
@@ -150,6 +161,11 @@ export class LabelFormDialog {
         this.saving.set(false);
         if (error) {
           applyApiFieldErrors(this.form, error);
+          if (error.code === 'Labels.NameTaken' && !this.form.controls.name.getError('api')) {
+            const control = this.form.controls.name;
+            control.setErrors({ ...control.errors, api: this.transloco.translate<string>('apiErrors.Labels.NameTaken') });
+            control.markAsTouched();
+          }
         } else {
           this.dialogRef.close(true);
         }

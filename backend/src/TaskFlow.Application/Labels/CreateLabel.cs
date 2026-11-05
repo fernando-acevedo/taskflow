@@ -15,7 +15,7 @@ public sealed class CreateLabelValidator : AbstractValidator<CreateLabelCommand>
     public CreateLabelValidator()
     {
         RuleFor(command => command.Name).NotEmpty().MaximumLength(Label.NameMaxLength);
-        RuleFor(command => command.Color).Must(Label.IsValidColor).WithMessage("The color must be a hex value like #1A2B3C.");
+        // The color is checked by the domain (LabelErrors.InvalidColor), which the API localizes by code.
     }
 }
 
@@ -24,6 +24,7 @@ public sealed class CreateLabelHandler(
     IAppDbContext db,
     ProjectAccess access,
     IValidator<CreateLabelCommand> validator,
+    IUniqueViolationDetector uniqueViolations,
     TimeProvider time)
 {
     public async Task<Result<LabelDto>> HandleAsync(CreateLabelCommand command, CancellationToken cancellationToken)
@@ -50,7 +51,15 @@ public sealed class CreateLabelHandler(
         }
 
         db.Labels.Add(created.Value);
-        await db.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await db.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException exception) when (uniqueViolations.IsUniqueViolation(exception))
+        {
+            return LabelErrors.NameTaken;
+        }
+
         return created.Value.ToDto();
     }
 }

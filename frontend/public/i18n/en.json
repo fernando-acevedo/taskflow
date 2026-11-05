@@ -430,6 +430,18 @@
     "deleted": "Label deleted",
     "deleteTitle": "Delete this label?",
     "deleteMessage": "“{{ name }}” will be removed from every task that has it.",
-    "deleteConfirm": "Delete"
+    "deleteConfirm": "Delete",
+    "colors": {
+      "red": "Red",
+      "orange": "Orange",
+      "amber": "Amber",
+      "green": "Green",
+      "teal": "Teal",
+      "lightBlue": "Light blue",
+      "blue": "Blue",
+      "purple": "Purple",
+      "pink": "Pink",
+      "gray": "Gray"
+    }
   }
 }

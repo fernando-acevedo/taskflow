@@ -24,6 +24,7 @@ public static class DependencyInjection
         services.AddDbContext<AppDbContext>((provider, options) => options
             .UseSqlServer(connectionString, sql => sql.EnableRetryOnFailure())
             .AddInterceptors(new CreationTimeInterceptor(provider.GetRequiredService<TimeProvider>())));
+        services.AddSingleton<IUniqueViolationDetector, Persistence.SqlServerUniqueViolationDetector>();
         services.AddScoped<IAppDbContext>(provider => provider.GetRequiredService<AppDbContext>());
 
         services.AddHealthChecks()
