@@ -36,6 +36,16 @@
       </mat-select>
     </mat-form-field>
 
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>{{ t('labels') }}</mat-label>
+      <mat-select [value]="current.label" (selectionChange)="setFilter({ label: $event.value })">
+        <mat-option [value]="null">{{ t('anyLabel') }}</mat-option>
+        @for (label of labels(); track label.id) {
+          <mat-option [value]="label.id">{{ label.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
     <mat-slide-toggle [checked]="current.overdue" (change)="setFilter({ overdue: $event.checked })">{{ t('onlyOverdue') }}</mat-slide-toggle>
 
     @if (filtered()) {
@@ -65,6 +75,7 @@
             <th scope="col">{{ t('status') }}</th>
             <th scope="col">{{ t('priority') }}</th>
             <th scope="col">{{ t('assignee') }}</th>
+            <th scope="col">{{ t('labels') }}</th>
             <th scope="col">{{ t('dueDate') }}</th>
           </tr>
         </thead>
@@ -77,6 +88,13 @@
               <td>{{ t('statuses.' + task.status) }}</td>
               <td><span class="priority" [attr.data-priority]="task.priority">{{ t('priorities.' + task.priority) }}</span></td>
               <td>{{ assigneeName(task) ?? (task.assigneeId ? t('formerMember') : '—') }}</td>
+              <td class="label-cell">
+                @for (label of task.labels; track label.id) {
+                  <app-label-chip [label]="label" />
+                } @empty {
+                  —
+                }
+              </td>
               <td [class.overdue]="task.isOverdue">
                 @if (task.dueDate) {
                   {{ task.dueDate | date: 'mediumDate' : 'UTC' : language.current() }}

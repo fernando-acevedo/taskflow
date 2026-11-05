@@ -28,4 +28,10 @@
   <data name="Projects.AssigneeNotMember" xml:space="preserve"><value>The assignee must be a member of the project.</value></data>
   <data name="Tasks.NotFound" xml:space="preserve"><value>The task was not found.</value></data>
   <data name="Concurrency.Stale" xml:space="preserve"><value>Someone else changed this item. Reload it and try again.</value></data>
+  <data name="Labels.NotFound" xml:space="preserve"><value>The label was not found.</value></data>
+  <data name="Labels.NameRequired" xml:space="preserve"><value>The label name is required.</value></data>
+  <data name="Labels.NameTooLong" xml:space="preserve"><value>The label name is too long.</value></data>
+  <data name="Labels.InvalidColor" xml:space="preserve"><value>The color must be a hex value like #1A2B3C.</value></data>
+  <data name="Labels.NameTaken" xml:space="preserve"><value>The project already has a label with this name.</value></data>
+  <data name="Labels.NotInProject" xml:space="preserve"><value>One or more labels don't belong to the project.</value></data>
 </root>

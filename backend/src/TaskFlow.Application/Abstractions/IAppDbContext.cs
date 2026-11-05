@@ -15,6 +15,8 @@ public interface IAppDbContext
 
     DbSet<Project> Projects { get; }
 
+    DbSet<Label> Labels { get; }
+
     DbSet<TaskItem> Tasks { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);

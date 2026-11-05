@@ -8,10 +8,12 @@ export interface TaskFilters {
   /** A user id, `me`, or `none` for unassigned tasks. */
   assignee: string | null;
   overdue: boolean;
+  /** A label id. */
+  label: string | null;
   search: string;
 }
 
-export const NO_FILTERS: TaskFilters = { status: null, priority: null, assignee: null, overdue: false, search: '' };
+export const NO_FILTERS: TaskFilters = { status: null, priority: null, assignee: null, overdue: false, label: null, search: '' };
 
 export function hasActiveFilters(filters: TaskFilters): boolean {
   return (
@@ -19,6 +21,7 @@ export function hasActiveFilters(filters: TaskFilters): boolean {
     filters.priority !== null ||
     filters.assignee !== null ||
     filters.overdue ||
+    filters.label !== null ||
     filters.search.trim() !== ''
   );
 }
@@ -35,6 +38,7 @@ export function parseTaskFilters(params: Params): TaskFilters {
     priority: oneOf(TASK_PRIORITIES, params['priority']),
     assignee: typeof assignee === 'string' && assignee ? assignee : null,
     overdue: params['overdue'] === 'true',
+    label: typeof params['label'] === 'string' && params['label'] ? params['label'] : null,
     search: typeof params['q'] === 'string' ? params['q'] : '',
   };
 }
@@ -46,6 +50,7 @@ export function toQueryParams(filters: TaskFilters): Params {
     priority: filters.priority,
     assignee: filters.assignee,
     overdue: filters.overdue ? 'true' : null,
+    label: filters.label,
     q: filters.search.trim() || null,
   };
 }
@@ -59,6 +64,7 @@ export function applyTaskFilters(tasks: readonly Task[], filters: TaskFilters, m
       (!filters.priority || task.priority === filters.priority) &&
       (!assignee || (assignee === 'none' ? task.assigneeId === null : task.assigneeId === assignee)) &&
       (!filters.overdue || task.isOverdue) &&
+      (!filters.label || task.labels.some((label) => label.id === filters.label)) &&
       (!search || task.title.toLocaleLowerCase().includes(search)),
   );
 }

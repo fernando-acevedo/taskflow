@@ -20,11 +20,12 @@ public sealed class TasksController : ApiControllerBase
         [FromQuery] TaskPriority? priority,
         [FromQuery] Guid? assigneeId,
         [FromQuery] string? search,
+        [FromQuery] Guid? labelId,
         [FromServices] ListTasksHandler handler,
         CancellationToken cancellationToken,
         [FromQuery] bool overdue = false) =>
         OkOrProblem(await handler.HandleAsync(
-            new ListTasksQuery(projectId, status, priority, assigneeId, overdue, search), cancellationToken));
+            new ListTasksQuery(projectId, status, priority, assigneeId, overdue, search, labelId), cancellationToken));
 
     [HttpGet("{taskId:guid}")]
     [ProducesResponseType<TaskDto>(StatusCodes.Status200OK)]
@@ -49,7 +50,7 @@ public sealed class TasksController : ApiControllerBase
         CancellationToken cancellationToken) =>
         CreatedOrProblem(
             await handler.HandleAsync(
-                new CreateTaskCommand(projectId, request.Title, request.Description, request.Priority, request.AssigneeId, request.DueDate),
+                new CreateTaskCommand(projectId, request.Title, request.Description, request.Priority, request.AssigneeId, request.DueDate, request.LabelIds),
                 cancellationToken),
             nameof(Get),
             task => new { projectId, taskId = task.Id });
@@ -68,7 +69,7 @@ public sealed class TasksController : ApiControllerBase
         CancellationToken cancellationToken) =>
         OkOrProblem(await handler.HandleAsync(
             new UpdateTaskCommand(
-                projectId, taskId, request.Title, request.Description, request.Priority, request.AssigneeId, request.DueDate, request.RowVersion),
+                projectId, taskId, request.Title, request.Description, request.Priority, request.AssigneeId, request.DueDate, request.RowVersion, request.LabelIds),
             cancellationToken));
 
     /// <summary>Moves the task to a column and position, as a Kanban drag and drop does.</summary>
@@ -103,7 +104,8 @@ public sealed record CreateTaskRequest(
     string? Description,
     TaskPriority Priority = TaskPriority.Medium,
     Guid? AssigneeId = null,
-    DateOnly? DueDate = null);
+    DateOnly? DueDate = null,
+    IReadOnlyList<Guid>? LabelIds = null);
 
 public sealed record UpdateTaskRequest(
     string Title,
@@ -111,6 +113,7 @@ public sealed record UpdateTaskRequest(
     TaskPriority Priority,
     Guid? AssigneeId,
     DateOnly? DueDate,
-    byte[] RowVersion);
+    byte[] RowVersion,
+    IReadOnlyList<Guid>? LabelIds = null);
 
 public sealed record MoveTaskRequest(TaskItemStatus Status, int Position, byte[] RowVersion);

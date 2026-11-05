@@ -11,12 +11,16 @@ import { MatSelectModule } from '@angular/material/select';
 import { TranslocoDirective } from '@jsverse/transloco';
 import { applyApiFieldErrors } from '../../../shared/data-access/api-field-errors';
 import { SaveFn } from '../../../shared/data-access/submission';
+import { Label } from '../../labels/data-access/labels-api.service';
+import { LabelChip } from '../../labels/ui/label-chip';
 import { ProjectMember } from '../../projects/data-access/projects-api.service';
 import { TASK_PRIORITIES, Task, TaskInput, TaskPriority } from '../data-access/tasks-api.service';
 
 export interface TaskFormData {
   readonly task: Task | null;
   readonly members: readonly ProjectMember[];
+  /** The project's labels. */
+  readonly labels: readonly Label[];
   readonly readOnly: boolean;
   readonly save: SaveFn<TaskInput>;
 }
@@ -46,6 +50,7 @@ export function localToday(now = new Date()): string {
     MatProgressBarModule,
     MatSelectModule,
     TranslocoDirective,
+    LabelChip,
   ],
   templateUrl: './task-form-dialog.html',
   styles: `
@@ -84,6 +89,7 @@ export class TaskFormDialog {
     priority: this.fb.control<TaskPriority>(this.data.task?.priority ?? 'Medium'),
     assigneeId: [this.data.task?.assigneeId ?? ''],
     dueDate: [this.data.task?.dueDate ?? ''],
+    labelIds: [this.data.task?.labels.map((label) => label.id) ?? []],
   });
 
   constructor() {
@@ -101,7 +107,7 @@ export class TaskFormDialog {
       this.form.markAllAsTouched();
       return;
     }
-    const { title, description, priority, assigneeId } = this.form.getRawValue();
+    const { title, description, priority, assigneeId, labelIds } = this.form.getRawValue();
     this.saving.set(true);
     this.data
       .save({
@@ -110,6 +116,7 @@ export class TaskFormDialog {
         priority,
         assigneeId: assigneeId || null,
         dueDate: dueDate || null,
+        labelIds,
       })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((error) => {

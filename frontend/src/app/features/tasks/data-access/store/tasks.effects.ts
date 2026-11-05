@@ -4,6 +4,7 @@ import { Store } from '@ngrx/store';
 import { EMPTY, catchError, concatMap, filter, map, of, switchMap, tap, withLatestFrom } from 'rxjs';
 import { ApiError, toApiError } from '../../../../core/http/api-error';
 import { Notifier } from '../../../../core/notifications/notifier';
+import { LabelsApiActions } from '../../../labels/data-access/store/labels.actions';
 import { TasksApiService } from '../tasks-api.service';
 import { TasksApiActions, TasksPageActions } from './tasks.actions';
 import { tasksFeature } from './tasks.feature';
@@ -11,7 +12,14 @@ import { tasksFeature } from './tasks.feature';
 export const loadTasks = createEffect(
   (actions$ = inject(Actions), store = inject(Store), api = inject(TasksApiService)) =>
     actions$.pipe(
-      ofType(TasksPageActions.opened, TasksApiActions.taskMoved, TasksApiActions.taskMoveFailed),
+      // Editing or deleting a label changes the labels each task carries.
+      ofType(
+        TasksPageActions.opened,
+        TasksApiActions.taskMoved,
+        TasksApiActions.taskMoveFailed,
+        LabelsApiActions.labelSaved,
+        LabelsApiActions.labelDeleted,
+      ),
       withLatestFrom(store.select(tasksFeature.selectProjectId)),
       map(([action, current]) => (action.type === TasksPageActions.opened.type ? action.projectId : current)),
       filter((projectId): projectId is string => projectId !== null),

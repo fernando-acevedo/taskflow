@@ -3,15 +3,23 @@ import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoDirective } from '@jsverse/transloco';
 import { LanguageService } from '../../../core/i18n/language.service';
+import { LabelChip } from '../../labels/ui/label-chip';
 import { Task } from '../data-access/tasks-api.service';
 
 /** A task as shown on the board: title, priority, assignee and due date. Presentational only. */
 @Component({
   selector: 'app-task-card',
-  imports: [DatePipe, MatIconModule, TranslocoDirective],
+  imports: [DatePipe, MatIconModule, TranslocoDirective, LabelChip],
   template: `
     <ng-container *transloco="let t; prefix: 'tasks'">
       <span class="title">{{ task().title }}</span>
+      @if (task().labels.length > 0) {
+        <span class="labels">
+          @for (label of task().labels; track label.id) {
+            <app-label-chip [label]="label" />
+          }
+        </span>
+      }
       <span class="details">
         <span class="priority" [attr.data-priority]="task().priority">{{ t('priorities.' + task().priority) }}</span>
         @if (task().dueDate; as due) {

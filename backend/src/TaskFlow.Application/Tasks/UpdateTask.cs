@@ -17,7 +17,8 @@ public sealed record UpdateTaskCommand(
     TaskPriority Priority,
     Guid? AssigneeId,
     DateOnly? DueDate,
-    byte[] RowVersion) : ITaskFields;
+    byte[] RowVersion,
+    IReadOnlyList<Guid>? LabelIds = null) : ITaskFields;
 
 /// <summary>Unlike creation, an update may keep a due date that has passed.</summary>
 public sealed class UpdateTaskValidator : AbstractValidator<UpdateTaskCommand>
@@ -50,7 +51,7 @@ public sealed class UpdateTaskHandler(
             return allowed.Error;
         }
 
-        var task = await db.Tasks.FirstOrDefaultAsync(
+        var task = await db.Tasks.Include(task => task.Labels).FirstOrDefaultAsync(
             task => task.Id == command.TaskId && task.ProjectId == command.ProjectId, cancellationToken);
         if (task is null)
         {
@@ -73,6 +74,12 @@ public sealed class UpdateTaskHandler(
         if (!updated.IsSuccess)
         {
             return updated.Error;
+        }
+
+        var labelled = await task.ApplyLabelsAsync(db, allowed.Value, command.LabelIds, cancellationToken);
+        if (!labelled.IsSuccess)
+        {
+            return labelled.Error;
         }
 
         await db.SaveChangesAsync(cancellationToken);

@@ -28,4 +28,10 @@
   <data name="Projects.AssigneeNotMember" xml:space="preserve"><value>El responsable debe ser miembro del proyecto.</value></data>
   <data name="Tasks.NotFound" xml:space="preserve"><value>No se encontró la tarea.</value></data>
   <data name="Concurrency.Stale" xml:space="preserve"><value>Otra persona modificó este elemento. Recárgalo e inténtalo de nuevo.</value></data>
+  <data name="Labels.NotFound" xml:space="preserve"><value>No se encontró la etiqueta.</value></data>
+  <data name="Labels.NameRequired" xml:space="preserve"><value>El nombre de la etiqueta es obligatorio.</value></data>
+  <data name="Labels.NameTooLong" xml:space="preserve"><value>El nombre de la etiqueta es demasiado largo.</value></data>
+  <data name="Labels.InvalidColor" xml:space="preserve"><value>El color debe ser un valor hexadecimal como #1A2B3C.</value></data>
+  <data name="Labels.NameTaken" xml:space="preserve"><value>El proyecto ya tiene una etiqueta con este nombre.</value></data>
+  <data name="Labels.NotInProject" xml:space="preserve"><value>Una o más etiquetas no pertenecen al proyecto.</value></data>
 </root>

@@ -21,6 +21,9 @@ internal sealed class TaskItemConfiguration : IEntityTypeConfiguration<TaskItem>
         builder.HasOne<ApplicationUser>().WithMany().HasForeignKey(task => task.AssigneeId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne<ApplicationUser>().WithMany().HasForeignKey(task => task.CreatedById).OnDelete(DeleteBehavior.Restrict);
 
+        builder.HasMany(task => task.Labels).WithMany().UsingEntity("TaskLabels");
+        builder.Navigation(task => task.Labels).UsePropertyAccessMode(PropertyAccessMode.Field);
+
         builder.HasIndex(task => new { task.ProjectId, task.Status, task.Position });
         builder.HasIndex(task => task.AssigneeId);
     }

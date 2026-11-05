@@ -185,6 +185,34 @@ namespace TaskFlow.Infrastructure.Persistence.Migrations
                     b.ToTable("Clients", (string)null);
                 });
 
+            modelBuilder.Entity("TaskFlow.Domain.Projects.Label", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .HasMaxLength(7)
+                        .IsUnicode(false)
+                        .HasColumnType("char(7)")
+                        .IsFixedLength();
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectId", "Name")
+                        .IsUnique();
+
+                    b.ToTable("Labels", (string)null);
+                });
+
             modelBuilder.Entity("TaskFlow.Domain.Projects.Project", b =>
                 {
                     b.Property<Guid>("Id")
@@ -385,6 +413,21 @@ namespace TaskFlow.Infrastructure.Persistence.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("TaskLabels", b =>
+                {
+                    b.Property<Guid>("LabelsId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("TaskItemId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("LabelsId", "TaskItemId");
+
+                    b.HasIndex("TaskItemId");
+
+                    b.ToTable("TaskLabels");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", null)
@@ -436,6 +479,15 @@ namespace TaskFlow.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("TaskFlow.Domain.Projects.Label", b =>
+                {
+                    b.HasOne("TaskFlow.Domain.Projects.Project", null)
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("TaskFlow.Domain.Projects.Project", b =>
                 {
                     b.HasOne("TaskFlow.Domain.Clients.Client", null)
@@ -477,6 +529,21 @@ namespace TaskFlow.Infrastructure.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("ProjectId")
                         .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TaskLabels", b =>
+                {
+                    b.HasOne("TaskFlow.Domain.Projects.Label", null)
+                        .WithMany()
+                        .HasForeignKey("LabelsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("TaskFlow.Domain.Tasks.TaskItem", null)
+                        .WithMany()
+                        .HasForeignKey("TaskItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 

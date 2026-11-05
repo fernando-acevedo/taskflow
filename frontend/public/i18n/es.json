@@ -172,6 +172,14 @@
     },
     "Concurrency": {
       "Stale": "Otra persona modificó esto mientras tanto. Lo recargamos; inténtalo de nuevo."
+    },
+    "Labels": {
+      "NotFound": "No se encontró la etiqueta. Puede que alguien la haya eliminado.",
+      "NameRequired": "Escribe un nombre para la etiqueta.",
+      "NameTooLong": "El nombre de la etiqueta puede tener hasta 40 caracteres.",
+      "InvalidColor": "Elige uno de los colores disponibles.",
+      "NameTaken": "Este proyecto ya tiene una etiqueta con ese nombre.",
+      "NotInProject": "Una de las etiquetas no pertenece a este proyecto."
     }
   },
   "clients": {
@@ -364,7 +372,10 @@
     "saved": "Tarea guardada",
     "deleted": "Tarea eliminada",
     "deleteTitle": "¿Eliminar esta tarea?",
-    "deleteMessage": "«{{ title }}» se eliminará para siempre."
+    "deleteMessage": "«{{ title }}» se eliminará para siempre.",
+    "labels": "Etiquetas",
+    "noLabels": "Este proyecto todavía no tiene etiquetas. Los responsables pueden crearlas en Ajustes.",
+    "anyLabel": "Cualquiera"
   },
   "dashboard": {
     "intro": "Esto es lo que necesita tu atención en tus proyectos.",
@@ -399,5 +410,26 @@
     "fair": "Aceptable",
     "good": "Buena",
     "strong": "Fuerte"
+  },
+  "labels": {
+    "title": "Etiquetas",
+    "empty": "Todavía no hay etiquetas. Crea algunas para agrupar las tareas del proyecto.",
+    "create": "Nueva etiqueta",
+    "createTitle": "Nueva etiqueta",
+    "editTitle": "Editar etiqueta",
+    "edit": "Editar etiqueta {{ name }}",
+    "delete": "Eliminar etiqueta {{ name }}",
+    "name": "Nombre",
+    "nameRule": "Escribe un nombre de hasta 40 caracteres.",
+    "color": "Color",
+    "preview": "Vista previa",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "created": "Etiqueta creada",
+    "saved": "Etiqueta guardada",
+    "deleted": "Etiqueta eliminada",
+    "deleteTitle": "¿Eliminar esta etiqueta?",
+    "deleteMessage": "«{{ name }}» se quitará de todas las tareas que la tengan.",
+    "deleteConfirm": "Eliminar"
   }
 }

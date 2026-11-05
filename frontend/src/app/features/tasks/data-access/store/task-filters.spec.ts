@@ -4,16 +4,17 @@ import { aTask } from './testing';
 const tasks = [
   aTask({ id: 'mine', title: 'Write copy', assigneeId: 'me-id', priority: 'High', status: 'Review' }),
   aTask({ id: 'theirs', title: 'Design logo', assigneeId: 'other-id', isOverdue: true }),
-  aTask({ id: 'nobody', title: 'Copy review', priority: 'High' }),
+  aTask({ id: 'nobody', title: 'Copy review', priority: 'High', labels: [{ id: 'l1', name: 'Bug', color: '#D32F2F' }] }),
 ];
 
 describe('task filters', () => {
   it('reads filters from the query string and ignores unknown values', () => {
-    expect(parseTaskFilters({ status: 'Review', priority: 'Urgent', assignee: 'me', overdue: 'true', q: 'copy' })).toEqual({
+    expect(parseTaskFilters({ status: 'Review', priority: 'Urgent', assignee: 'me', overdue: 'true', label: 'l1', q: 'copy' })).toEqual({
       status: 'Review',
       priority: null,
       assignee: 'me',
       overdue: true,
+      label: 'l1',
       search: 'copy',
     });
     expect(parseTaskFilters({})).toEqual(NO_FILTERS);
@@ -25,6 +26,7 @@ describe('task filters', () => {
       priority: 'High',
       assignee: null,
       overdue: null,
+      label: null,
       q: null,
     });
   });
@@ -38,11 +40,14 @@ describe('task filters', () => {
     expect(ids({ assignee: 'none' })).toEqual(['nobody']);
     expect(ids({ priority: 'High', search: 'COPY' })).toEqual(['mine', 'nobody']);
     expect(ids({ overdue: true })).toEqual(['theirs']);
+    expect(ids({ label: 'l1' })).toEqual(['nobody']);
+    expect(ids({ label: 'other' })).toEqual([]);
     expect(ids({ status: 'Review', assignee: 'other-id' })).toEqual([]);
   });
 
   it('knows when any filter is active', () => {
     expect(hasActiveFilters(NO_FILTERS)).toBe(false);
     expect(hasActiveFilters({ ...NO_FILTERS, overdue: true })).toBe(true);
+    expect(hasActiveFilters({ ...NO_FILTERS, label: 'l1' })).toBe(true);
   });
 });

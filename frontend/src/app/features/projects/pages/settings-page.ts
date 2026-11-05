@@ -8,6 +8,7 @@ import { TranslocoDirective } from '@jsverse/transloco';
 import { Store } from '@ngrx/store';
 import { filter } from 'rxjs';
 import { LanguageService } from '../../../core/i18n/language.service';
+import { LabelsManager } from '../../labels/ui/labels-manager';
 import { SaveFn, Submissions, nextSubmissionId } from '../../../shared/data-access/submission';
 import { confirm } from '../../../shared/ui/confirm-dialog';
 import { ProjectInput } from '../data-access/projects-api.service';
@@ -18,7 +19,7 @@ import { ProjectFormData, ProjectFormDialog } from '../ui/project-form-dialog';
 /** Owner-only: edit the project's details, archive or restore it. */
 @Component({
   selector: 'app-settings-page',
-  imports: [DatePipe, MatButtonModule, MatCardModule, MatIconModule, TranslocoDirective],
+  imports: [DatePipe, MatButtonModule, MatCardModule, MatIconModule, TranslocoDirective, LabelsManager],
   template: `
     <ng-container *transloco="let t; prefix: 'projects'">
       @if (project(); as current) {
@@ -55,6 +56,9 @@ import { ProjectFormData, ProjectFormDialog } from '../ui/project-form-dialog';
             </mat-card-actions>
           }
         </mat-card>
+        @if (isOwner() && !current.isArchived) {
+          <app-labels-manager class="labels" />
+        }
       }
     </ng-container>
   `,
@@ -62,6 +66,9 @@ import { ProjectFormData, ProjectFormDialog } from '../ui/project-form-dialog';
     :host {
       display: block;
       max-width: 720px;
+    }
+    .labels {
+      margin-top: 16px;
     }
     .facts {
       display: grid;

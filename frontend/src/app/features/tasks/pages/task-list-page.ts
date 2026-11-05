@@ -11,6 +11,8 @@ import { Store } from '@ngrx/store';
 import { LanguageService } from '../../../core/i18n/language.service';
 import { EmptyState } from '../../../shared/ui/empty-state';
 import { SearchField } from '../../../shared/ui/search-field';
+import { labelsFeature } from '../../labels/data-access/store/labels.feature';
+import { LabelChip } from '../../labels/ui/label-chip';
 import { projectsFeature } from '../../projects/data-access/store/projects.feature';
 import { TASK_PRIORITIES, TASK_STATUSES, Task } from '../data-access/tasks-api.service';
 import { TaskFilters, hasActiveFilters, toQueryParams } from '../data-access/store/task-filters';
@@ -30,6 +32,7 @@ import { TaskEditor } from '../ui/task-editor';
     TranslocoDirective,
     EmptyState,
     SearchField,
+    LabelChip,
   ],
   templateUrl: './task-list-page.html',
   styleUrl: './task-list-page.scss',
@@ -49,6 +52,7 @@ export class TaskListPage {
   protected readonly total = this.store.selectSignal(tasksFeature.selectTotal);
   protected readonly loading = this.store.selectSignal(tasksFeature.selectLoading);
   protected readonly canEdit = this.store.selectSignal(projectsFeature.selectCanEditTasks);
+  protected readonly labels = this.store.selectSignal(labelsFeature.selectAll);
   protected readonly members = this.store.selectSignal(projectsFeature.selectMembers);
 
   protected readonly filtered = computed(() => hasActiveFilters(this.filters()));
