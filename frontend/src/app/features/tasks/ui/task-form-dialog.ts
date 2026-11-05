@@ -12,6 +12,7 @@ import { TranslocoDirective } from '@jsverse/transloco';
 import { applyApiFieldErrors } from '../../../shared/data-access/api-field-errors';
 import { SaveFn } from '../../../shared/data-access/submission';
 import { Label } from '../../labels/data-access/labels-api.service';
+import { TaskHistory } from '../../activity/ui/task-history';
 import { TaskComments } from '../../comments/ui/task-comments';
 import { LabelChip } from '../../labels/ui/label-chip';
 import { ProjectMember } from '../../projects/data-access/projects-api.service';
@@ -53,6 +54,7 @@ export function localToday(now = new Date()): string {
     TranslocoDirective,
     LabelChip,
     TaskComments,
+    TaskHistory,
   ],
   templateUrl: './task-form-dialog.html',
   styles: `

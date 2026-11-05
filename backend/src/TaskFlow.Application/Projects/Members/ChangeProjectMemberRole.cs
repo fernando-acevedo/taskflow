@@ -1,6 +1,8 @@
 using FluentValidation;
 using TaskFlow.Application.Abstractions;
+using TaskFlow.Application.Activity;
 using TaskFlow.Application.Common;
+using TaskFlow.Domain.Activity;
 using TaskFlow.Domain.Common;
 using TaskFlow.Domain.Projects;
 
@@ -21,6 +23,7 @@ public sealed class ChangeProjectMemberRoleHandler(
     IAppDbContext db,
     ProjectAccess access,
     IValidator<ChangeProjectMemberRoleCommand> validator,
+    ActivityLog activity,
     TimeProvider time)
 {
     public async Task<Result> HandleAsync(ChangeProjectMemberRoleCommand command, CancellationToken cancellationToken)
@@ -37,10 +40,17 @@ public sealed class ChangeProjectMemberRoleHandler(
             return allowed;
         }
 
+        var before = allowed.Value.RoleOf(command.UserId);
         var changed = allowed.Value.ChangeMemberRole(command.UserId, command.Role, time.GetUtcNow());
         if (!changed.IsSuccess)
         {
             return changed;
+        }
+
+        if (before != command.Role)
+        {
+            activity.Record(
+                command.ProjectId, ActivityType.MemberRoleChanged, new { memberId = command.UserId, from = before, to = command.Role });
         }
 
         await db.SaveChangesAsync(cancellationToken);

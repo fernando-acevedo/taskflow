@@ -75,6 +75,7 @@
 
     @if (data.task) {
       <app-task-comments [projectId]="data.task.projectId" [taskId]="data.task.id" />
+      <app-task-history [projectId]="data.task.projectId" [taskId]="data.task.id" />
     }
   </mat-dialog-content>
 

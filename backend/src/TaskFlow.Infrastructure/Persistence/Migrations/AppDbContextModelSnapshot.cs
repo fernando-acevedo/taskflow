@@ -153,6 +153,52 @@ namespace TaskFlow.Infrastructure.Persistence.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("TaskFlow.Domain.Activity.ActivityEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ActorId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Changes")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset>("OccurredAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<long>("Sequence")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Sequence"));
+
+                    b.Property<Guid?>("TaskItemId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(40)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActorId");
+
+                    b.HasIndex("ProjectId", "OccurredAt", "Sequence")
+                        .IsDescending(false, true, true);
+
+                    b.HasIndex("TaskItemId", "OccurredAt", "Sequence")
+                        .IsDescending(false, true, true);
+
+                    b.ToTable("ActivityEntries", (string)null);
+                });
+
             modelBuilder.Entity("TaskFlow.Domain.Clients.Client", b =>
                 {
                     b.Property<Guid>("Id")
@@ -522,6 +568,21 @@ namespace TaskFlow.Infrastructure.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TaskFlow.Domain.Activity.ActivityEntry", b =>
+                {
+                    b.HasOne("TaskFlow.Infrastructure.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("ActorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TaskFlow.Domain.Projects.Project", null)
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 

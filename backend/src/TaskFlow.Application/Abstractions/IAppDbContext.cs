@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using TaskFlow.Domain.Activity;
 using TaskFlow.Domain.Clients;
 using TaskFlow.Domain.Projects;
 using TaskFlow.Domain.Tasks;
@@ -23,6 +24,8 @@ public interface IAppDbContext
 
     /// <summary>Users mentioned in task comments, for notifications.</summary>
     DbSet<TaskCommentMention> TaskCommentMentions { get; }
+
+    DbSet<ActivityEntry> ActivityEntries { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

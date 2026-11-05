@@ -1,7 +1,9 @@
 using FluentValidation;
 using TaskFlow.Application.Abstractions;
+using TaskFlow.Application.Activity;
 using TaskFlow.Application.Common;
 using TaskFlow.Application.Users;
+using TaskFlow.Domain.Activity;
 using TaskFlow.Domain.Common;
 using TaskFlow.Domain.Projects;
 
@@ -24,6 +26,7 @@ public sealed class AddProjectMemberHandler(
     ProjectAccess access,
     IIdentityService identity,
     IValidator<AddProjectMemberCommand> validator,
+    ActivityLog activity,
     TimeProvider time)
 {
     public async Task<Result<ProjectMemberDto>> HandleAsync(AddProjectMemberCommand command, CancellationToken cancellationToken)
@@ -53,6 +56,7 @@ public sealed class AddProjectMemberHandler(
             return added.Error;
         }
 
+        activity.Record(project.Id, ActivityType.MemberAdded, new { memberId = user.Id, role = command.Role });
         await db.SaveChangesAsync(cancellationToken);
 
         var member = project.Members.Single(member => member.UserId == user.Id);

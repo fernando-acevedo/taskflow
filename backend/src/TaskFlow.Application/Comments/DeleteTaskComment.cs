@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using TaskFlow.Application.Abstractions;
+using TaskFlow.Application.Activity;
 using TaskFlow.Application.Projects;
+using TaskFlow.Domain.Activity;
 using TaskFlow.Domain.Common;
 using TaskFlow.Domain.Tasks;
 
@@ -9,7 +11,7 @@ namespace TaskFlow.Application.Comments;
 public sealed record DeleteTaskCommentCommand(Guid ProjectId, Guid TaskId, Guid CommentId);
 
 /// <summary>The author, or an owner of the project, deletes a comment.</summary>
-public sealed class DeleteTaskCommentHandler(IAppDbContext db, ProjectAccess access, ICurrentUser currentUser)
+public sealed class DeleteTaskCommentHandler(IAppDbContext db, ProjectAccess access, ICurrentUser currentUser, ActivityLog activity)
 {
     public async Task<Result> HandleAsync(DeleteTaskCommentCommand command, CancellationToken cancellationToken)
     {
@@ -36,6 +38,12 @@ public sealed class DeleteTaskCommentHandler(IAppDbContext db, ProjectAccess acc
             return deletable;
         }
 
+        var taskTitle = await db.Tasks
+            .Where(task => task.Id == command.TaskId)
+            .Select(task => task.Title)
+            .FirstOrDefaultAsync(cancellationToken);
+        activity.Record(
+            command.ProjectId, ActivityType.CommentDeleted, new { taskTitle, commentId = comment.Id }, command.TaskId);
         db.TaskComments.Remove(comment);
         try
         {

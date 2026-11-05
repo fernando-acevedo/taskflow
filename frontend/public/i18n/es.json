@@ -300,7 +300,8 @@
       "list": "Lista",
       "members": "Miembros",
       "settings": "Configuración",
-      "overview": "Resumen"
+      "overview": "Resumen",
+      "activity": "Actividad"
     }
   },
   "members": {
@@ -475,5 +476,43 @@
     "deleted": "Comentario eliminado.",
     "deleteTitle": "¿Eliminar este comentario?",
     "deleteMessage": "El comentario de {{ author }} se eliminará para todos."
+  },
+  "activity": {
+    "title": "Actividad",
+    "history": "Historial",
+    "loading": "Cargando…",
+    "loadFailed": "No se pudo cargar la actividad.",
+    "empty": "Todavía no hay actividad.",
+    "loadMore": "Cargar más",
+    "none": "ninguna",
+    "generic": "{{ actor }} hizo algo ({{ type }})",
+    "types": {
+      "TaskCreated": "{{ actor }} creó «{{ task }}»",
+      "TaskUpdated": "{{ actor }} actualizó «{{ task }}»",
+      "TaskAssigned": "{{ actor }} asignó «{{ task }}» a {{ to }}",
+      "TaskReassigned": "{{ actor }} reasignó «{{ task }}» de {{ from }} a {{ to }}",
+      "TaskUnassigned": "{{ actor }} quitó la asignación de «{{ task }}»",
+      "TaskMoved": "{{ actor }} movió «{{ task }}» de {{ from }} a {{ to }}",
+      "TaskDeleted": "{{ actor }} eliminó «{{ task }}»",
+      "CommentAdded": "{{ actor }} comentó en «{{ task }}»",
+      "CommentEdited": "{{ actor }} editó un comentario en «{{ task }}»",
+      "CommentDeleted": "{{ actor }} eliminó un comentario en «{{ task }}»",
+      "MemberAdded": "{{ actor }} agregó a {{ member }} como {{ role }}",
+      "MemberRemoved": "{{ actor }} quitó a {{ member }} ({{ role }})",
+      "MemberRoleChanged": "{{ actor }} cambió el rol de {{ member }} de {{ from }} a {{ to }}",
+      "LabelCreated": "{{ actor }} creó la etiqueta «{{ label }}»",
+      "LabelRenamed": "{{ actor }} renombró la etiqueta «{{ from }}» a «{{ to }}»",
+      "LabelDeleted": "{{ actor }} eliminó la etiqueta «{{ label }}»"
+    },
+    "changes": {
+      "title": "Título: «{{ from }}» → «{{ to }}»",
+      "priority": "Prioridad: {{ from }} → {{ to }}",
+      "dueDate": "Cambió la fecha límite de {{ from }} a {{ to }}",
+      "dueDateSet": "Puso la fecha límite en {{ to }}",
+      "dueDateCleared": "Quitó la fecha límite",
+      "description": "Descripción editada",
+      "labelsAdded": "Etiquetas agregadas: {{ labels }}",
+      "labelsRemoved": "Etiquetas quitadas: {{ labels }}"
+    }
   }
 }
