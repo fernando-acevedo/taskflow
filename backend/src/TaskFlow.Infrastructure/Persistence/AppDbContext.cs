@@ -20,6 +20,10 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
 
     public DbSet<TaskItem> Tasks => Set<TaskItem>();
 
+    public DbSet<TaskComment> TaskComments => Set<TaskComment>();
+
+    public DbSet<TaskCommentMention> TaskCommentMentions => Set<TaskCommentMention>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);

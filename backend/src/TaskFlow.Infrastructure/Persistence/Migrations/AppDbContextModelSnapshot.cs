@@ -274,6 +274,52 @@ namespace TaskFlow.Infrastructure.Persistence.Migrations
                     b.ToTable("ProjectMembers", (string)null);
                 });
 
+            modelBuilder.Entity("TaskFlow.Domain.Tasks.TaskComment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AuthorId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("EditedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid>("TaskItemId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorId");
+
+                    b.HasIndex("TaskItemId", "CreatedAt");
+
+                    b.ToTable("TaskComments", (string)null);
+                });
+
+            modelBuilder.Entity("TaskFlow.Domain.Tasks.TaskCommentMention", b =>
+                {
+                    b.Property<Guid>("TaskCommentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("TaskCommentId", "UserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("TaskCommentMentions", (string)null);
+                });
+
             modelBuilder.Entity("TaskFlow.Domain.Tasks.TaskItem", b =>
                 {
                     b.Property<Guid>("Id")
@@ -512,6 +558,36 @@ namespace TaskFlow.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("TaskFlow.Domain.Tasks.TaskComment", b =>
+                {
+                    b.HasOne("TaskFlow.Infrastructure.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TaskFlow.Domain.Tasks.TaskItem", null)
+                        .WithMany()
+                        .HasForeignKey("TaskItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TaskFlow.Domain.Tasks.TaskCommentMention", b =>
+                {
+                    b.HasOne("TaskFlow.Domain.Tasks.TaskComment", null)
+                        .WithMany("Mentions")
+                        .HasForeignKey("TaskCommentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("TaskFlow.Infrastructure.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("TaskFlow.Domain.Tasks.TaskItem", b =>
                 {
                     b.HasOne("TaskFlow.Infrastructure.Identity.ApplicationUser", null)
@@ -550,6 +626,11 @@ namespace TaskFlow.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("TaskFlow.Domain.Projects.Project", b =>
                 {
                     b.Navigation("Members");
+                });
+
+            modelBuilder.Entity("TaskFlow.Domain.Tasks.TaskComment", b =>
+                {
+                    b.Navigation("Mentions");
                 });
 #pragma warning restore 612, 618
         }

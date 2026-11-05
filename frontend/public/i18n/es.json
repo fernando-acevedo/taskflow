@@ -180,6 +180,14 @@
       "InvalidColor": "Elige uno de los colores disponibles.",
       "NameTaken": "Este proyecto ya tiene una etiqueta con ese nombre.",
       "NotInProject": "Una de las etiquetas no pertenece a este proyecto."
+    },
+    "TaskComments": {
+      "NotFound": "No se encontró el comentario. Puede que alguien lo haya eliminado.",
+      "BodyRequired": "Escribe algo antes de publicar.",
+      "BodyTooLong": "Un comentario puede tener hasta 4000 caracteres.",
+      "MentionNotMember": "Solo puedes mencionar a miembros de este proyecto.",
+      "NotAuthor": "Solo el autor puede editar un comentario.",
+      "NotAuthorOrManager": "Solo el autor o un propietario del proyecto puede eliminar un comentario."
     }
   },
   "clients": {
@@ -443,5 +451,29 @@
       "pink": "Rosa",
       "gray": "Gris"
     }
+  },
+  "comments": {
+    "title": "Comentarios",
+    "loading": "Cargando comentarios…",
+    "loadFailed": "No se pudieron cargar los comentarios.",
+    "empty": "Todavía no hay comentarios.",
+    "readOnly": "No puedes comentar en esta tarea.",
+    "newComment": "Añadir un comentario",
+    "editComment": "Editar comentario",
+    "post": "Comentar",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "edit": "Editar comentario",
+    "delete": "Eliminar comentario",
+    "edited": "(editado)",
+    "mentionHint": "Escribe @ para mencionar a un miembro.",
+    "mentionList": "Miembros a mencionar",
+    "bodyRequired": "Escribe algo antes de publicar.",
+    "bodyTooLong": "Un comentario puede tener hasta {{ max }} caracteres.",
+    "created": "Comentario publicado.",
+    "saved": "Comentario guardado.",
+    "deleted": "Comentario eliminado.",
+    "deleteTitle": "¿Eliminar este comentario?",
+    "deleteMessage": "El comentario de {{ author }} se eliminará para todos."
   }
 }

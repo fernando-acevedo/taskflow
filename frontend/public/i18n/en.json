@@ -180,6 +180,14 @@
       "InvalidColor": "Choose one of the available colors.",
       "NameTaken": "This project already has a label with this name.",
       "NotInProject": "One of the labels doesn’t belong to this project."
+    },
+    "TaskComments": {
+      "NotFound": "The comment was not found. Someone may have deleted it.",
+      "BodyRequired": "Write something before posting.",
+      "BodyTooLong": "A comment can have up to 4000 characters.",
+      "MentionNotMember": "You can only mention members of this project.",
+      "NotAuthor": "Only the author can edit a comment.",
+      "NotAuthorOrManager": "Only the author or a project owner can delete a comment."
     }
   },
   "clients": {
@@ -443,5 +451,29 @@
       "pink": "Pink",
       "gray": "Gray"
     }
+  },
+  "comments": {
+    "title": "Comments",
+    "loading": "Loading comments…",
+    "loadFailed": "The comments could not be loaded.",
+    "empty": "No comments yet.",
+    "readOnly": "You can’t comment on this task.",
+    "newComment": "Add a comment",
+    "editComment": "Edit comment",
+    "post": "Comment",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit comment",
+    "delete": "Delete comment",
+    "edited": "(edited)",
+    "mentionHint": "Type @ to mention a member.",
+    "mentionList": "Members to mention",
+    "bodyRequired": "Write something before posting.",
+    "bodyTooLong": "A comment can have up to {{ max }} characters.",
+    "created": "Comment posted.",
+    "saved": "Comment saved.",
+    "deleted": "Comment deleted.",
+    "deleteTitle": "Delete this comment?",
+    "deleteMessage": "The comment by {{ author }} will be deleted for everyone."
   }
 }

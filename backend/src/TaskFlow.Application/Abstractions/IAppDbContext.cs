@@ -19,5 +19,10 @@ public interface IAppDbContext
 
     DbSet<TaskItem> Tasks { get; }
 
+    DbSet<TaskComment> TaskComments { get; }
+
+    /// <summary>Users mentioned in task comments, for notifications.</summary>
+    DbSet<TaskCommentMention> TaskCommentMentions { get; }
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
