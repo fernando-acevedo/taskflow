@@ -57,3 +57,7 @@ tbody tr:last-child td {
   color: var(--mat-sys-error);
   font-weight: 600;
 }
+
+.label-cell app-label-chip {
+  margin: 0 4px 4px 0;
+}

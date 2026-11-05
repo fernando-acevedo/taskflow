@@ -14,7 +14,8 @@ public sealed record CreateTaskCommand(
     string? Description,
     TaskPriority Priority = TaskPriority.Medium,
     Guid? AssigneeId = null,
-    DateOnly? DueDate = null) : ITaskFields;
+    DateOnly? DueDate = null,
+    IReadOnlyList<Guid>? LabelIds = null) : ITaskFields;
 
 public sealed class CreateTaskValidator : AbstractValidator<CreateTaskCommand>
 {
@@ -66,6 +67,12 @@ public sealed class CreateTaskHandler(
         if (!created.IsSuccess)
         {
             return created.Error;
+        }
+
+        var labelled = await created.Value.ApplyLabelsAsync(db, allowed.Value, command.LabelIds, cancellationToken);
+        if (!labelled.IsSuccess)
+        {
+            return labelled.Error;
         }
 
         db.Tasks.Add(created.Value);

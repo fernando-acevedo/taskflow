@@ -15,7 +15,8 @@ public sealed record ListTasksQuery(
     TaskPriority? Priority = null,
     Guid? AssigneeId = null,
     bool Overdue = false,
-    string? Search = null);
+    string? Search = null,
+    Guid? LabelId = null);
 
 public sealed class ListTasksValidator : AbstractValidator<ListTasksQuery>
 {
@@ -62,6 +63,11 @@ public sealed class ListTasksHandler(IAppDbContext db, ProjectAccess access, IVa
         if (query.AssigneeId is { } assigneeId)
         {
             tasks = tasks.Where(task => task.AssigneeId == assigneeId);
+        }
+
+        if (query.LabelId is { } labelId)
+        {
+            tasks = tasks.Where(task => task.Labels.Any(label => label.Id == labelId));
         }
 
         if (query.Overdue)

@@ -3,6 +3,8 @@ import { provideEffects } from '@ngrx/effects';
 import { provideState } from '@ngrx/store';
 import * as projectDashboardEffects from '../dashboard/data-access/store/project-dashboard.effects';
 import { projectDashboardFeature } from '../dashboard/data-access/store/project-dashboard.feature';
+import * as labelsEffects from '../labels/data-access/store/labels.effects';
+import { labelsFeature } from '../labels/data-access/store/labels.feature';
 import * as tasksEffects from '../tasks/data-access/store/tasks.effects';
 import { tasksFeature } from '../tasks/data-access/store/tasks.feature';
 import { TaskEditor } from '../tasks/ui/task-editor';
@@ -18,6 +20,8 @@ export const projectsRoutes: Routes = [
       provideEffects(projectsEffects),
       provideState(tasksFeature),
       provideEffects(tasksEffects),
+      provideState(labelsFeature),
+      provideEffects(labelsEffects),
       provideState(projectDashboardFeature),
       provideEffects(projectDashboardEffects),
       TaskEditor,

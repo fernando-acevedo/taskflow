@@ -8,6 +8,7 @@ import { TranslocoDirective } from '@jsverse/transloco';
 import { Store } from '@ngrx/store';
 import { Notifier } from '../../../core/notifications/notifier';
 import { EmptyState } from '../../../shared/ui/empty-state';
+import { LabelsPageActions } from '../../labels/data-access/store/labels.actions';
 import { TasksPageActions } from '../../tasks/data-access/store/tasks.actions';
 import { ProjectPageActions } from '../data-access/store/projects.actions';
 import { projectsFeature } from '../data-access/store/projects.feature';
@@ -55,11 +56,13 @@ export class ProjectPage {
       const projectId = this.projectId();
       this.store.dispatch(ProjectPageActions.opened({ projectId }));
       this.store.dispatch(TasksPageActions.opened({ projectId }));
+      this.store.dispatch(LabelsPageActions.opened({ projectId }));
     });
   }
 
   protected reload(): void {
     this.store.dispatch(ProjectPageActions.opened({ projectId: this.projectId() }));
     this.store.dispatch(TasksPageActions.opened({ projectId: this.projectId() }));
+    this.store.dispatch(LabelsPageActions.opened({ projectId: this.projectId() }));
   }
 }

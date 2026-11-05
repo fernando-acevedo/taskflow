@@ -56,6 +56,21 @@
           }
         </mat-form-field>
       </div>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ t('labels') }}</mat-label>
+        <mat-select formControlName="labelIds" multiple>
+          @for (label of data.labels; track label.id) {
+            <mat-option [value]="label.id"><app-label-chip [label]="label" /></mat-option>
+          }
+        </mat-select>
+        @if (data.labels.length === 0) {
+          <mat-hint>{{ t('noLabels') }}</mat-hint>
+        }
+        @if (form.controls.labelIds.getError('api'); as message) {
+          <mat-error>{{ message }}</mat-error>
+        }
+      </mat-form-field>
     </mat-dialog-content>
 
     <mat-dialog-actions>

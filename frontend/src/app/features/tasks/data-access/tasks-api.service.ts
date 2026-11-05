@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
+import { Label } from '../../labels/data-access/labels-api.service';
 
 export const TASK_STATUSES = ['ToDo', 'InProgress', 'Review', 'Done'] as const;
 export type TaskStatus = (typeof TASK_STATUSES)[number];
@@ -19,6 +20,7 @@ export interface Task {
   readonly assigneeId: string | null;
   /** `yyyy-MM-dd`. */
   readonly dueDate: string | null;
+  readonly labels: readonly Label[];
   readonly isOverdue: boolean;
   readonly position: number;
   readonly createdById: string;
@@ -34,6 +36,8 @@ export interface TaskInput {
   readonly priority: TaskPriority;
   readonly assigneeId: string | null;
   readonly dueDate: string | null;
+  /** The complete list of the task's labels. */
+  readonly labelIds: readonly string[];
 }
 
 @Injectable({ providedIn: 'root' })

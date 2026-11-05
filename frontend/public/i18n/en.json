@@ -172,6 +172,14 @@
     },
     "Concurrency": {
       "Stale": "Someone else changed this in the meantime. We reloaded it; try again."
+    },
+    "Labels": {
+      "NotFound": "The label was not found. Someone may have deleted it.",
+      "NameRequired": "Enter a name for the label.",
+      "NameTooLong": "The label name can have up to 40 characters.",
+      "InvalidColor": "Choose one of the available colors.",
+      "NameTaken": "This project already has a label with this name.",
+      "NotInProject": "One of the labels doesn’t belong to this project."
     }
   },
   "clients": {
@@ -364,7 +372,10 @@
     "saved": "Task saved",
     "deleted": "Task deleted",
     "deleteTitle": "Delete this task?",
-    "deleteMessage": "“{{ title }}” will be deleted permanently."
+    "deleteMessage": "“{{ title }}” will be deleted permanently.",
+    "labels": "Labels",
+    "noLabels": "This project has no labels yet. Owners can create them in Settings.",
+    "anyLabel": "Any label"
   },
   "dashboard": {
     "intro": "Here is what needs your attention across your projects.",
@@ -399,5 +410,26 @@
     "fair": "Fair",
     "good": "Good",
     "strong": "Strong"
+  },
+  "labels": {
+    "title": "Labels",
+    "empty": "No labels yet. Create some to group the tasks of this project.",
+    "create": "New label",
+    "createTitle": "New label",
+    "editTitle": "Edit label",
+    "edit": "Edit label {{ name }}",
+    "delete": "Delete label {{ name }}",
+    "name": "Name",
+    "nameRule": "Enter a name of up to 40 characters.",
+    "color": "Color",
+    "preview": "Preview",
+    "cancel": "Cancel",
+    "save": "Save",
+    "created": "Label created",
+    "saved": "Label saved",
+    "deleted": "Label deleted",
+    "deleteTitle": "Delete this label?",
+    "deleteMessage": "“{{ name }}” will be removed from every task that has it.",
+    "deleteConfirm": "Delete"
   }
 }

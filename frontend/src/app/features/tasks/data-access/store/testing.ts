@@ -10,6 +10,7 @@ export function aTask(overrides: Partial<Task> & Pick<Task, 'id'>): Task {
     priority: 'Medium',
     assigneeId: null,
     dueDate: null,
+    labels: [],
     isOverdue: false,
     position: 0,
     createdById: 'u1',

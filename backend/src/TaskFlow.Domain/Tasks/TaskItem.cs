@@ -28,6 +28,8 @@ public sealed class TaskItem
     public const int TitleMaxLength = 200;
     public const int DescriptionMaxLength = 4000;
 
+    private readonly List<Label> _labels = [];
+
     private TaskItem(Guid id, Guid projectId, string title, Guid createdById, DateTimeOffset createdAt)
     {
         Id = id;
@@ -68,6 +70,8 @@ public sealed class TaskItem
 
     /// <summary>Optimistic concurrency token, maintained by the database.</summary>
     public byte[] RowVersion { get; private set; } = [];
+
+    public IReadOnlyCollection<Label> Labels => _labels;
 
     /// <summary>Creates a To Do task at the given position of that column.</summary>
     public static Result<TaskItem> Create(
@@ -142,6 +146,34 @@ public sealed class TaskItem
         }
 
         Position = position;
+        return Result.Success();
+    }
+
+    /// <summary>Replaces the task's labels; all of them must belong to the task's project.</summary>
+    public Result SetLabels(Project project, IReadOnlyCollection<Label> labels)
+    {
+        ArgumentNullException.ThrowIfNull(labels);
+        var check = CheckProject(project, AssigneeId);
+        if (!check.IsSuccess)
+        {
+            return check;
+        }
+
+        if (labels.Any(label => label.ProjectId != ProjectId))
+        {
+            return LabelErrors.NotInProject;
+        }
+
+        var wanted = labels.Select(label => label.Id).ToHashSet();
+        _labels.RemoveAll(label => !wanted.Contains(label.Id));
+        foreach (var label in labels)
+        {
+            if (_labels.TrueForAll(existing => existing.Id != label.Id))
+            {
+                _labels.Add(label);
+            }
+        }
+
         return Result.Success();
     }
 

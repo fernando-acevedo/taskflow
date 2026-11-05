@@ -1,0 +1,57 @@
+using FluentValidation;
+using Microsoft.EntityFrameworkCore;
+using TaskFlow.Application.Abstractions;
+using TaskFlow.Application.Common;
+using TaskFlow.Application.Projects;
+using TaskFlow.Domain.Common;
+using TaskFlow.Domain.Projects;
+
+namespace TaskFlow.Application.Labels;
+
+public sealed record UpdateLabelCommand(Guid ProjectId, Guid LabelId, string Name, string Color);
+
+public sealed class UpdateLabelValidator : AbstractValidator<UpdateLabelCommand>
+{
+    public UpdateLabelValidator()
+    {
+        RuleFor(command => command.Name).NotEmpty().MaximumLength(Label.NameMaxLength);
+        RuleFor(command => command.Color).Must(Label.IsValidColor).WithMessage("The color must be a hex value like #1A2B3C.");
+    }
+}
+
+public sealed class UpdateLabelHandler(
+    IAppDbContext db,
+    ProjectAccess access,
+    IValidator<UpdateLabelCommand> validator)
+{
+    public async Task<Result<LabelDto>> HandleAsync(UpdateLabelCommand command, CancellationToken cancellationToken)
+    {
+        var validation = await validator.ValidateAsync(command, cancellationToken);
+        if (!validation.IsValid)
+        {
+            return validation.ToError();
+        }
+
+        var allowed = await access.GetAsync(command.ProjectId, ProjectAccessLevel.Manage, cancellationToken);
+        if (!allowed.IsSuccess)
+        {
+            return allowed.Error;
+        }
+
+        var labels = await db.Labels.Where(label => label.ProjectId == command.ProjectId).ToListAsync(cancellationToken);
+        var label = labels.Find(label => label.Id == command.LabelId);
+        if (label is null)
+        {
+            return LabelErrors.NotFound;
+        }
+
+        var updated = label.Update(allowed.Value, command.Name, command.Color, labels);
+        if (!updated.IsSuccess)
+        {
+            return updated.Error;
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+        return label.ToDto();
+    }
+}
