@@ -35,7 +35,7 @@
 
     <nav mat-tab-nav-bar [tabPanel]="panel" [attr.aria-label]="t('project.tabs.label')">
       @for (tab of tabs; track tab.path) {
-        @if (tab.path !== 'settings' || isOwner()) {
+        @if ((tab.path !== 'settings' && tab.path !== 'hours') || isOwner()) {
           <a mat-tab-link [routerLink]="tab.path" routerLinkActive #active="routerLinkActive" [active]="active.isActive" [attr.aria-label]="t(tab.label)">
             <mat-icon aria-hidden="true">{{ tab.icon }}</mat-icon>
             <span class="tab-label">{{ t(tab.label) }}</span>

@@ -23,6 +23,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
 
     public DbSet<TaskComment> TaskComments => Set<TaskComment>();
 
+    public DbSet<TimeEntry> TimeEntries => Set<TimeEntry>();
+
     public DbSet<TaskCommentMention> TaskCommentMentions => Set<TaskCommentMention>();
 
     public DbSet<ActivityEntry> ActivityEntries => Set<ActivityEntry>();

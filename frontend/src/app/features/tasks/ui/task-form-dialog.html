@@ -58,6 +58,18 @@
       </div>
 
       <mat-form-field appearance="outline">
+        <mat-label>{{ t('estimate') }}</mat-label>
+        <input matInput formControlName="estimatedMinutes" inputmode="decimal" autocomplete="off" />
+        @if (form.controls.estimatedMinutes.getError('api'); as message) {
+          <mat-error>{{ message }}</mat-error>
+        } @else if (form.controls.estimatedMinutes.hasError('duration')) {
+          <mat-error>{{ t('estimateRule') }}</mat-error>
+        } @else {
+          <mat-hint>{{ t('estimateHint') }}</mat-hint>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
         <mat-label>{{ t('labels') }}</mat-label>
         <mat-select formControlName="labelIds" multiple>
           @for (label of data.labels; track label.id) {
@@ -74,6 +86,7 @@
     </form>
 
     @if (data.task) {
+      <app-task-time [projectId]="data.task.projectId" [taskId]="data.task.id" />
       <app-task-comments [projectId]="data.task.projectId" [taskId]="data.task.id" />
       <app-task-history [projectId]="data.task.projectId" [taskId]="data.task.id" />
     }

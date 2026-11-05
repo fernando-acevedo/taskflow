@@ -22,6 +22,8 @@ public interface IAppDbContext
 
     DbSet<TaskComment> TaskComments { get; }
 
+    DbSet<TimeEntry> TimeEntries { get; }
+
     /// <summary>Users mentioned in task comments, for notifications.</summary>
     DbSet<TaskCommentMention> TaskCommentMentions { get; }
 
