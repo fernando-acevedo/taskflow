@@ -12,6 +12,7 @@ import { TranslocoDirective } from '@jsverse/transloco';
 import { applyApiFieldErrors } from '../../../shared/data-access/api-field-errors';
 import { SaveFn } from '../../../shared/data-access/submission';
 import { Label } from '../../labels/data-access/labels-api.service';
+import { TaskComments } from '../../comments/ui/task-comments';
 import { LabelChip } from '../../labels/ui/label-chip';
 import { ProjectMember } from '../../projects/data-access/projects-api.service';
 import { TASK_PRIORITIES, Task, TaskInput, TaskPriority } from '../data-access/tasks-api.service';
@@ -51,6 +52,7 @@ export function localToday(now = new Date()): string {
     MatSelectModule,
     TranslocoDirective,
     LabelChip,
+    TaskComments,
   ],
   templateUrl: './task-form-dialog.html',
   styles: `

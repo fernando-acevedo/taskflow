@@ -1,10 +1,10 @@
 <ng-container *transloco="let t; prefix: 'tasks'">
   <h2 mat-dialog-title>{{ data.task ? (data.readOnly ? t('viewTitle') : t('editTitle')) : t('createTitle') }}</h2>
-  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-    <mat-dialog-content>
-      @if (saving()) {
-        <mat-progress-bar mode="indeterminate" />
-      }
+  <mat-dialog-content>
+    @if (saving()) {
+      <mat-progress-bar mode="indeterminate" />
+    }
+    <form id="task-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
       <mat-form-field appearance="outline">
         <mat-label>{{ t('title') }}</mat-label>
         <input matInput formControlName="title" required />
@@ -71,9 +71,14 @@
           <mat-error>{{ message }}</mat-error>
         }
       </mat-form-field>
-    </mat-dialog-content>
+    </form>
 
-    <mat-dialog-actions>
+    @if (data.task) {
+      <app-task-comments [projectId]="data.task.projectId" [taskId]="data.task.id" />
+    }
+  </mat-dialog-content>
+
+  <mat-dialog-actions>
       @if (data.task && !data.readOnly) {
         <button mat-button type="button" (click)="delete()" [disabled]="saving()">
           <mat-icon aria-hidden="true">delete</mat-icon>
@@ -85,8 +90,7 @@
         <button mat-flat-button type="button" mat-dialog-close>{{ t('close') }}</button>
       } @else {
         <button mat-button type="button" mat-dialog-close>{{ t('cancel') }}</button>
-        <button mat-flat-button type="submit" [disabled]="saving()">{{ t('save') }}</button>
+        <button mat-flat-button type="submit" form="task-form" [disabled]="saving()">{{ t('save') }}</button>
       }
     </mat-dialog-actions>
-  </form>
 </ng-container>
