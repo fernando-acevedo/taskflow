@@ -144,3 +144,29 @@ that don't need a database. `AuthApi` contains helpers for registering and loggi
 - CI (`.github/workflows/`) builds the backend in Release and runs the tests; for the frontend it runs
   lint, tests and build.
 - `infra/` is intentionally empty until phase 5 (Azure deployment).
+
+## Workflow multiagente y ahorro de tokens
+
+El flujo completo está en `docs/workflow.md`. El estado de las tareas vive en el Panel Gantt (artifact), no en
+el chat ni en este repo. Los subagentes no lo actualizan: cada uno devuelve una línea `Gantt: {...}` para pegarla.
+
+| Tipo de tarea | Agente | Modelo |
+|---|---|---|
+| Endpoint, handler, regla de dominio, Infrastructure | `backend-dev` | sonnet |
+| Componente, página, store NgRx, traducciones | `frontend-dev` | sonnet |
+| Migración EF Core (después del cambio de modelo) | `db-migrator` | sonnet |
+| Correr tests acotados o del lote | `test-runner` | haiku |
+| Revisar el diff antes de cerrar un lote | `code-reviewer` | haiku |
+
+Nunca opus salvo que el usuario lo pida.
+
+Reglas para el hilo principal:
+- Toda tarea acotada va a un subagente. El hilo principal coordina y consolida resúmenes; no lee código salvo
+  que haga falta para escribir el encargo.
+- No releer archivos ya leídos en la sesión. Ubicar con Grep/Glob antes de abrir, y abrir con offset/limit.
+- Filtrar la salida de comandos (`tail`, `grep`); nunca volcar logs completos.
+- Preferir CLI (`gh`, `git`, `dotnet`, `npm`/`ng`) antes que herramientas MCP para lo mismo.
+- `/clear` entre tareas o lotes no relacionados. `/compact` con foco, por ejemplo
+  `/compact conservar solo archivos tocados, decisiones y blockers del lote actual`.
+- En paralelo solo tareas que toquen carpetas distintas (`backend/` y `frontend/`). Dos tareas en la misma capa
+  van en serie o en worktrees separados.
