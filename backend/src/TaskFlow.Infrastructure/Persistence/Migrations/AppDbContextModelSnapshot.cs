@@ -161,6 +161,9 @@ namespace TaskFlow.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("ActorId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("ApiKeyId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Changes")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -193,6 +196,8 @@ namespace TaskFlow.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("ActorId");
 
+                    b.HasIndex("ApiKeyId");
+
                     b.HasIndex("TenantId");
 
                     b.HasIndex("ProjectId", "OccurredAt", "Sequence")
@@ -202,6 +207,65 @@ namespace TaskFlow.Infrastructure.Persistence.Migrations
                         .IsDescending(false, true, true);
 
                     b.ToTable("ActivityEntries", (string)null);
+                });
+
+            modelBuilder.Entity("TaskFlow.Domain.ApiKeys.ApiKey", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("KeyHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .IsUnicode(false)
+                        .HasColumnType("char(64)")
+                        .IsFixedLength();
+
+                    b.Property<DateTimeOffset?>("LastUsedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Prefix")
+                        .IsRequired()
+                        .HasMaxLength(11)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(11)");
+
+                    b.Property<DateTimeOffset?>("RevokedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Scope")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(10)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("KeyHash")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("ApiKeys", (string)null);
                 });
 
             modelBuilder.Entity("TaskFlow.Domain.Clients.Client", b =>
@@ -477,6 +541,26 @@ namespace TaskFlow.Infrastructure.Persistence.Migrations
                     b.ToTable("TaskCommentMentions", (string)null);
                 });
 
+            modelBuilder.Entity("TaskFlow.Domain.Tasks.TaskDependency", b =>
+                {
+                    b.Property<Guid>("TaskItemId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("DependsOnTaskId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("TaskItemId", "DependsOnTaskId");
+
+                    b.HasIndex("DependsOnTaskId");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("TaskDependencies", (string)null);
+                });
+
             modelBuilder.Entity("TaskFlow.Domain.Tasks.TaskItem", b =>
                 {
                     b.Property<Guid>("Id")
@@ -504,6 +588,15 @@ namespace TaskFlow.Infrastructure.Persistence.Migrations
                     b.Property<int?>("EstimatedMinutes")
                         .HasColumnType("int");
 
+                    b.Property<string>("ExternalKey")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("IsBlocked")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
                     b.Property<int>("Position")
                         .HasColumnType("int");
 
@@ -519,8 +612,15 @@ namespace TaskFlow.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
 
+                    b.Property<DateOnly?>("StartDate")
+                        .HasColumnType("date");
+
                     b.Property<int>("Status")
                         .HasColumnType("int");
+
+                    b.Property<string>("StatusNote")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uniqueidentifier");
@@ -540,6 +640,10 @@ namespace TaskFlow.Infrastructure.Persistence.Migrations
                     b.HasIndex("CreatedById");
 
                     b.HasIndex("TenantId");
+
+                    b.HasIndex("ProjectId", "ExternalKey")
+                        .IsUnique()
+                        .HasFilter("[ExternalKey] IS NOT NULL");
 
                     b.HasIndex("ProjectId", "Status", "Position");
 
@@ -835,9 +939,23 @@ namespace TaskFlow.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("TaskFlow.Domain.ApiKeys.ApiKey", null)
+                        .WithMany()
+                        .HasForeignKey("ApiKeyId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("TaskFlow.Domain.Projects.Project", null)
                         .WithMany()
                         .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TaskFlow.Domain.ApiKeys.ApiKey", b =>
+                {
+                    b.HasOne("TaskFlow.Infrastructure.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
@@ -939,6 +1057,21 @@ namespace TaskFlow.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("TaskFlow.Domain.Tasks.TaskDependency", b =>
+                {
+                    b.HasOne("TaskFlow.Domain.Tasks.TaskItem", null)
+                        .WithMany()
+                        .HasForeignKey("DependsOnTaskId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TaskFlow.Domain.Tasks.TaskItem", null)
+                        .WithMany("Dependencies")
+                        .HasForeignKey("TaskItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("TaskFlow.Domain.Tasks.TaskItem", b =>
                 {
                     b.HasOne("TaskFlow.Infrastructure.Identity.ApplicationUser", null)
@@ -1021,6 +1154,11 @@ namespace TaskFlow.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("TaskFlow.Domain.Tasks.TaskComment", b =>
                 {
                     b.Navigation("Mentions");
+                });
+
+            modelBuilder.Entity("TaskFlow.Domain.Tasks.TaskItem", b =>
+                {
+                    b.Navigation("Dependencies");
                 });
 #pragma warning restore 612, 618
         }
