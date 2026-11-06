@@ -13,5 +13,8 @@
 | [9](0009-activity-log.md) | The activity log is recorded explicitly in the handlers, not by an EF interceptor | Accepted | Handlers write activity entries themselves, in the same transaction as the change. |
 | [10](0010-notifications-delivery.md) | Notifications reach the browser by polling, not SignalR | Accepted | Store notifications in the database and poll the unread count every 30 seconds. |
 | [11](0011-azure-hosting-with-bicep.md) | Host the demo on Azure free tiers, defined in Bicep | Accepted | App Service F1, Static Web Apps Free and serverless Azure SQL, created from Bicep and deployed by GitHub Actions. |
+| [12](0012-tenancy-model.md) | One shared database with a TenantId, filtered automatically and failing closed | Accepted | Tenant and TenantMembership; `ITenantOwned` entities get a global EF filter and a SaveChanges interceptor, backed by architecture tests. |
+| [13](0013-tenant-resolution-and-roles.md) | The tenant comes from an X-Tenant header, checked against the membership | Accepted | Membership cached per user and tenant; roles Owner/Admin/Member per tenant; the global Admin becomes super-admin, who creates tenants. |
+| [14](0014-background-work-and-demo-per-tenant.md) | Background work and the demo run per tenant | Accepted | `TenantScope` for jobs without a request; the demo reset only touches the demo tenant; `Demo:AllowDataWipe` allows that reset. |
 
 Add a new ADR when making a decision of comparable weight, and add it to this table.
