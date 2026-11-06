@@ -1,8 +1,10 @@
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using TaskFlow.Application.Abstractions;
+using TaskFlow.Application.Activity;
 using TaskFlow.Application.Common;
 using TaskFlow.Application.Projects;
+using TaskFlow.Domain.Activity;
 using TaskFlow.Domain.Common;
 using TaskFlow.Domain.Projects;
 
@@ -23,7 +25,8 @@ public sealed class UpdateLabelHandler(
     IAppDbContext db,
     ProjectAccess access,
     IValidator<UpdateLabelCommand> validator,
-    IUniqueViolationDetector uniqueViolations)
+    IUniqueViolationDetector uniqueViolations,
+    ActivityLog activity)
 {
     public async Task<Result<LabelDto>> HandleAsync(UpdateLabelCommand command, CancellationToken cancellationToken)
     {
@@ -46,10 +49,17 @@ public sealed class UpdateLabelHandler(
             return LabelErrors.NotFound;
         }
 
+        var previousName = label.Name;
         var updated = label.Update(allowed.Value, command.Name, command.Color, labels);
         if (!updated.IsSuccess)
         {
             return updated.Error;
+        }
+
+        if (previousName != label.Name)
+        {
+            activity.Record(
+                command.ProjectId, ActivityType.LabelRenamed, new { labelId = label.Id, from = previousName, to = label.Name });
         }
 
         try

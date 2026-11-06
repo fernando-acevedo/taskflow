@@ -1,9 +1,11 @@
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using TaskFlow.Application.Abstractions;
+using TaskFlow.Application.Activity;
 using TaskFlow.Application.Common;
 using TaskFlow.Application.Projects;
 using TaskFlow.Application.Users;
+using TaskFlow.Domain.Activity;
 using TaskFlow.Domain.Common;
 using TaskFlow.Domain.Tasks;
 
@@ -24,6 +26,7 @@ public sealed class CreateTaskCommentHandler(
     ICurrentUser currentUser,
     IIdentityService identity,
     IValidator<CreateTaskCommentCommand> validator,
+    ActivityLog activity,
     TimeProvider time)
 {
     public async Task<Result<TaskCommentDto>> HandleAsync(CreateTaskCommentCommand command, CancellationToken cancellationToken)
@@ -40,7 +43,11 @@ public sealed class CreateTaskCommentHandler(
             return validation.ToError();
         }
 
-        if (!await db.Tasks.AnyAsync(task => task.Id == command.TaskId && task.ProjectId == command.ProjectId, cancellationToken))
+        var taskTitle = await db.Tasks
+            .Where(task => task.Id == command.TaskId && task.ProjectId == command.ProjectId)
+            .Select(task => task.Title)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (taskTitle is null)
         {
             return TaskErrors.NotFound;
         }
@@ -57,6 +64,11 @@ public sealed class CreateTaskCommentHandler(
             return TaskCommentErrors.MentionNotMember;
         }
 
+        activity.Record(
+            command.ProjectId,
+            ActivityType.CommentAdded,
+            new { taskTitle, commentId = created.Value.Id },
+            command.TaskId);
         db.TaskComments.Add(created.Value);
         await db.SaveChangesAsync(cancellationToken);
 

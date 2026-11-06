@@ -300,7 +300,8 @@
       "list": "List",
       "members": "Members",
       "settings": "Settings",
-      "overview": "Overview"
+      "overview": "Overview",
+      "activity": "Activity"
     }
   },
   "members": {
@@ -475,5 +476,43 @@
     "deleted": "Comment deleted.",
     "deleteTitle": "Delete this comment?",
     "deleteMessage": "The comment by {{ author }} will be deleted for everyone."
+  },
+  "activity": {
+    "title": "Activity",
+    "history": "History",
+    "loading": "Loading…",
+    "loadFailed": "The activity could not be loaded.",
+    "empty": "No activity yet.",
+    "loadMore": "Load more",
+    "none": "none",
+    "generic": "{{ actor }} did something ({{ type }})",
+    "types": {
+      "TaskCreated": "{{ actor }} created “{{ task }}”",
+      "TaskUpdated": "{{ actor }} updated “{{ task }}”",
+      "TaskAssigned": "{{ actor }} assigned “{{ task }}” to {{ to }}",
+      "TaskReassigned": "{{ actor }} reassigned “{{ task }}” from {{ from }} to {{ to }}",
+      "TaskUnassigned": "{{ actor }} unassigned “{{ task }}”",
+      "TaskMoved": "{{ actor }} moved “{{ task }}” from {{ from }} to {{ to }}",
+      "TaskDeleted": "{{ actor }} deleted “{{ task }}”",
+      "CommentAdded": "{{ actor }} commented on “{{ task }}”",
+      "CommentEdited": "{{ actor }} edited a comment on “{{ task }}”",
+      "CommentDeleted": "{{ actor }} deleted a comment on “{{ task }}”",
+      "MemberAdded": "{{ actor }} added {{ member }} as {{ role }}",
+      "MemberRemoved": "{{ actor }} removed {{ member }} ({{ role }})",
+      "MemberRoleChanged": "{{ actor }} changed the role of {{ member }} from {{ from }} to {{ to }}",
+      "LabelCreated": "{{ actor }} created the label “{{ label }}”",
+      "LabelRenamed": "{{ actor }} renamed the label “{{ from }}” to “{{ to }}”",
+      "LabelDeleted": "{{ actor }} deleted the label “{{ label }}”"
+    },
+    "changes": {
+      "title": "Title: “{{ from }}” → “{{ to }}”",
+      "priority": "Priority: {{ from }} → {{ to }}",
+      "dueDate": "Changed the due date from {{ from }} to {{ to }}",
+      "dueDateSet": "Set the due date to {{ to }}",
+      "dueDateCleared": "Removed the due date",
+      "description": "Description edited",
+      "labelsAdded": "Labels added: {{ labels }}",
+      "labelsRemoved": "Labels removed: {{ labels }}"
+    }
   }
 }

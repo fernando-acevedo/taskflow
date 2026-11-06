@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using TaskFlow.Application.Abstractions;
+using TaskFlow.Domain.Activity;
 using TaskFlow.Domain.Clients;
 using TaskFlow.Domain.Projects;
 using TaskFlow.Domain.Tasks;
@@ -23,6 +24,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<TaskComment> TaskComments => Set<TaskComment>();
 
     public DbSet<TaskCommentMention> TaskCommentMentions => Set<TaskCommentMention>();
+
+    public DbSet<ActivityEntry> ActivityEntries => Set<ActivityEntry>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

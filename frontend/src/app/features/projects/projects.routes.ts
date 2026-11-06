@@ -3,6 +3,8 @@ import { provideEffects } from '@ngrx/effects';
 import { provideState } from '@ngrx/store';
 import * as projectDashboardEffects from '../dashboard/data-access/store/project-dashboard.effects';
 import { projectDashboardFeature } from '../dashboard/data-access/store/project-dashboard.feature';
+import * as activityEffects from '../activity/data-access/store/activity.effects';
+import { activityFeature } from '../activity/data-access/store/activity.feature';
 import * as commentsEffects from '../comments/data-access/store/comments.effects';
 import { commentsFeature } from '../comments/data-access/store/comments.feature';
 import * as labelsEffects from '../labels/data-access/store/labels.effects';
@@ -24,6 +26,8 @@ export const projectsRoutes: Routes = [
       provideEffects(tasksEffects),
       provideState(commentsFeature),
       provideEffects(commentsEffects),
+      provideState(activityFeature),
+      provideEffects(activityEffects),
       provideState(labelsFeature),
       provideEffects(labelsEffects),
       provideState(projectDashboardFeature),
@@ -43,6 +47,7 @@ export const projectsRoutes: Routes = [
             path: 'overview',
             loadComponent: () => import('../dashboard/pages/project-overview-page').then((m) => m.ProjectOverviewPage),
           },
+          { path: 'activity', loadComponent: () => import('../activity/pages/activity-page').then((m) => m.ActivityPage) },
           { path: 'members', loadComponent: () => import('./pages/members-page').then((m) => m.MembersPage) },
           { path: 'settings', loadComponent: () => import('./pages/settings-page').then((m) => m.SettingsPage) },
         ],

@@ -14,7 +14,7 @@ import { projectsFeature } from '../../projects/data-access/store/projects.featu
 import { CommentInput, TaskComment } from '../data-access/comments-api.service';
 import { CommentsPageActions } from '../data-access/store/comments.actions';
 import { commentsFeature } from '../data-access/store/comments.feature';
-import { relativeTime } from './comment-time';
+import { relativeTime } from '../../../shared/ui/relative-time';
 import { CommentEditor } from './comment-editor';
 import { BodySegment, segmentBody } from './mentions';
 

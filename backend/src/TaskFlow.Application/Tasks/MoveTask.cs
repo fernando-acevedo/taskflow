@@ -1,8 +1,10 @@
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using TaskFlow.Application.Abstractions;
+using TaskFlow.Application.Activity;
 using TaskFlow.Application.Common;
 using TaskFlow.Application.Projects;
+using TaskFlow.Domain.Activity;
 using TaskFlow.Domain.Common;
 using TaskFlow.Domain.Tasks;
 
@@ -27,6 +29,7 @@ public sealed class MoveTaskHandler(
     ProjectAccess access,
     IValidator<MoveTaskCommand> validator,
     GetTaskHandler getTask,
+    ActivityLog activity,
     TimeProvider time)
 {
     public async Task<Result<TaskDto>> HandleAsync(MoveTaskCommand command, CancellationToken cancellationToken)
@@ -63,6 +66,15 @@ public sealed class MoveTaskHandler(
         if (!moved.IsSuccess)
         {
             return moved.Error;
+        }
+
+        if (sourceStatus != command.Status)
+        {
+            activity.Record(
+                command.ProjectId,
+                ActivityType.TaskMoved,
+                new { taskTitle = task.Title, from = sourceStatus, to = command.Status },
+                task.Id);
         }
 
         target.Insert(position, task);

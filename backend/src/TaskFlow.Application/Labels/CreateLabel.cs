@@ -1,8 +1,10 @@
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using TaskFlow.Application.Abstractions;
+using TaskFlow.Application.Activity;
 using TaskFlow.Application.Common;
 using TaskFlow.Application.Projects;
+using TaskFlow.Domain.Activity;
 using TaskFlow.Domain.Common;
 using TaskFlow.Domain.Projects;
 
@@ -25,6 +27,7 @@ public sealed class CreateLabelHandler(
     ProjectAccess access,
     IValidator<CreateLabelCommand> validator,
     IUniqueViolationDetector uniqueViolations,
+    ActivityLog activity,
     TimeProvider time)
 {
     public async Task<Result<LabelDto>> HandleAsync(CreateLabelCommand command, CancellationToken cancellationToken)
@@ -50,6 +53,10 @@ public sealed class CreateLabelHandler(
             return created.Error;
         }
 
+        activity.Record(
+            command.ProjectId,
+            ActivityType.LabelCreated,
+            new { labelId = created.Value.Id, labelName = created.Value.Name, color = created.Value.Color });
         db.Labels.Add(created.Value);
         try
         {

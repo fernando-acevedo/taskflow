@@ -1,8 +1,10 @@
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using TaskFlow.Application.Abstractions;
+using TaskFlow.Application.Activity;
 using TaskFlow.Application.Common;
 using TaskFlow.Application.Projects;
+using TaskFlow.Domain.Activity;
 using TaskFlow.Domain.Common;
 using TaskFlow.Domain.Tasks;
 
@@ -33,6 +35,7 @@ public sealed class CreateTaskHandler(
     ICurrentUser currentUser,
     IValidator<CreateTaskCommand> validator,
     GetTaskHandler getTask,
+    ActivityLog activity,
     TimeProvider time)
 {
     public async Task<Result<TaskDto>> HandleAsync(CreateTaskCommand command, CancellationToken cancellationToken)
@@ -75,7 +78,13 @@ public sealed class CreateTaskHandler(
             return labelled.Error;
         }
 
-        db.Tasks.Add(created.Value);
+        var task = created.Value;
+        activity.Record(
+            command.ProjectId,
+            ActivityType.TaskCreated,
+            new { taskTitle = task.Title, status = task.Status, priority = task.Priority, assigneeId = task.AssigneeId },
+            task.Id);
+        db.Tasks.Add(task);
         await db.SaveChangesAsync(cancellationToken);
 
         return await getTask.HandleAsync(new GetTaskQuery(command.ProjectId, created.Value.Id), cancellationToken);
