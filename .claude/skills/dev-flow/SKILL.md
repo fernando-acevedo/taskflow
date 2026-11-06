@@ -52,7 +52,7 @@ Todo lo demás lo decidís vos siguiendo `CLAUDE.md`, las ADRs y el código veci
 ### 2. Paralelo entre fases
 Dos fases van en paralelo solo si `gantt.js phases` las lista como par posible. Cada una trabaja en su propio
 worktree, para que sus agentes no se pisen:
-`git worktree add ../taskflow-<fase> -b feature/<fase>-<slug> <base>`. En cada encargo decí la ruta absoluta del
+`git worktree add .worktrees/<fase> -b feature/<fase>-<slug> <base>` (dentro del repo para que los agentes tengan permiso; `.worktrees/` va en `.git/info/exclude`; `npm ci` en su `frontend/`). En cada encargo decí la ruta absoluta del
 worktree y que trabaje solo ahí. Las migraciones de dos fases nunca corren a la vez (las dos tocan el snapshot):
 la de la segunda fase se genera después de mergear la primera a su rama, o se regenera (`db-migrator`) antes de
 su commit. Al cerrar, `git worktree remove`.

@@ -13,21 +13,21 @@ junta las decisiones abiertas (`- [ ]`) de esa fase y las pregunta todas juntas 
   global de EF Core `TenantId == tenant actual` (sin tenant resuelto no devuelve nada). Al guardar, un interceptor
   pone el `TenantId` y rechaza escribir en otro tenant. Un test de arquitectura falla si una entidad nueva no
   tiene el filtro, y otro si aparece `IgnoreQueryFilters`/`FromSql` fuera de una lista permitida.
-- [ ] D1 ¿Un usuario puede pertenecer a varios tenants desde el primer día? — Recomendación: sí; el costo extra es
+- [x] D1 ¿Un usuario puede pertenecer a varios tenants desde el primer día? — Decidido (usuario, 2026-11-06, recomendación): sí; el costo extra es
   chico y evita rehacer el modelo.
-- [ ] D2 ¿Cómo se crean los tenants: auto-registro de la agencia o solo el super-admin? — Recomendación: solo el
+- [x] D2 ¿Cómo se crean los tenants: auto-registro de la agencia o solo el super-admin? — Decidido (usuario, 2026-11-06, recomendación): solo el
   super-admin por ahora; el auto-registro puede venir después.
-- [ ] D3 ¿El super-admin puede entrar a cualquier tenant para dar soporte? — Recomendación: sí, eligiéndolo de
+- [x] D3 ¿El super-admin puede entrar a cualquier tenant para dar soporte? — Decidido (usuario, 2026-11-06, recomendación): sí, eligiéndolo de
   forma explícita y quedando registrado en la actividad.
-- [ ] D4 ¿Se conserva `Demo:AllowDataWipe`? — Recomendación: sí, con el sentido de "permitir el reset del tenant
+- [x] D4 ¿Se conserva `Demo:AllowDataWipe`? — Decidido (usuario, 2026-11-06, recomendación): sí, con el sentido de "permitir el reset del tenant
   demo", ya que el reset deja de borrar toda la base.
 
 ## F8 · Tema
 
-- [ ] D5 ¿Sistema, claro y oscuro, o también alto contraste? — Recomendación: tres valores; alto contraste queda
+- [x] D5 ¿Sistema, claro y oscuro, o también alto contraste? — Decidido (usuario, 2026-11-06, recomendación): tres valores; alto contraste queda
   para otra fase.
-- [ ] D6 El botón de la barra superior, ¿cicla entre los tres o abre un menú? — Recomendación: menú.
-- [ ] D7 ¿El tema se aplica también en el login (desde el navegador) o solo con sesión? — Recomendación: también
+- [x] D6 El botón de la barra superior, ¿cicla entre los tres o abre un menú? — Decidido (usuario, 2026-11-06, recomendación): menú.
+- [x] D7 ¿El tema se aplica también en el login (desde el navegador) o solo con sesión? — Decidido (usuario, 2026-11-06, recomendación): también
   en el login, con el valor guardado en el navegador.
 
 ## F9 · API keys
