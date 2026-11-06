@@ -26,6 +26,8 @@ public static class ApiKeyDefaults
     /// <summary>How long a check that the key's owner is active is reused (same as the security stamp's).</summary>
     public static readonly TimeSpan OwnerCacheDuration = TimeSpan.FromSeconds(30);
 
+    public static string OwnerCacheKey(Guid userId) => $"apikey-owner:{userId}";
+
     /// <summary><c>LastUsedAt</c> is written at most this often per key.</summary>
     public static readonly TimeSpan LastUsedInterval = TimeSpan.FromMinutes(5);
 
@@ -78,7 +80,7 @@ internal sealed class ApiKeyAuthenticationHandler(
         }
 
         var key = found.Key;
-        var ownerActive = await cache.GetOrCreateAsync($"apikey-owner:{key.UserId}", entry =>
+        var ownerActive = await cache.GetOrCreateAsync(ApiKeyDefaults.OwnerCacheKey(key.UserId), entry =>
         {
             entry.AbsoluteExpirationRelativeToNow = ApiKeyDefaults.OwnerCacheDuration;
             return db.Users.Where(user => user.Id == key.UserId).Select(user => user.IsActive).FirstOrDefaultAsync(cancellationToken);
