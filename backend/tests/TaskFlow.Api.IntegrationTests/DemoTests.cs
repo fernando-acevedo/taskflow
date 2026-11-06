@@ -13,7 +13,9 @@ using TaskFlow.Api.IntegrationTests.Infrastructure;
 using TaskFlow.Application.Demo;
 using TaskFlow.Infrastructure.Demo;
 using TaskFlow.Infrastructure.Identity;
+using TaskFlow.Domain.Tenancy;
 using TaskFlow.Infrastructure.Persistence;
+using TaskFlow.Infrastructure.Tenancy;
 
 namespace TaskFlow.Api.IntegrationTests;
 
@@ -41,7 +43,7 @@ public sealed class DemoTests(SqlServerApiFactory factory) : IAsyncLifetime
         }
 
         var options = new DbContextOptionsBuilder<AppDbContext>().UseSqlServer(_connectionString).Options;
-        await using var db = new AppDbContext(options);
+        await using var db = new AppDbContext(options, new TenantContext());
         await db.Database.EnsureDeletedAsync();
     }
 
@@ -72,6 +74,7 @@ public sealed class DemoTests(SqlServerApiFactory factory) : IAsyncLifetime
         status.Enabled.ShouldBeFalse();
         status.NextResetAt.ShouldBeNull();
         status.Accounts.ShouldBeEmpty();
+        status.TenantId.ShouldBeNull();
     }
 
     [Fact]
@@ -85,6 +88,7 @@ public sealed class DemoTests(SqlServerApiFactory factory) : IAsyncLifetime
         status.Enabled.ShouldBeTrue();
         // The shared clock drifts with other tests that advance it, so derive the expectation from it.
         status.NextResetAt.ShouldBe(DemoSchedule.NextOccurrence("0 3 * * *", "UTC", factory.Time.GetUtcNow()));
+        status.TenantId.ShouldBe(TenantDefaults.DemoId);
         status.Accounts.ShouldContain(account => account.Email == AdminEmail && account.Password == AdminPassword && account.Role == "Admin");
         status.Accounts.ShouldContain(account => account.Email == MemberEmail && account.Password == MemberPassword && account.Role == "Member");
     }
@@ -101,7 +105,11 @@ public sealed class DemoTests(SqlServerApiFactory factory) : IAsyncLifetime
         await using (var scope = host.Services.CreateAsyncScope())
         {
             var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-            (await users.CreateAsync(new ApplicationUser { UserName = strayEmail, Email = strayEmail }, AuthApi.ValidPassword)).Succeeded.ShouldBeTrue();
+            var stray = new ApplicationUser { UserName = strayEmail, Email = strayEmail };
+            (await users.CreateAsync(stray, AuthApi.ValidPassword)).Succeeded.ShouldBeTrue();
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            db.TenantMemberships.Add(TenantMembership.Create(TenantDefaults.DemoId, stray.Id, TenantRole.Member, factory.Time.GetUtcNow()));
+            await db.SaveChangesAsync(Ct);
         }
 
         using var admin = host.CreateClient();
@@ -117,19 +125,25 @@ public sealed class DemoTests(SqlServerApiFactory factory) : IAsyncLifetime
             reset.ShouldBeTrue();
         }
 
-        await using (var scope = host.Services.CreateAsyncScope())
+        await host.Services.GetRequiredService<TenantScope>().RunAsync(TenantDefaults.DemoId, async (services, token) =>
         {
-            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            (await db.Users.AnyAsync(user => user.Email == strayEmail, Ct)).ShouldBeFalse();
-            (await db.Users.AnyAsync(user => user.Email == SqlServerApiFactory.AdminEmail, Ct)).ShouldBeTrue();
-            (await db.Clients.AnyAsync(row => row.Name == "Leftover client", Ct)).ShouldBeFalse();
-            (await db.Clients.CountAsync(Ct)).ShouldBe(4);
-            (await db.Projects.CountAsync(Ct)).ShouldBe(4);
-            (await db.Tasks.CountAsync(Ct)).ShouldBeGreaterThanOrEqualTo(25);
-            (await db.Tasks.Select(task => task.Status).Distinct().CountAsync(Ct)).ShouldBe(4);
-            (await db.TaskComments.AnyAsync(Ct)).ShouldBeTrue();
-            (await db.TimeEntries.AnyAsync(Ct)).ShouldBeTrue();
-        }
+            var db = services.GetRequiredService<AppDbContext>();
+            (await db.Users.AnyAsync(user => user.Email == strayEmail, token)).ShouldBeFalse();
+            (await db.Users.AnyAsync(user => user.Email == SqlServerApiFactory.AdminEmail, token)).ShouldBeTrue();
+            (await db.Clients.AnyAsync(row => row.Name == "Leftover client", token)).ShouldBeFalse();
+            (await db.Clients.CountAsync(token)).ShouldBe(4);
+            (await db.Projects.CountAsync(token)).ShouldBe(4);
+            (await db.Tasks.CountAsync(token)).ShouldBeGreaterThanOrEqualTo(25);
+            (await db.Tasks.Select(task => task.Status).Distinct().CountAsync(token)).ShouldBe(4);
+            (await db.TaskComments.AnyAsync(token)).ShouldBeTrue();
+            (await db.TimeEntries.AnyAsync(token)).ShouldBeTrue();
+
+            // The demo accounts are members of the demo tenant (the admin owns it) and are not super-admins.
+            var members = await db.TenantMemberships.Where(m => m.TenantId == TenantDefaults.DemoId).ToListAsync(token);
+            members.ShouldContain(m => m.Role == TenantRole.Owner);
+            (await db.Users.Where(user => user.Email == AdminEmail || user.Email == MemberEmail)
+                .SelectMany(user => db.UserRoles.Where(role => role.UserId == user.Id)).AnyAsync(token)).ShouldBeFalse();
+        }, Ct);
 
         // The old session ended (the stamp rotated) and both demo accounts log in with their configured passwords.
         using (var stale = await admin.GetAsync("/api/clients", Ct))
@@ -147,6 +161,62 @@ public sealed class DemoTests(SqlServerApiFactory factory) : IAsyncLifetime
         fresh.UseToken(await fresh.LoginForTokensAsync(AdminEmail, AdminPassword));
         var clients = await fresh.GetJsonAsync<PagedResponse<ClientRow>>("/api/clients");
         clients.TotalCount.ShouldBe(4);
+    }
+
+    [Fact]
+    public async Task AResetNeverTouchesOtherTenantsOrTheirUsers()
+    {
+        using var host = DemoHost();
+        using var client = host.CreateClient();
+        await WaitForStartupResetAsync(host);
+
+        // A production tenant that shares the database with the demo: a client, a project with a labelled task,
+        // and a user who belongs to it and to the demo tenant.
+        var acmeId = Guid.CreateVersion7();
+        var acmeUserEmail = AuthApi.NewEmail();
+        Guid acmeUserId;
+        await using (var scope = host.Services.CreateAsyncScope())
+        {
+            var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            var user = new ApplicationUser { UserName = acmeUserEmail, Email = acmeUserEmail };
+            (await users.CreateAsync(user, AuthApi.ValidPassword)).Succeeded.ShouldBeTrue();
+            acmeUserId = user.Id;
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            db.Tenants.Add(Tenant.Create(acmeId, "Acme", "acme", isDemo: false, factory.Time.GetUtcNow()).Value);
+            db.TenantMemberships.Add(TenantMembership.Create(acmeId, acmeUserId, TenantRole.Owner, factory.Time.GetUtcNow()));
+            db.TenantMemberships.Add(TenantMembership.Create(TenantDefaults.DemoId, acmeUserId, TenantRole.Member, factory.Time.GetUtcNow()));
+            await db.SaveChangesAsync(Ct);
+        }
+
+        await host.Services.GetRequiredService<TenantScope>().RunAsync(acmeId, async (services, token) =>
+        {
+            var db = services.GetRequiredService<AppDbContext>();
+            db.Clients.Add(TaskFlow.Domain.Clients.Client.Create("Acme customer", null, null, factory.Time.GetUtcNow()));
+            await db.SaveChangesAsync(token);
+        }, Ct);
+
+        await using (var scope = host.Services.CreateAsyncScope())
+        {
+            (await scope.ServiceProvider.GetRequiredService<DemoResetter>().ResetAsync(Ct)).ShouldBeTrue();
+        }
+
+        await host.Services.GetRequiredService<TenantScope>().RunAsync(acmeId, async (services, token) =>
+        {
+            var db = services.GetRequiredService<AppDbContext>();
+            (await db.Clients.CountAsync(row => row.Name == "Acme customer", token)).ShouldBe(1);
+            (await db.Users.AnyAsync(user => user.Id == acmeUserId, token)).ShouldBeTrue();
+            (await db.Tenants.AnyAsync(tenant => tenant.Id == acmeId, token)).ShouldBeTrue();
+            (await db.TenantMemberships.AnyAsync(m => m.TenantId == acmeId && m.UserId == acmeUserId, token)).ShouldBeTrue();
+        }, Ct);
+
+        // The demo tenant itself was rebuilt, so the visitor-user who also belonged elsewhere is not a member of it any more.
+        await host.Services.GetRequiredService<TenantScope>().RunAsync(TenantDefaults.DemoId, async (services, token) =>
+        {
+            var db = services.GetRequiredService<AppDbContext>();
+            (await db.Clients.AnyAsync(row => row.Name == "Acme customer", token)).ShouldBeFalse();
+            (await db.Clients.CountAsync(token)).ShouldBe(4);
+            (await db.TenantMemberships.AnyAsync(m => m.TenantId == TenantDefaults.DemoId && m.UserId == acmeUserId, token)).ShouldBeFalse();
+        }, Ct);
     }
 
     [Fact]
@@ -178,8 +248,9 @@ public sealed class DemoTests(SqlServerApiFactory factory) : IAsyncLifetime
         using var client = host.CreateClient();
         await WaitForStartupResetAsync(host);
 
+        // The user-management API is for the platform super-admin; the demo accounts do not have that role.
         using var admin = host.CreateClient();
-        admin.UseToken(await admin.LoginForTokensAsync(AdminEmail, AdminPassword));
+        admin.UseToken(await admin.LoginForTokensAsync(SqlServerApiFactory.AdminEmail, SqlServerApiFactory.AdminPassword));
         var memberId = await admin.FindUserIdAsync(MemberEmail);
 
         using (var deactivate = await admin.DeactivateUserAsync(memberId))
@@ -230,7 +301,7 @@ public sealed class DemoTests(SqlServerApiFactory factory) : IAsyncLifetime
         using var client = host.CreateClient();
         await WaitForStartupResetAsync(host);
         using var admin = host.CreateClient();
-        admin.UseToken(await admin.LoginForTokensAsync(AdminEmail, AdminPassword));
+        admin.UseToken(await admin.LoginForTokensAsync(SqlServerApiFactory.AdminEmail, SqlServerApiFactory.AdminPassword));
 
         var invitee = AuthApi.NewEmail();
         using (var invite = await admin.InviteUserAsync(invitee, isAdmin: true))
@@ -294,7 +365,7 @@ public sealed class DemoTests(SqlServerApiFactory factory) : IAsyncLifetime
         return await scope.ServiceProvider.GetRequiredService<AppDbContext>().DemoResetLogs.CountAsync(Ct);
     }
 
-    private sealed record DemoStatus(bool Enabled, DateTimeOffset? NextResetAt, IReadOnlyList<DemoAccount> Accounts);
+    private sealed record DemoStatus(bool Enabled, DateTimeOffset? NextResetAt, IReadOnlyList<DemoAccount> Accounts, Guid? TenantId);
 
     private sealed record DemoAccount(string Email, string Password, string Role);
 

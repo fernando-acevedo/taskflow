@@ -25,7 +25,7 @@ public sealed partial class TenantArchitectureTests
     // Source files allowed to use IgnoreQueryFilters / FromSql* / ExecuteSql*, each with its reason.
     private static readonly Dictionary<string, string> AllowedRawSql = new()
     {
-        ["TaskFlow.Infrastructure/Demo/DemoResetter.cs"] = "wipes the TaskLabels join table of the demo; to be scoped to the demo tenant in T-63",
+        // Empty on purpose (T-63): the demo reset no longer needs raw SQL. Add an entry here, with its reason, if a file must.
     };
 
     [Fact]

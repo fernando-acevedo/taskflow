@@ -3,43 +3,51 @@ using System.Data.Common;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using TaskFlow.Application.Abstractions;
 using TaskFlow.Application.Demo;
 using TaskFlow.Application.Users;
 using TaskFlow.Domain.Projects;
+using TaskFlow.Domain.Tenancy;
 using TaskFlow.Infrastructure.Identity;
 using TaskFlow.Infrastructure.Persistence;
+using TaskFlow.Infrastructure.Tenancy;
 
 namespace TaskFlow.Infrastructure.Demo;
 
 /// <summary>
-/// Wipes the public demo and seeds it again (ADR 0005): business data and non-demo users are deleted, the demo
-/// accounts are recreated with their configured passwords, and a realistic agency dataset is added. All in one
-/// transaction, under an application lock so two instances never reset at the same time.
+/// The work of the demo reset, run with the demo tenant in scope (ADR 0005, 0014): the demo tenant's business data
+/// and member users are deleted, the demo accounts are recreated with their configured passwords and made members
+/// of the demo tenant, and a realistic agency dataset is added. Rows of every other tenant are never touched. All
+/// in one transaction, under an application lock so two instances never reset at the same time.
 /// </summary>
-public sealed class DemoResetter(
+internal sealed class DemoResetWork(
     AppDbContext db,
+    ITenantContext tenant,
     UserManager<ApplicationUser> userManager,
-    RoleManager<IdentityRole<Guid>> roleManager,
     SessionValidator sessions,
+    TenantAccess tenantAccess,
     IOptions<DemoOptions> demoOptions,
     IOptions<AdminSeedOptions> adminSeed,
     TimeProvider time)
 {
     private const string LockResource = "taskflow-demo-reset";
 
-    /// <summary>Resets when a scheduled reset has passed since the last one. Returns whether it reset.</summary>
-    public Task<bool> ResetIfDueAsync(CancellationToken cancellationToken) => RunAsync(onlyIfDue: true, cancellationToken);
-
-    /// <summary>Resets now, whatever the schedule says. Returns false only when another instance is resetting.</summary>
-    public Task<bool> ResetAsync(CancellationToken cancellationToken) => RunAsync(onlyIfDue: false, cancellationToken);
-
-    private async Task<bool> RunAsync(bool onlyIfDue, CancellationToken cancellationToken)
+    /// <summary>Runs inside the demo tenant's <see cref="TenantScope"/>; returns false when it is not due or another instance is resetting.</summary>
+    public async Task<bool> RunAsync(bool onlyIfDue, CancellationToken cancellationToken)
     {
         var options = demoOptions.Value;
         if (!options.Enabled)
         {
             return false;
+        }
+
+        // Defense in depth: whatever scope this runs in, it only ever works on a tenant flagged as the demo.
+        var demoId = tenant.TenantId ?? throw new InvalidOperationException("The demo reset needs the demo tenant in scope.");
+        if (!await db.Tenants.AnyAsync(row => row.Id == demoId && row.IsDemo, cancellationToken))
+        {
+            throw new InvalidOperationException("The demo reset refuses to touch a tenant that is not flagged IsDemo.");
         }
 
         var affectedUsers = new HashSet<Guid>();
@@ -69,10 +77,11 @@ public sealed class DemoResetter(
                 }
             }
 
-            await DeleteBusinessDataAsync(cancellationToken);
-            await DeleteOtherUsersAsync(options, affectedUsers, cancellationToken);
+            await DeleteBusinessDataAsync(demoId, cancellationToken);
+            await DeleteDemoUsersAsync(demoId, options, affectedUsers, cancellationToken);
             var accounts = await EnsureAccountsAsync(options, affectedUsers);
             var teammates = await CreateTeammatesAsync(affectedUsers);
+            AddMemberships(demoId, accounts, teammates, startedAt);
 
             DemoDataSeeder.Seed(db, accounts, teammates, startedAt);
             db.Set<DemoResetLog>().Add(new DemoResetLog
@@ -91,10 +100,25 @@ public sealed class DemoResetter(
             foreach (var userId in affectedUsers)
             {
                 sessions.Forget(userId);
+                tenantAccess.Forget(userId, demoId);
             }
         }
 
         return reset;
+    }
+
+    /// <summary>The demo "Admin" account owns the demo tenant, the other accounts and the teammates are members.</summary>
+    private void AddMemberships(Guid demoId, List<DemoUser> accounts, List<Guid> teammates, DateTimeOffset now)
+    {
+        foreach (var account in accounts)
+        {
+            db.TenantMemberships.Add(TenantMembership.Create(demoId, account.Id, account.IsAdmin ? TenantRole.Owner : TenantRole.Member, now));
+        }
+
+        foreach (var teammate in teammates)
+        {
+            db.TenantMemberships.Add(TenantMembership.Create(demoId, teammate, TenantRole.Member, now));
+        }
     }
 
     /// <summary>Takes a transaction-owned lock without waiting; it is released when the transaction ends.</summary>
@@ -127,32 +151,47 @@ public sealed class DemoResetter(
         command.Parameters.Add(parameter);
     }
 
-    /// <summary>Deletes children before parents; most foreign keys are Restrict.</summary>
-    private async Task DeleteBusinessDataAsync(CancellationToken cancellationToken)
+    /// <summary>
+    /// Deletes the demo tenant's rows, children before parents; most foreign keys are Restrict. The tenant query
+    /// filter (the work runs inside the demo tenant's scope) is what keeps every statement to that tenant. The
+    /// TaskLabels join rows go with their tasks (cascade).
+    /// </summary>
+    private async Task DeleteBusinessDataAsync(Guid demoId, CancellationToken cancellationToken)
     {
         await db.Notifications.ExecuteDeleteAsync(cancellationToken);
         await db.ActivityEntries.ExecuteDeleteAsync(cancellationToken);
         await db.TimeEntries.ExecuteDeleteAsync(cancellationToken);
         await db.TaskCommentMentions.ExecuteDeleteAsync(cancellationToken);
         await db.TaskComments.ExecuteDeleteAsync(cancellationToken);
-        await db.Database.ExecuteSqlRawAsync("DELETE FROM [TaskLabels]", cancellationToken);
         await db.Tasks.ExecuteDeleteAsync(cancellationToken);
         await db.Labels.ExecuteDeleteAsync(cancellationToken);
         await db.Set<ProjectMember>().ExecuteDeleteAsync(cancellationToken);
         await db.Projects.ExecuteDeleteAsync(cancellationToken);
         await db.Clients.ExecuteDeleteAsync(cancellationToken);
-        await db.NotificationPreferences.ExecuteDeleteAsync(cancellationToken);
+
+        // Preferences are per user, not per tenant: only those of the demo tenant's members go.
+        await db.NotificationPreferences
+            .Where(preferences => db.TenantMemberships.Any(m => m.TenantId == demoId && m.UserId == preferences.UserId))
+            .ExecuteDeleteAsync(cancellationToken);
+        await db.TenantSupportAccesses.Where(access => access.TenantId == demoId).ExecuteDeleteAsync(cancellationToken);
     }
 
-    /// <summary>Removes every user except the demo accounts and the seeded admin. Identity rows cascade.</summary>
-    private async Task DeleteOtherUsersAsync(DemoOptions options, HashSet<Guid> affectedUsers, CancellationToken cancellationToken)
+    /// <summary>
+    /// Removes the demo tenant's members except the demo accounts and the seeded admin, and the memberships
+    /// themselves (the accounts get theirs back). Users who also belong to another tenant are never deleted.
+    /// Identity rows cascade.
+    /// </summary>
+    private async Task DeleteDemoUsersAsync(Guid demoId, DemoOptions options, HashSet<Guid> affectedUsers, CancellationToken cancellationToken)
     {
         var keep = KeptEmails(options);
         var doomed = await db.Users
+            .Where(user => db.TenantMemberships.Any(m => m.TenantId == demoId && m.UserId == user.Id))
+            .Where(user => !db.TenantMemberships.Any(m => m.TenantId != demoId && m.UserId == user.Id))
             .Where(user => user.NormalizedEmail == null || !keep.Contains(user.NormalizedEmail))
             .Select(user => user.Id)
             .ToListAsync(cancellationToken);
         affectedUsers.UnionWith(doomed);
+        await db.TenantMemberships.Where(m => m.TenantId == demoId).ExecuteDeleteAsync(cancellationToken);
         await db.Users.Where(user => doomed.Contains(user.Id)).ExecuteDeleteAsync(cancellationToken);
     }
 
@@ -170,11 +209,6 @@ public sealed class DemoResetter(
     /// <summary>Creates or repairs each demo account: password, role, active, unlocked, and a fresh security stamp.</summary>
     private async Task<List<DemoUser>> EnsureAccountsAsync(DemoOptions options, HashSet<Guid> affectedUsers)
     {
-        if (!await roleManager.RoleExistsAsync(Roles.Admin))
-        {
-            Ensure(await roleManager.CreateAsync(new IdentityRole<Guid>(Roles.Admin)));
-        }
-
         var users = new List<DemoUser>();
         foreach (var account in options.Accounts)
         {
@@ -198,12 +232,9 @@ public sealed class DemoResetter(
                 Ensure(await userManager.ResetAccessFailedCountAsync(user));
             }
 
-            var isAdmin = await userManager.IsInRoleAsync(user, Roles.Admin);
-            if (account.Role == DemoAccountRole.Admin && !isAdmin)
-            {
-                Ensure(await userManager.AddToRoleAsync(user, Roles.Admin));
-            }
-            else if (account.Role != DemoAccountRole.Admin && isAdmin)
+            // The Identity Admin role is the platform super-admin and reaches every tenant (ADR 0013): a shared
+            // public account must never have it. The demo "Admin" is an Owner of the demo tenant instead.
+            if (await userManager.IsInRoleAsync(user, Roles.Admin))
             {
                 Ensure(await userManager.RemoveFromRoleAsync(user, Roles.Admin));
             }
@@ -246,3 +277,66 @@ public sealed class DemoResetter(
 
 /// <summary>A demo account as the seeder needs it.</summary>
 internal sealed record DemoUser(Guid Id, bool IsAdmin);
+
+/// <summary>
+/// Resets the public demo (ADR 0005, 0014). The demo is a tenant of its own (<c>IsDemo</c>): this creates it when
+/// missing and runs <see cref="DemoResetWork"/> inside its <see cref="TenantScope"/>, so the reset can only reach
+/// that tenant and production tenants can share the database.
+/// </summary>
+public sealed class DemoResetter(AppDbContext db, TenantScope tenantScope, IOptions<DemoOptions> demoOptions, TimeProvider time)
+{
+    /// <summary>Resets when a scheduled reset has passed since the last one. Returns whether it reset.</summary>
+    public Task<bool> ResetIfDueAsync(CancellationToken cancellationToken) => RunAsync(onlyIfDue: true, cancellationToken);
+
+    /// <summary>Resets now, whatever the schedule says. Returns false only when another instance is resetting.</summary>
+    public Task<bool> ResetAsync(CancellationToken cancellationToken) => RunAsync(onlyIfDue: false, cancellationToken);
+
+    private async Task<bool> RunAsync(bool onlyIfDue, CancellationToken cancellationToken)
+    {
+        if (!demoOptions.Value.Enabled)
+        {
+            return false;
+        }
+
+        await EnsureTenantAsync(cancellationToken);
+        return await tenantScope.RunAsync(
+            TenantDefaults.DemoId,
+            (services, token) => services.GetRequiredService<DemoResetWork>().RunAsync(onlyIfDue, token),
+            cancellationToken);
+    }
+
+    private async Task EnsureTenantAsync(CancellationToken cancellationToken)
+    {
+        var existing = await db.Tenants
+            .Where(tenant => tenant.Id == TenantDefaults.DemoId)
+            .Select(tenant => (bool?)tenant.IsDemo)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (existing == false)
+        {
+            throw new InvalidOperationException("The demo tenant id belongs to a tenant that is not flagged IsDemo.");
+        }
+
+        if (existing is null)
+        {
+            db.Tenants.Add(TenantDefaults.CreateDemo(time.GetUtcNow()));
+            try
+            {
+                await db.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateException)
+            {
+                // Another instance may have created it first; anything else is a real failure.
+                if (!await TenantExistsAsync(cancellationToken))
+                {
+                    throw;
+                }
+            }
+        }
+    }
+
+    private async Task<bool> TenantExistsAsync(CancellationToken cancellationToken)
+    {
+        db.ChangeTracker.Clear();
+        return await db.Tenants.AnyAsync(tenant => tenant.Id == TenantDefaults.DemoId, cancellationToken);
+    }
+}

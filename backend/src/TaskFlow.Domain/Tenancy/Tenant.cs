@@ -39,6 +39,10 @@ public sealed partial class Tenant
         return new Tenant(Guid.CreateVersion7(now), name, slug, isDemo, now);
     }
 
+    /// <summary>Creates a tenant with a known id, for the tenants the platform itself provisions (default, demo).</summary>
+    public static Result<Tenant> Create(Guid id, string name, string slug, bool isDemo, DateTimeOffset now) =>
+        IsValidSlug(slug) ? new Tenant(id, name, slug, isDemo, now) : TenantErrors.InvalidSlug;
+
     public static bool IsValidSlug(string? slug) =>
         !string.IsNullOrEmpty(slug) && slug.Length <= SlugMaxLength && SlugPattern().IsMatch(slug);
 

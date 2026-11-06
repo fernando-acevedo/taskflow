@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using TaskFlow.Application.Demo;
 using TaskFlow.Infrastructure.Demo;
-using TaskFlow.Infrastructure.Persistence;
+using TaskFlow.Infrastructure.Tenancy;
 
 namespace TaskFlow.Api.Controllers;
 
@@ -16,6 +16,7 @@ public sealed class DemoController(IOptions<DemoOptions> options, TimeProvider t
     /// <summary>
     /// Whether this is the public demo, when it resets next, and the shared accounts the login page shows. The
     /// accounts (with passwords, which come from app settings) are listed only while the demo is enabled.
+    /// <c>TenantId</c> is the demo tenant, which the frontend sends as X-Tenant (ADR 0013).
     /// </summary>
     [HttpGet("status")]
     [ProducesResponseType<DemoStatusResponse>(StatusCodes.Status200OK)]
@@ -24,16 +25,17 @@ public sealed class DemoController(IOptions<DemoOptions> options, TimeProvider t
         var demo = options.Value;
         if (!demo.Enabled)
         {
-            return new DemoStatusResponse(false, null, []);
+            return new DemoStatusResponse(false, null, [], null);
         }
 
         return new DemoStatusResponse(
             true,
             DemoSchedule.NextOccurrence(demo.ResetCron, demo.TimeZone, time.GetUtcNow()),
-            [.. demo.Accounts.Select(account => new DemoAccountResponse(account.Email!, account.Password!, account.Role.ToString()))]);
+            [.. demo.Accounts.Select(account => new DemoAccountResponse(account.Email!, account.Password!, account.Role.ToString()))],
+            TenantDefaults.DemoId);
     }
 }
 
-public sealed record DemoStatusResponse(bool Enabled, DateTimeOffset? NextResetAt, IReadOnlyList<DemoAccountResponse> Accounts);
+public sealed record DemoStatusResponse(bool Enabled, DateTimeOffset? NextResetAt, IReadOnlyList<DemoAccountResponse> Accounts, Guid? TenantId);
 
 public sealed record DemoAccountResponse(string Email, string Password, string Role);
