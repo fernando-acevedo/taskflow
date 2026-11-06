@@ -1,0 +1,118 @@
+<ng-container *transloco="let t">
+  <header class="page-header">
+    <div>
+      <h1>{{ t('users.title') }}</h1>
+      <p>{{ t('users.subtitle') }}</p>
+    </div>
+    <button mat-flat-button type="button" (click)="openForm()">
+      <mat-icon aria-hidden="true">person_add</mat-icon>
+      {{ t('users.create') }}
+    </button>
+  </header>
+
+  <div class="filters">
+    <app-search-field
+      [label]="t('users.search')"
+      [value]="search()"
+      (searched)="searchChanged($event)"
+    />
+  </div>
+
+  <app-paged-list
+    [loading]="loading()"
+    [busy]="loading() || saving()"
+    [loadError]="loadError()"
+    [empty]="filtered().length === 0"
+    [totalCount]="filtered().length"
+    [page]="page()"
+    [pageSize]="pageSize()"
+    (retry)="retry()"
+    (pageChange)="changePage($event)"
+  >
+    <app-empty-state empty icon="group" [message]="t('users.noMatches')" />
+    <ul class="rows">
+      @for (member of visible(); track member.userId) {
+        @let actions = actionsFor(member);
+        <li [class.archived]="!member.isActive">
+          <div class="main">
+            <strong>{{ member.displayName }}</strong>
+            <span class="chip" [class.primary]="member.role !== 'Member'">{{
+              t('tenant.roles.' + member.role)
+            }}</span>
+            @if (!member.isActive) {
+              <span class="chip error">{{ t('users.inactive') }}</span>
+            }
+            @if (member.isInvitationPending) {
+              <span class="chip">{{ t('users.invitationPending') }}</span>
+            }
+            <span class="meta">{{ member.email }}</span>
+          </div>
+          @if (member.userId === me()?.id) {
+            <span class="chip">{{ t('users.you') }}</span>
+          } @else if (actions.any) {
+            <button
+              mat-icon-button
+              type="button"
+              [matMenuTriggerFor]="menu"
+              [attr.aria-label]="t('users.actions', { name: member.displayName })"
+            >
+              <mat-icon aria-hidden="true">more_vert</mat-icon>
+            </button>
+            <mat-menu #menu="matMenu" xPosition="before">
+              @if (actions.resendInvitation) {
+                <button mat-menu-item type="button" (click)="resendInvitation(member)">
+                  {{ t('users.resendInvitation') }}
+                </button>
+              }
+              @for (role of actions.roles; track role) {
+                <button mat-menu-item type="button" (click)="changeRole(member, role)">
+                  {{ t('users.makeRole', { role: t('tenant.roles.' + role) }) }}
+                </button>
+              }
+              @if (actions.toggleActive) {
+                @if (member.isActive) {
+                  <button mat-menu-item type="button" (click)="setActive(member, false)">
+                    {{ t('users.deactivate') }}
+                  </button>
+                } @else {
+                  <button mat-menu-item type="button" (click)="setActive(member, true)">
+                    {{ t('users.activate') }}
+                  </button>
+                }
+              }
+              @if (actions.remove) {
+                <button mat-menu-item type="button" (click)="remove(member)">
+                  {{ t('users.removeMember') }}
+                </button>
+              }
+            </mat-menu>
+          }
+        </li>
+      }
+    </ul>
+  </app-paged-list>
+
+  @if (isOwner()) {
+    <section class="support" aria-labelledby="support-title">
+      <h2 id="support-title">{{ t('users.supportTitle') }}</h2>
+      <p>{{ t('users.supportSubtitle') }}</p>
+      @if (supportAccess().length === 0) {
+        <p class="meta">{{ t('users.supportEmpty') }}</p>
+      } @else {
+        <ul class="rows">
+          @for (access of supportAccess(); track access.id) {
+            <li>
+              <div class="main">
+                <strong>{{ access.displayName }}</strong>
+                <span class="meta">{{ access.email }}</span>
+              </div>
+              <time class="meta" [attr.datetime]="access.at">{{
+                access.at | date: 'medium' : undefined : language.current()
+              }}</time>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  }
+</ng-container>

@@ -2,6 +2,7 @@ import { EntityState, createEntityAdapter } from '@ngrx/entity';
 import { getRouterSelectors } from '@ngrx/router-store';
 import { createFeature, createReducer, createSelector, on } from '@ngrx/store';
 import { AuthApiActions, ShellActions } from '../../../../core/auth/store/auth.actions';
+import { TenantActions } from '../../../../core/tenant/store/tenant.actions';
 import { authFeature } from '../../../../core/auth/store/auth.feature';
 import { ApiError } from '../../../../core/http/api-error';
 import { Task } from '../tasks-api.service';
@@ -38,7 +39,7 @@ export const tasksFeature = createFeature({
   reducer: createReducer(
     initialTasksState,
     // Another user may sign in next in this tab; nothing of the previous session may show.
-    on(ShellActions.logoutClicked, AuthApiActions.sessionExpired, (): TasksState => initialTasksState),
+    on(ShellActions.logoutClicked, AuthApiActions.sessionExpired, TenantActions.tenantSwitched, (): TasksState => initialTasksState),
     on(TasksPageActions.opened, (state, { projectId }): TasksState =>
       // Another project's tasks must not flash while this one loads.
       state.projectId === projectId

@@ -1,5 +1,6 @@
 import { createFeature, createReducer, createSelector, on } from '@ngrx/store';
 import { AuthApiActions, ShellActions } from '../../../../core/auth/store/auth.actions';
+import { TenantActions } from '../../../../core/tenant/store/tenant.actions';
 import { ApiError } from '../../../../core/http/api-error';
 import { ActivityEntry } from '../activity-api.service';
 import { ActivityApiActions, ActivityPageActions, ActivityScope } from './activity.actions';
@@ -35,7 +36,7 @@ export const activityFeature = createFeature({
   name: 'activity',
   reducer: createReducer(
     initialActivityState,
-    on(ShellActions.logoutClicked, AuthApiActions.sessionExpired, (): ActivityState => initialActivityState),
+    on(ShellActions.logoutClicked, AuthApiActions.sessionExpired, TenantActions.tenantSwitched, (): ActivityState => initialActivityState),
     on(ActivityPageActions.opened, (state, { scope, projectId, taskId }): ActivityState => {
       const feed = state[scope];
       // Reopening the same feed keeps what is shown while it refreshes.

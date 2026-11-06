@@ -1,5 +1,12 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  untracked,
+} from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -8,6 +15,7 @@ import { RouterLink } from '@angular/router';
 import { TranslocoDirective } from '@jsverse/transloco';
 import { Store } from '@ngrx/store';
 import { authFeature } from '../../../core/auth/store/auth.feature';
+import { tenantFeature } from '../../../core/tenant/store/tenant.feature';
 import { LanguageService } from '../../../core/i18n/language.service';
 import { Notifier } from '../../../core/notifications/notifier';
 import { EmptyState } from '../../../shared/ui/empty-state';
@@ -48,7 +56,8 @@ export class DashboardPage {
   protected readonly language = inject(LanguageService);
 
   protected readonly user = this.store.selectSignal(authFeature.selectUser);
-  protected readonly isAdmin = this.store.selectSignal(authFeature.selectIsAdmin);
+  protected readonly isAdmin = this.store.selectSignal(tenantFeature.selectCanManage);
+  private readonly tenantId = this.store.selectSignal(tenantFeature.selectCurrentId);
   protected readonly dashboard = this.store.selectSignal(myDashboardFeature.selectDashboard);
   protected readonly loading = this.store.selectSignal(myDashboardFeature.selectLoading);
   protected readonly error = this.store.selectSignal(myDashboardFeature.selectError);
@@ -62,7 +71,11 @@ export class DashboardPage {
   });
 
   constructor() {
-    this.refresh();
+    // Loads on opening and again when the tenant changes while the home page is already showing.
+    effect(() => {
+      this.tenantId();
+      untracked(() => this.refresh());
+    });
   }
 
   protected refresh(): void {

@@ -1,5 +1,6 @@
 import { createFeature, createReducer, on } from '@ngrx/store';
 import { AuthApiActions, ShellActions } from '../../../../core/auth/store/auth.actions';
+import { TenantActions } from '../../../../core/tenant/store/tenant.actions';
 import { ApiError } from '../../../../core/http/api-error';
 import { MyDashboard } from '../dashboard-api.service';
 import { DashboardApiActions, DashboardPageActions } from './dashboard.actions';
@@ -17,9 +18,21 @@ export const myDashboardFeature = createFeature({
   name: 'myDashboard',
   reducer: createReducer(
     initialMyDashboardState,
-    on(ShellActions.logoutClicked, AuthApiActions.sessionExpired, (): MyDashboardState => initialMyDashboardState),
-    on(DashboardPageActions.opened, (state): MyDashboardState => ({ ...state, loading: true, error: null })),
-    on(DashboardApiActions.myDashboardLoaded, (state, { dashboard }): MyDashboardState => ({ ...state, dashboard, loading: false })),
-    on(DashboardApiActions.myDashboardLoadFailed, (state, { error }): MyDashboardState => ({ ...state, loading: false, error })),
+    on(ShellActions.logoutClicked, AuthApiActions.sessionExpired, TenantActions.tenantSwitched, (): MyDashboardState => initialMyDashboardState),
+    on(DashboardPageActions.opened, (state): MyDashboardState => ({
+      ...state,
+      loading: true,
+      error: null,
+    })),
+    on(DashboardApiActions.myDashboardLoaded, (state, { dashboard }): MyDashboardState => ({
+      ...state,
+      dashboard,
+      loading: false,
+    })),
+    on(DashboardApiActions.myDashboardLoadFailed, (state, { error }): MyDashboardState => ({
+      ...state,
+      loading: false,
+      error,
+    })),
   ),
 });

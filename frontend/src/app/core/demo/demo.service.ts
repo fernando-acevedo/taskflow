@@ -13,6 +13,8 @@ export interface DemoAccount {
 export interface DemoStatus {
   enabled: boolean;
   nextResetAt: string | null;
+  /** The demo workspace, when the API says which one. */
+  tenantId?: string | null;
   accounts: DemoAccount[];
 }
 

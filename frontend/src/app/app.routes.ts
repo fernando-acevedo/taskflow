@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { provideEffects } from '@ngrx/effects';
 import { provideState } from '@ngrx/store';
-import { adminGuard, authGuard, guestGuard } from './core/auth/auth.guards';
+import { authGuard, guestGuard, tenantAdminGuard } from './core/auth/auth.guards';
 import * as statusEffects from './features/status/data-access/store/status.effects';
 import { statusFeature } from './features/status/data-access/store/status.feature';
 
@@ -68,12 +68,12 @@ export const routes: Routes = [
       },
       {
         path: 'clients',
-        canActivate: [adminGuard],
-        loadChildren: () => import('./features/clients/clients.routes').then((m) => m.clientsRoutes),
+        canActivate: [tenantAdminGuard],
+        loadChildren: () =>
+          import('./features/clients/clients.routes').then((m) => m.clientsRoutes),
       },
       {
         path: 'admin',
-        canActivate: [adminGuard],
         loadChildren: () => import('./features/admin/admin.routes').then((m) => m.adminRoutes),
       },
     ],
