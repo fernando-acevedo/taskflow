@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using TaskFlow.Application.Abstractions;
 using TaskFlow.Domain.Activity;
+using TaskFlow.Domain.ApiKeys;
 using TaskFlow.Domain.Clients;
 using TaskFlow.Domain.Notifications;
 using TaskFlow.Domain.Projects;
@@ -41,6 +42,8 @@ public sealed class AppDbContext(
 
     public DbSet<TaskItem> Tasks => Set<TaskItem>();
 
+    public DbSet<TaskDependency> TaskDependencies => Set<TaskDependency>();
+
     public DbSet<TaskComment> TaskComments => Set<TaskComment>();
 
     public DbSet<TimeEntry> TimeEntries => Set<TimeEntry>();
@@ -48,6 +51,8 @@ public sealed class AppDbContext(
     public DbSet<TaskCommentMention> TaskCommentMentions => Set<TaskCommentMention>();
 
     public DbSet<ActivityEntry> ActivityEntries => Set<ActivityEntry>();
+
+    public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
 
     public DbSet<Notification> Notifications => Set<Notification>();
 

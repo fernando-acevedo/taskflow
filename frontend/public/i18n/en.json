@@ -113,7 +113,53 @@
     "saved": "Saved",
     "emailNotConfirmed": "Your email isn't confirmed yet. Confirm it so you can reset your password if you forget it.",
     "resendConfirmation": "Send confirmation email",
-    "confirmationSent": "We sent a confirmation link to {{email}}. Check your inbox and spam folder."
+    "confirmationSent": "We sent a confirmation link to {{email}}. Check your inbox and spam folder.",
+    "apiKeys": {
+      "title": "API keys",
+      "intro": "Keys let scripts and integrations call the API on your behalf. A key is shown only once, when you create it.",
+      "create": "New API key",
+      "createTitle": "New API key",
+      "name": "Name",
+      "nameRule": "Enter a name of up to 100 characters.",
+      "scope": "Scope",
+      "scopes": {
+        "Read": "Read only",
+        "Write": "Read and write"
+      },
+      "expiresAt": "Expires on",
+      "expiresHint": "Leave empty for 90 days. At most one year.",
+      "expiresRule": "Choose a date in the future, within one year.",
+      "cancel": "Cancel",
+      "save": "Create key",
+      "empty": "You have no API keys.",
+      "loadFailed": "The API keys couldn't be loaded.",
+      "loading": "Loading…",
+      "retry": "Try again",
+      "prefix": "Key",
+      "expires": "Expires",
+      "lastUsed": "Last used",
+      "neverUsed": "Never",
+      "status": "Status",
+      "actions": "Actions",
+      "statuses": {
+        "active": "Active",
+        "revoked": "Revoked",
+        "expired": "Expired"
+      },
+      "revoke": "Revoke",
+      "revokeLabel": "Revoke “{{ name }}”",
+      "revokeTitle": "Revoke this API key?",
+      "revokeMessage": "“{{ name }}” will stop working immediately. This can't be undone.",
+      "created": "API key created",
+      "revoked": "API key revoked",
+      "secretTitle": "Copy your API key",
+      "secretWarning": "This is the only time the key is shown. Copy it now and keep it somewhere safe; you won't be able to see it again.",
+      "secretLabel": "API key",
+      "copy": "Copy",
+      "copied": "Copied",
+      "copyFailed": "Couldn't copy. Select the key and copy it manually.",
+      "done": "I've copied it"
+    }
   },
   "errors": {
     "DuplicateUserName": "An account with this email already exists.",
@@ -219,7 +265,19 @@
       "AssigneeNotMember": "The assignee must be a member of the project."
     },
     "Tasks": {
-      "NotFound": "The task was not found. Someone may have deleted it."
+      "NotFound": "The task was not found. Someone may have deleted it.",
+      "ExternalKeyInvalid": "The external key may only contain letters, digits, dots, colons, underscores and hyphens, and is at most 100 characters.",
+      "ExternalKeyLocked": "The task already has another external key, which can't be changed.",
+      "ExternalKeyTaken": "Another task of the project already uses this external key.",
+      "StartAfterDue": "The start date can't be after the due date.",
+      "DependencyOnSelf": "A task can't depend on itself.",
+      "DependencyNotInProject": "A task can only depend on tasks of the same project.",
+      "DependencyCycle": "These dependencies would make tasks wait for each other in a loop.",
+      "TooManyDependencies": "A task can depend on at most 50 tasks.",
+      "DependencyKeyNotFound": "A task this one depends on was not found in the project or in the same request.",
+      "DuplicateExternalKey": "The same external key appears more than once in the request.",
+      "SyncEmpty": "Send at least one task.",
+      "SyncTooLarge": "A sync can carry at most 200 tasks."
     },
     "Concurrency": {
       "Stale": "Someone else changed this in the meantime. We reloaded it; try again."
@@ -230,7 +288,8 @@
       "NameTooLong": "The label name can have up to 40 characters.",
       "InvalidColor": "Choose one of the available colors.",
       "NameTaken": "This project already has a label with this name.",
-      "NotInProject": "One of the labels doesn’t belong to this project."
+      "NotInProject": "One of the labels doesn’t belong to this project.",
+      "CreateNotAllowed": "Only a project owner signed in as a person can create labels. Create this label first or ask an owner."
     },
     "TaskComments": {
       "NotFound": "The comment was not found. Someone may have deleted it.",
@@ -261,6 +320,14 @@
       "MemberNotFound": "The member was not found.",
       "OwnerRequired": "Only an owner can do this with an owner.",
       "SuperAdminRequired": "Only the platform administrator can do this."
+    },
+    "ApiKeys": {
+      "NotFound": "The API key was not found.",
+      "ExpiryInPast": "The expiry date must be in the future.",
+      "ExpiryTooFar": "An API key can last at most one year.",
+      "TooMany": "You have too many active API keys. Revoke one first.",
+      "ScopeInsufficient": "This API key's scope doesn't allow this action.",
+      "NotAllowedWithKey": "API keys can't be used for this. Sign in as a person."
     }
   },
   "clients": {
@@ -468,7 +535,15 @@
     "anyLabel": "Any label",
     "estimate": "Estimate",
     "estimateHint": "Hours and minutes (2:30, 2h 30m) or decimal hours (2.5)",
-    "estimateRule": "Enter a duration such as 2:30, 2h 30m or 2.5."
+    "estimateRule": "Enter a duration such as 2:30, 2h 30m or 2.5.",
+    "blocked": "Blocked",
+    "blockedYes": "Blocked",
+    "planning": "Planning",
+    "externalKey": "External key",
+    "startDate": "Start date",
+    "startAfterDue": "The start date can’t be after the due date.",
+    "statusNote": "Status note",
+    "dependsOn": "Depends on"
   },
   "dashboard": {
     "intro": "Here is what needs your attention across your projects.",
@@ -570,6 +645,7 @@
     "loadFailed": "The activity could not be loaded.",
     "empty": "No activity yet.",
     "loadMore": "Load more",
+    "viaApiKey": "via API key",
     "none": "none",
     "generic": "{{ actor }} did something ({{ type }})",
     "types": {

@@ -4,7 +4,6 @@ using TaskFlow.Application.Abstractions;
 using TaskFlow.Application.Activity;
 using TaskFlow.Application.Common;
 using TaskFlow.Application.Projects;
-using TaskFlow.Domain.Activity;
 using TaskFlow.Domain.Common;
 using TaskFlow.Domain.Tasks;
 
@@ -58,50 +57,13 @@ public sealed class MoveTaskHandler(
             return CommonErrors.Stale;
         }
 
-        var sourceStatus = task.Status;
-        var target = await ColumnWithoutAsync(task, command.Status, cancellationToken);
-        var position = Math.Min(command.Position, target.Count);
-
-        var moved = task.Move(allowed.Value, command.Status, position, time.GetUtcNow());
+        var moved = await TaskMoves.MoveAsync(db, activity, time, allowed.Value, task, command.Status, command.Position, cancellationToken);
         if (!moved.IsSuccess)
         {
             return moved.Error;
         }
 
-        if (sourceStatus != command.Status)
-        {
-            activity.Record(
-                command.ProjectId,
-                ActivityType.TaskMoved,
-                new { taskTitle = task.Title, from = sourceStatus, to = command.Status },
-                task.Id);
-        }
-
-        target.Insert(position, task);
-        Renumber(target);
-        if (sourceStatus != command.Status)
-        {
-            Renumber(await ColumnWithoutAsync(task, sourceStatus, cancellationToken));
-        }
-
         await db.SaveChangesAsync(cancellationToken);
         return await getTask.HandleAsync(new GetTaskQuery(command.ProjectId, task.Id), cancellationToken);
-    }
-
-    private Task<List<TaskItem>> ColumnWithoutAsync(TaskItem task, TaskItemStatus status, CancellationToken cancellationToken) =>
-        db.Tasks
-            .Where(other => other.ProjectId == task.ProjectId && other.Status == status && other.Id != task.Id)
-            .OrderBy(other => other.Position)
-            .ToListAsync(cancellationToken);
-
-    private static void Renumber(List<TaskItem> column)
-    {
-        for (var index = 0; index < column.Count; index++)
-        {
-            if (column[index].Position != index)
-            {
-                column[index].Reposition(index);
-            }
-        }
     }
 }

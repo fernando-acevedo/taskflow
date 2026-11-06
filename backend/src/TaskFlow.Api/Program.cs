@@ -12,6 +12,7 @@ using TaskFlow.Api.Identity;
 using TaskFlow.Application;
 using TaskFlow.Application.Abstractions;
 using TaskFlow.Infrastructure;
+using TaskFlow.Infrastructure.ApiKeys;
 using TaskFlow.Infrastructure.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -36,7 +37,7 @@ builder.Services.AddScoped<IAuthorizationHandler, TenantAdminHandler>();
 
 builder.Services.AddControllers()
     .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options => options.AddDocumentTransformer<BearerSecurityTransformer>());
 
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<ConcurrencyExceptionHandler>();
@@ -52,10 +53,18 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
     options.ApplyCurrentCultureToResponseHeaders = true;
 });
 
+var apiKeyPermitLimit = builder.Configuration.GetValue("RateLimiting:ApiKey:PermitLimit", 120);
 var authPermitLimit = builder.Configuration.GetValue("RateLimiting:Auth:PermitLimit", 10);
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    // Each API key has its own budget (ADR 0016); people are limited only on the auth endpoints below.
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+        context.User.FindFirst(ApiKeyDefaults.KeyIdClaim) is { Value: var keyId }
+            ? RateLimitPartition.GetFixedWindowLimiter(
+                $"api-key:{keyId}",
+                _ => new FixedWindowRateLimiterOptions { PermitLimit = apiKeyPermitLimit, Window = TimeSpan.FromMinutes(1) })
+            : RateLimitPartition.GetNoLimiter("people"));
     options.AddPolicy(RateLimitPolicies.Auth, context => RateLimitPartition.GetFixedWindowLimiter(
         context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
         _ => new FixedWindowRateLimiterOptions { PermitLimit = authPermitLimit, Window = TimeSpan.FromMinutes(1) }));
@@ -87,18 +96,17 @@ app.UseStatusCodePages();
 app.UseSerilogRequestLogging();
 app.UseRequestLocalization();
 app.UseCors(FrontendCorsPolicy);
-app.UseRateLimiter();
-
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-    app.MapScalarApiReference();
-}
+// The API reference is public in every environment (ADR 0016): it describes the endpoints and holds no data.
+app.MapOpenApi();
+app.MapScalarApiReference();
 
 // HTTPS is enforced by the hosting platform (App Service "HTTPS only"), not by the app.
 app.UseAuthentication();
+// After authentication so the limiter can partition by API key.
+app.UseRateLimiter();
 app.UseMiddleware<SessionValidationMiddleware>();
 app.UseMiddleware<TenantResolutionMiddleware>();
+app.UseMiddleware<ApiKeyScopeMiddleware>();
 app.UseAuthorization();
 
 app.MapControllers();

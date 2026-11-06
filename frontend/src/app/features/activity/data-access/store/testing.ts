@@ -9,6 +9,7 @@ export function anEntry(overrides: Partial<ActivityEntry> & Pick<ActivityEntry, 
     type: 'TaskCreated',
     occurredAt: '2026-11-01T10:00:00Z',
     changes: { taskTitle: 'Write docs' },
+    viaApiKey: false,
     ...overrides,
   };
 }

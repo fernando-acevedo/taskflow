@@ -2,6 +2,7 @@ using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using TaskFlow.Application.Abstractions;
 using TaskFlow.Application.Common;
+using TaskFlow.Domain.ApiKeys;
 using TaskFlow.Domain.Clients;
 using TaskFlow.Domain.Common;
 using TaskFlow.Domain.Projects;
@@ -15,7 +16,7 @@ public sealed class CreateProjectValidator : AbstractValidator<CreateProjectComm
     public CreateProjectValidator() => this.AddProjectFieldRules();
 }
 
-/// <summary>Any user can create a project for an active client and becomes its owner.</summary>
+/// <summary>Any person can create a project for an active client and becomes its owner. An API key never does (ADR 0016).</summary>
 public sealed class CreateProjectHandler(
     IAppDbContext db,
     ICurrentUser currentUser,
@@ -25,6 +26,11 @@ public sealed class CreateProjectHandler(
 {
     public async Task<Result<ProjectDto>> HandleAsync(CreateProjectCommand command, CancellationToken cancellationToken)
     {
+        if (currentUser.ApiKeyId is not null)
+        {
+            return ApiKeyErrors.NotAllowedWithKey;
+        }
+
         var validation = await validator.ValidateAsync(command, cancellationToken);
         if (!validation.IsValid)
         {

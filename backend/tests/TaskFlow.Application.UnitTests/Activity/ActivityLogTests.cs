@@ -33,6 +33,25 @@ public sealed class ActivityLogTests
         added.Select(e => e.OccurredAt).Distinct().Count().ShouldBe(1);
     }
 
+    [Fact]
+    public void EntriesCarryTheApiKeyTheActorUsed()
+    {
+        var added = new List<ActivityEntry>();
+        var set = FakeDbSet.Of<ActivityEntry>();
+        set.When(s => s.Add(Arg.Any<ActivityEntry>())).Do(call => added.Add(call.Arg<ActivityEntry>()));
+        var db = Substitute.For<IAppDbContext>();
+        db.ActivityEntries.Returns(set);
+        var keyId = Guid.NewGuid();
+        var user = Substitute.For<ICurrentUser>();
+        user.Id.Returns(Guid.NewGuid());
+        user.ApiKeyId.Returns(keyId);
+        var log = new ActivityLog(db, user, new FixedTime(new DateTimeOffset(2026, 10, 19, 12, 0, 0, TimeSpan.Zero)));
+
+        log.Record(Guid.NewGuid(), ActivityType.TaskUpdated, new { });
+
+        added.ShouldHaveSingleItem().ApiKeyId.ShouldBe(keyId);
+    }
+
     private sealed class FixedTime(DateTimeOffset now) : TimeProvider
     {
         public override DateTimeOffset GetUtcNow() => now;

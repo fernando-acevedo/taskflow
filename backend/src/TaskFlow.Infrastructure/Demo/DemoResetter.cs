@@ -163,9 +163,11 @@ internal sealed partial class DemoResetWork(
     {
         await db.Notifications.ExecuteDeleteAsync(cancellationToken);
         await db.ActivityEntries.ExecuteDeleteAsync(cancellationToken);
+        await db.ApiKeys.ExecuteDeleteAsync(cancellationToken);
         await db.TimeEntries.ExecuteDeleteAsync(cancellationToken);
         await db.TaskCommentMentions.ExecuteDeleteAsync(cancellationToken);
         await db.TaskComments.ExecuteDeleteAsync(cancellationToken);
+        await db.TaskDependencies.ExecuteDeleteAsync(cancellationToken);
         await db.Tasks.ExecuteDeleteAsync(cancellationToken);
         await db.Labels.ExecuteDeleteAsync(cancellationToken);
         await db.Set<ProjectMember>().ExecuteDeleteAsync(cancellationToken);

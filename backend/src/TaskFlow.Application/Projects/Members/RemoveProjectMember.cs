@@ -1,6 +1,7 @@
 using TaskFlow.Application.Abstractions;
 using TaskFlow.Application.Activity;
 using TaskFlow.Domain.Activity;
+using TaskFlow.Domain.ApiKeys;
 using TaskFlow.Domain.Common;
 
 namespace TaskFlow.Application.Projects.Members;
@@ -17,6 +18,12 @@ public sealed class RemoveProjectMemberHandler(
 {
     public async Task<Result> HandleAsync(RemoveProjectMemberCommand command, CancellationToken cancellationToken)
     {
+        if (currentUser.ApiKeyId is not null)
+        {
+            // A key must not remove its owner (self-removal only needs Work) nor anyone else.
+            return ApiKeyErrors.NotAllowedWithKey;
+        }
+
         var level = command.UserId == currentUser.Id ? ProjectAccessLevel.Work : ProjectAccessLevel.Manage;
         var allowed = await access.GetAsync(command.ProjectId, level, cancellationToken);
         if (!allowed.IsSuccess)

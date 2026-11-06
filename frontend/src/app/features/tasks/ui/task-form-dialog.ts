@@ -2,13 +2,16 @@ import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
+import { DatePipe } from '@angular/common';
 import { TranslocoDirective } from '@jsverse/transloco';
+import { LanguageService } from '../../../core/i18n/language.service';
 import { applyApiFieldErrors } from '../../../shared/data-access/api-field-errors';
 import { SaveFn } from '../../../shared/data-access/submission';
 import { parseDuration, toClockText } from '../../../shared/ui/duration';
@@ -26,6 +29,8 @@ export interface TaskFormData {
   readonly members: readonly ProjectMember[];
   /** The project's labels. */
   readonly labels: readonly Label[];
+  /** The project's tasks, to show the titles of the ones this task depends on. */
+  readonly tasks?: readonly Task[];
   readonly readOnly: boolean;
   readonly save: SaveFn<TaskInput>;
 }
@@ -43,8 +48,10 @@ const MAX_ESTIMATE_MINUTES = 9999 * 60;
 @Component({
   selector: 'app-task-form-dialog',
   imports: [
+    DatePipe,
     ReactiveFormsModule,
     MatButtonModule,
+    MatCheckboxModule,
     MatDialogModule,
     MatFormFieldModule,
     MatIconModule,
@@ -70,6 +77,27 @@ const MAX_ESTIMATE_MINUTES = 9999 * 60;
     .row mat-form-field {
       flex: 1 1 180px;
     }
+    .planning h3 {
+      font: var(--mat-sys-title-small);
+      margin: 16px 0 4px;
+    }
+    .planning dl {
+      display: grid;
+      grid-template-columns: max-content 1fr;
+      gap: 4px 16px;
+      margin: 0;
+    }
+    .planning dt {
+      color: var(--mat-sys-on-surface-variant);
+    }
+    .planning dd {
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+    .planning ul {
+      margin: 0;
+      padding-left: 16px;
+    }
     .spacer {
       flex: 1;
     }
@@ -86,6 +114,11 @@ export class TaskFormDialog {
   protected readonly minDate = this.data.task ? null : localToday();
 
   protected readonly assignees = this.assigneeOptions();
+  protected readonly language = inject(LanguageService);
+  /** Titles of the tasks this one depends on; a deleted task's id shows as the id. */
+  protected readonly dependencies = (this.data.task?.dependsOn ?? []).map(
+    (id) => this.data.tasks?.find((task) => task.id === id)?.title ?? id,
+  );
 
   private readonly fb = inject(NonNullableFormBuilder);
   protected readonly form = this.fb.group({
@@ -93,7 +126,10 @@ export class TaskFormDialog {
     description: [this.data.task?.description ?? '', Validators.maxLength(4000)],
     priority: this.fb.control<TaskPriority>(this.data.task?.priority ?? 'Medium'),
     assigneeId: [this.data.task?.assigneeId ?? ''],
+    startDate: [this.data.task?.startDate ?? ''],
     dueDate: [this.data.task?.dueDate ?? ''],
+    isBlocked: [this.data.task?.isBlocked ?? false],
+    statusNote: [this.data.task?.statusNote ?? '', Validators.maxLength(500)],
     labelIds: [this.data.task?.labels.map((label) => label.id) ?? []],
     /** Hours and minutes ("2:30", "2h 30m") or decimal hours ("2.5"); empty for no estimate. */
     estimatedMinutes: [toClockText(this.data.task?.estimatedMinutes ?? null)],
@@ -106,9 +142,12 @@ export class TaskFormDialog {
   }
 
   protected submit(): void {
-    const { dueDate } = this.form.getRawValue();
+    const { dueDate, startDate } = this.form.getRawValue();
     if (this.minDate && dueDate && dueDate < this.minDate) {
       this.form.controls.dueDate.setErrors({ past: true });
+    }
+    if (startDate && dueDate && startDate > dueDate) {
+      this.form.controls.startDate.setErrors({ startAfterDue: true });
     }
     const estimateText = this.form.controls.estimatedMinutes.value.trim();
     const estimate = estimateText === '' ? null : parseDuration(estimateText);
@@ -119,7 +158,7 @@ export class TaskFormDialog {
       this.form.markAllAsTouched();
       return;
     }
-    const { title, description, priority, assigneeId, labelIds } = this.form.getRawValue();
+    const { title, description, priority, assigneeId, labelIds, isBlocked, statusNote } = this.form.getRawValue();
     this.saving.set(true);
     this.data
       .save({
@@ -127,7 +166,10 @@ export class TaskFormDialog {
         description: description.trim() || null,
         priority,
         assigneeId: assigneeId || null,
+        startDate: startDate || null,
         dueDate: dueDate || null,
+        isBlocked,
+        statusNote: statusNote.trim() || null,
         labelIds,
         estimatedMinutes: estimate,
       })
@@ -137,6 +179,11 @@ export class TaskFormDialog {
         if (error) {
           // A description of up to 4000 characters must not be lost to a rejected save.
           applyApiFieldErrors(this.form, error);
+          if (error.code === 'Tasks.StartAfterDue') {
+            // Not a field error for the API, but the user fixes it in the start date.
+            this.form.controls.startDate.setErrors({ startAfterDue: true });
+            this.form.controls.startDate.markAsTouched();
+          }
         } else {
           this.dialogRef.close();
         }

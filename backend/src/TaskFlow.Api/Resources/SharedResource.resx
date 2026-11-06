@@ -45,6 +45,7 @@
   <data name="Labels.InvalidColor" xml:space="preserve"><value>The color must be a hex value like #1A2B3C.</value></data>
   <data name="Labels.NameTaken" xml:space="preserve"><value>The project already has a label with this name.</value></data>
   <data name="Labels.NotInProject" xml:space="preserve"><value>One or more labels don't belong to the project.</value></data>
+  <data name="Labels.CreateNotAllowed" xml:space="preserve"><value>The project doesn't have this label, and only a project owner signed in as a person can create labels.</value></data>
   <data name="TaskComments.NotFound" xml:space="preserve"><value>The comment was not found.</value></data>
   <data name="Notifications.NotFound" xml:space="preserve"><value>The notification was not found.</value></data>
   <data name="TaskComments.BodyRequired" xml:space="preserve"><value>The comment can't be empty.</value></data>
@@ -58,4 +59,22 @@
   <data name="TimeEntries.InvalidRange" xml:space="preserve"><value>Pick a start and an end date, with the start no later than the end, in a range of up to 366 days.</value></data>
   <data name="TimeEntries.InvalidMinutes" xml:space="preserve"><value>Minutes must be between 1 and 1440.</value></data>
   <data name="TimeEntries.NoteTooLong" xml:space="preserve"><value>The note is too long.</value></data>
+  <data name="ApiKeys.NotFound" xml:space="preserve"><value>The API key was not found.</value></data>
+  <data name="ApiKeys.ExpiryInPast" xml:space="preserve"><value>The expiry date must be in the future.</value></data>
+  <data name="ApiKeys.ExpiryTooFar" xml:space="preserve"><value>An API key can last at most one year.</value></data>
+  <data name="ApiKeys.TooMany" xml:space="preserve"><value>You have too many active API keys. Revoke one first.</value></data>
+  <data name="ApiKeys.ScopeInsufficient" xml:space="preserve"><value>This API key's scope doesn't allow this action.</value></data>
+  <data name="ApiKeys.NotAllowedWithKey" xml:space="preserve"><value>API keys can't be used for this. Sign in as a person.</value></data>
+  <data name="Tasks.ExternalKeyInvalid" xml:space="preserve"><value>The external key may only contain letters, digits, dots, colons, underscores and hyphens, and is at most 100 characters.</value></data>
+  <data name="Tasks.ExternalKeyLocked" xml:space="preserve"><value>The task already has another external key, which can't be changed.</value></data>
+  <data name="Tasks.ExternalKeyTaken" xml:space="preserve"><value>Another task of the project already uses this external key.</value></data>
+  <data name="Tasks.StartAfterDue" xml:space="preserve"><value>The start date can't be after the due date.</value></data>
+  <data name="Tasks.DependencyOnSelf" xml:space="preserve"><value>A task can't depend on itself.</value></data>
+  <data name="Tasks.DependencyNotInProject" xml:space="preserve"><value>A task can only depend on tasks of the same project.</value></data>
+  <data name="Tasks.DependencyCycle" xml:space="preserve"><value>These dependencies would make tasks wait for each other in a loop.</value></data>
+  <data name="Tasks.TooManyDependencies" xml:space="preserve"><value>A task can depend on at most 50 tasks.</value></data>
+  <data name="Tasks.DependencyKeyNotFound" xml:space="preserve"><value>A task this one depends on was not found in the project or in the same request.</value></data>
+  <data name="Tasks.DuplicateExternalKey" xml:space="preserve"><value>The same external key appears more than once in the request.</value></data>
+  <data name="Tasks.SyncEmpty" xml:space="preserve"><value>Send at least one task.</value></data>
+  <data name="Tasks.SyncTooLarge" xml:space="preserve"><value>A sync can carry at most 200 tasks.</value></data>
 </root>

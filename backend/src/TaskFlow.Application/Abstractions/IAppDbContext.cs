@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TaskFlow.Domain.Activity;
+using TaskFlow.Domain.ApiKeys;
 using TaskFlow.Domain.Clients;
 using TaskFlow.Domain.Notifications;
 using TaskFlow.Domain.Projects;
@@ -31,6 +32,8 @@ public interface IAppDbContext
 
     DbSet<TaskItem> Tasks { get; }
 
+    DbSet<TaskDependency> TaskDependencies { get; }
+
     DbSet<TaskComment> TaskComments { get; }
 
     DbSet<TimeEntry> TimeEntries { get; }
@@ -39,6 +42,8 @@ public interface IAppDbContext
     DbSet<TaskCommentMention> TaskCommentMentions { get; }
 
     DbSet<ActivityEntry> ActivityEntries { get; }
+
+    DbSet<ApiKey> ApiKeys { get; }
 
     DbSet<Notification> Notifications { get; }
 

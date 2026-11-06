@@ -20,6 +20,15 @@ import { Task } from '../data-access/tasks-api.service';
           }
         </span>
       }
+      @if (task().isBlocked) {
+        <span class="blocked">
+          <mat-icon aria-hidden="true">block</mat-icon>
+          {{ t('blocked') }}
+        </span>
+      }
+      @if (task().statusNote; as note) {
+        <span class="note">{{ note }}</span>
+      }
       <span class="details">
         <span class="priority" [attr.data-priority]="task().priority">{{ t('priorities.' + task().priority) }}</span>
         @if (task().dueDate; as due) {

@@ -32,13 +32,13 @@ junta las decisiones abiertas (`- [ ]`) de esa fase y las pregunta todas juntas 
 
 ## F9 · API keys
 
-- [ ] D8 El "agente" del Gantt, ¿es una etiqueta (`agent:backend-dev`) o un usuario de servicio? — Recomendación:
+- [x] D8 El "agente" del Gantt, ¿es una etiqueta (`agent:backend-dev`) o un usuario de servicio? — Decidido (2026-11-06, recomendación):
   etiqueta.
-- [ ] D9 "Bloqueado", ¿es una marca sobre la tarea o un quinto estado del Kanban? — Recomendación: marca
+- [x] D9 "Bloqueado", ¿es una marca sobre la tarea o un quinto estado del Kanban? — Decidido (2026-11-06, recomendación): marca
   `IsBlocked`.
-- [ ] D10 Las notas del Gantt, ¿van en un campo `StatusNote` o como comentarios? — Recomendación: `StatusNote`.
-- [ ] D11 ¿Vista Timeline/Gantt dentro de TaskFlow en esta fase? — Recomendación: queda como tarjeta opcional
+- [x] D10 Las notas del Gantt, ¿van en un campo `StatusNote` o como comentarios? — Decidido (2026-11-06, recomendación): `StatusNote`.
+- [x] D11 ¿Vista Timeline/Gantt dentro de TaskFlow en esta fase? — Decidido (2026-11-06, recomendación): queda como tarjeta opcional
   (T-83); se hace solo si la pedís.
-- [ ] D12 ¿Quién crea keys y el vencimiento es obligatorio? — Recomendación: cualquier miembro, con vencimiento
+- [x] D12 ¿Quién crea keys y el vencimiento es obligatorio? — Decidido (2026-11-06, recomendación): cualquier miembro, con vencimiento
   por defecto de 90 días.
-- [ ] D13 ¿Se publica la referencia de la API (Scalar/OpenAPI) en producción? — Recomendación: sí, sin datos.
+- [x] D13 ¿Se publica la referencia de la API (Scalar/OpenAPI) en producción? — Decidido (2026-11-06, recomendación): sí, sin datos.

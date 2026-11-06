@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
+using TaskFlow.Infrastructure.ApiKeys;
 using TaskFlow.Infrastructure.Persistence;
 
 namespace TaskFlow.Infrastructure.Identity;
@@ -38,7 +39,13 @@ public sealed class SessionValidator(AppDbContext db, IMemoryCache cache, IOptio
     }
 
     /// <summary>Called after renewing a user's security stamp, so this instance rejects their old tokens at once.</summary>
-    public void Forget(Guid userId) => cache.Remove(CacheKey(userId));
+    public void Forget(Guid userId)
+    {
+        cache.Remove(CacheKey(userId));
+
+        // The API keys of that user cache whether the owner is active; deactivating them must cut the keys off too.
+        cache.Remove(ApiKeyDefaults.OwnerCacheKey(userId));
+    }
 
     private static string CacheKey(Guid userId) => $"security-stamp:{userId}";
 }

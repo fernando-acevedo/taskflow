@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
@@ -9,6 +10,7 @@ using TaskFlow.Application.Abstractions;
 using TaskFlow.Application.Demo;
 using TaskFlow.Application.Notifications;
 using TaskFlow.Application.Users;
+using TaskFlow.Infrastructure.ApiKeys;
 using TaskFlow.Infrastructure.Demo;
 using TaskFlow.Infrastructure.Email;
 using TaskFlow.Infrastructure.Identity;
@@ -67,6 +69,14 @@ public static class DependencyInjection
 
         services.Configure<InvitationTokenProviderOptions>(options => options.TokenLifespan =
             TimeSpan.FromDays(configuration.GetValue("Auth:InvitationDays", InvitationTokenProviderOptions.DefaultLifespanDays)));
+
+        // API keys (ADR 0016): `Bearer tf_...` goes to the ApiKey scheme, any other token to Identity as before.
+        services.AddAuthentication(options => options.DefaultScheme = ApiKeyDefaults.SelectorScheme)
+            .AddScheme<AuthenticationSchemeOptions, ApiKeyAuthenticationHandler>(ApiKeyDefaults.Scheme, null)
+            .AddPolicyScheme(ApiKeyDefaults.SelectorScheme, null, options => options.ForwardDefaultSelector = context =>
+                ApiKeyDefaults.SecretFrom(context.Request) is not null
+                    ? ApiKeyDefaults.Scheme
+                    : IdentityConstants.BearerScheme);
 
         services.Configure<BearerTokenOptions>(IdentityConstants.BearerScheme, options =>
         {

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using TaskFlow.Domain.Activity;
+using TaskFlow.Domain.ApiKeys;
 using TaskFlow.Domain.Projects;
 using TaskFlow.Infrastructure.Identity;
 
@@ -18,6 +19,8 @@ internal sealed class ActivityEntryConfiguration : IEntityTypeConfiguration<Acti
 
         builder.HasOne<Project>().WithMany().HasForeignKey(entry => entry.ProjectId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne<ApplicationUser>().WithMany().HasForeignKey(entry => entry.ActorId).OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne<ApiKey>().WithMany().HasForeignKey(entry => entry.ApiKeyId).OnDelete(DeleteBehavior.Restrict);
 
         // TaskItemId has no foreign key on purpose: the entries of a deleted task must stay.
         builder.HasIndex(entry => new { entry.ProjectId, entry.OccurredAt, entry.Sequence }).IsDescending(false, true, true);

@@ -40,6 +40,12 @@ describe('devtools sanitizer', () => {
     });
   });
 
+  it('masks the secret of a new API key', () => {
+    const action = { type: '[API Keys API] Key Created', name: 'CI', secret: 'tf_ab12_SECRET' };
+
+    expect(hideSecrets(action)).toEqual({ ...action, secret: '••••••' });
+  });
+
   it('masks the token in the router state', () => {
     const state = {
       router: {

@@ -42,6 +42,9 @@ import { describeActivity } from './activity-text';
                 }
               </ul>
             }
+            @if (entry.viaApiKey) {
+              <span class="via-key">{{ t('activity.viaApiKey') }}</span>
+            }
             <time [attr.datetime]="entry.occurredAt" [title]="entry.occurredAt | date: 'medium' : undefined : language.current()">
               {{ when(entry) }}
             </time>
@@ -78,6 +81,11 @@ import { describeActivity } from './activity-text';
       padding-left: 16px;
       font-size: 0.875rem;
       color: var(--mat-sys-on-surface-variant);
+    }
+    .via-key {
+      font-size: 0.8125rem;
+      color: var(--mat-sys-on-surface-variant);
+      margin-right: 8px;
     }
     time,
     .note {

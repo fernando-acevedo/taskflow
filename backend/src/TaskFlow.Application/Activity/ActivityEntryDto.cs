@@ -13,6 +13,7 @@ namespace TaskFlow.Application.Activity;
 /// <param name="Type">What happened.</param>
 /// <param name="OccurredAt">When it happened.</param>
 /// <param name="Changes">A JSON object whose keys depend on <paramref name="Type"/>; see ADR 0009.</param>
+/// <param name="ViaApiKey">True when the change was made with an API key (the key's id is not exposed).</param>
 public sealed record ActivityEntryDto(
     Guid Id,
     Guid? TaskId,
@@ -20,7 +21,8 @@ public sealed record ActivityEntryDto(
     string ActorName,
     ActivityType Type,
     DateTimeOffset OccurredAt,
-    JsonElement Changes);
+    JsonElement Changes,
+    bool ViaApiKey);
 
 internal static class ActivityMapping
 {
@@ -59,7 +61,8 @@ internal static class ActivityMapping
                 names.GetValueOrDefault(row.Entry.ActorId, string.Empty),
                 row.Entry.Type,
                 row.Entry.OccurredAt,
-                JsonSerializer.SerializeToElement(row.Changes));
+                JsonSerializer.SerializeToElement(row.Changes),
+                row.Entry.ApiKeyId is not null);
         }).ToList();
 
         return new PagedResult<ActivityEntryDto>(items, page.Page, page.PageSize, page.TotalCount);

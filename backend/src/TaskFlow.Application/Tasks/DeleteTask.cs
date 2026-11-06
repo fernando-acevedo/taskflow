@@ -34,6 +34,8 @@ public sealed class DeleteTaskHandler(IAppDbContext db, ProjectAccess access, Ac
             return TaskErrors.NotFound;
         }
 
+        var dependents = await db.TaskDependencies.Where(dependency => dependency.DependsOnTaskId == task.Id).ToListAsync(cancellationToken);
+        db.TaskDependencies.RemoveRange(dependents);
         activity.Record(command.ProjectId, ActivityType.TaskDeleted, new { taskTitle = task.Title }, task.Id);
         db.Tasks.Remove(task);
         await db.SaveChangesAsync(cancellationToken);

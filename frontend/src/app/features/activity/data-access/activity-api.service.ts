@@ -16,6 +16,8 @@ export interface ActivityEntry {
   readonly type: string;
   readonly occurredAt: string;
   readonly changes: ActivityChanges;
+  /** True when the change was made with an API key. */
+  readonly viaApiKey: boolean;
 }
 
 export interface ActivityPage {

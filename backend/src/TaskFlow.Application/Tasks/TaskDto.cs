@@ -27,7 +27,12 @@ public sealed record TaskDto(
     DateTimeOffset UpdatedAt,
     DateTimeOffset? CompletedAt,
     byte[] RowVersion,
-    IReadOnlyList<LabelDto> Labels);
+    IReadOnlyList<LabelDto> Labels,
+    string? ExternalKey,
+    DateOnly? StartDate,
+    bool IsBlocked,
+    string? StatusNote,
+    IReadOnlyList<Guid> DependsOn);
 
 /// <summary>The editable fields of a task, shared by create and update.</summary>
 public interface ITaskFields
@@ -113,5 +118,10 @@ internal static class TaskQueries
             task.UpdatedAt,
             task.CompletedAt,
             task.RowVersion,
-            task.Labels.OrderBy(label => label.Name).Select(label => new LabelDto(label.Id, label.Name, label.Color)).ToList()));
+            task.Labels.OrderBy(label => label.Name).Select(label => new LabelDto(label.Id, label.Name, label.Color)).ToList(),
+            task.ExternalKey,
+            task.StartDate,
+            task.IsBlocked,
+            task.StatusNote,
+            task.Dependencies.Select(dependency => dependency.DependsOnTaskId).ToList()));
 }

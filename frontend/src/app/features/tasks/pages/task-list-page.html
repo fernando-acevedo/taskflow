@@ -84,6 +84,12 @@
             <tr>
               <td>
                 <button type="button" class="link" (click)="editor.open(task)">{{ task.title }}</button>
+                @if (task.isBlocked) {
+                  <span class="blocked">{{ t('blocked') }}</span>
+                }
+                @if (task.statusNote) {
+                  <div class="status-note">{{ task.statusNote }}</div>
+                }
               </td>
               <td>{{ t('statuses.' + task.status) }}</td>
               <td><span class="priority" [attr.data-priority]="task.priority">{{ t('priorities.' + task.priority) }}</span></td>

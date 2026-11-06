@@ -61,3 +61,18 @@ tbody tr:last-child td {
 .label-cell app-label-chip {
   margin: 0 4px 4px 0;
 }
+
+.blocked {
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font: var(--mat-sys-label-medium);
+  background: var(--mat-sys-error-container);
+  color: var(--mat-sys-on-error-container);
+}
+
+.status-note {
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+  overflow-wrap: anywhere;
+}

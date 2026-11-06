@@ -9,6 +9,7 @@ import { ActivityFeed } from './activity-feed';
 const en = {
   activity: {
     loadMore: 'Load more',
+    viaApiKey: 'via API key',
     empty: 'No activity yet.',
     generic: '{{ actor }} did {{ type }}',
     types: { TaskMoved: '{{ actor }} moved “{{ task }}” from {{ from }} to {{ to }}' },
@@ -45,6 +46,15 @@ describe('ActivityFeed', () => {
 
     const sentences = Array.from(element.querySelectorAll('.sentence')).map((node) => node.textContent?.replace(/\s+/g, ' ').trim());
     expect(sentences).toEqual(['Ana moved “Docs” from To do to Done', 'Ana did Strange']);
+  });
+
+  it('marks the entries made with an API key', () => {
+    const { element } = render({ items: [anEntry({ id: 'k', viaApiKey: true }), anEntry({ id: 'p' })] });
+
+    const marks = Array.from(element.querySelectorAll('.via-key')).map((node) => node.textContent?.trim());
+    expect(marks).toEqual(['via API key']);
+    expect(element.querySelectorAll('.entry')[0].querySelector('.via-key')).not.toBeNull();
+    expect(element.querySelectorAll('.entry')[1].querySelector('.via-key')).toBeNull();
   });
 
   it('makes the title a button that opens the task while the task exists', () => {

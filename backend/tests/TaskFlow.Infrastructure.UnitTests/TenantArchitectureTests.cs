@@ -25,7 +25,7 @@ public sealed partial class TenantArchitectureTests
     // Source files allowed to use IgnoreQueryFilters / FromSql* / ExecuteSql*, each with its reason.
     private static readonly Dictionary<string, string> AllowedRawSql = new()
     {
-        // Empty on purpose (T-63): the demo reset no longer needs raw SQL. Add an entry here, with its reason, if a file must.
+        ["ApiKeys/ApiKeyAuthentication.cs"] = "finds an API key by the hash of its secret before any tenant is known; the key says which tenant the request is in (ADR 0016)",
     };
 
     [Fact]
