@@ -3,6 +3,7 @@ using DotNet.Testcontainers.Builders;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -67,6 +68,16 @@ public sealed class SqlServerApiFactory : WebApplicationFactory<Program>, IAsync
         }
 
         SkipReason = "Neither Docker nor LocalDB is available. These tests always run in CI.";
+    }
+
+    /// <summary>
+    /// A connection string for a new, empty database on the same server, for tests that must not share data
+    /// with the rest of the suite (the host migrates it on startup). The caller drops it afterwards.
+    /// </summary>
+    public string NewDatabaseConnectionString(string prefix)
+    {
+        var builder = new SqlConnectionStringBuilder(_connectionString) { InitialCatalog = $"{prefix}_{Guid.NewGuid():N}" };
+        return builder.ConnectionString;
     }
 
     /// <summary>Changes a task's due date directly, for overdue tasks the API refuses to create.</summary>

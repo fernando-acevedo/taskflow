@@ -4,9 +4,12 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using TaskFlow.Application.Abstractions;
+using TaskFlow.Application.Demo;
 using TaskFlow.Application.Notifications;
 using TaskFlow.Application.Users;
+using TaskFlow.Infrastructure.Demo;
 using TaskFlow.Infrastructure.Email;
 using TaskFlow.Infrastructure.Identity;
 using TaskFlow.Infrastructure.Notifications;
@@ -85,6 +88,13 @@ public static class DependencyInjection
 
         services.Configure<NotificationOptions>(configuration.GetSection(NotificationOptions.SectionName));
         services.AddHostedService<DueSoonNotificationService>();
+
+        // The public demo (ADR 0005). Options are validated at startup only when Demo:Enabled is true.
+        services.AddOptions<DemoOptions>().Bind(configuration.GetSection(DemoOptions.SectionName)).ValidateOnStart();
+        services.AddSingleton<IValidateOptions<DemoOptions>, DemoOptionsValidator>();
+        services.AddSingleton<IDemoMode, DemoMode>();
+        services.AddScoped<DemoResetter>();
+        services.AddHostedService<DemoResetService>();
 
         // MapIdentityApi resolves it once, from the root provider, so it must not depend on scoped services.
         services.AddSingleton<IEmailSender<ApplicationUser>, IdentityEmailSender>();

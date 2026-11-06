@@ -534,6 +534,24 @@ namespace TaskFlow.Infrastructure.Persistence.Migrations
                     b.ToTable("TimeEntries", (string)null);
                 });
 
+            modelBuilder.Entity("TaskFlow.Infrastructure.Demo.DemoResetLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CompletedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset>("StartedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompletedAt");
+
+                    b.ToTable("DemoResetLogs", (string)null);
+                });
+
             modelBuilder.Entity("TaskFlow.Infrastructure.Identity.ApplicationUser", b =>
                 {
                     b.Property<Guid>("Id")

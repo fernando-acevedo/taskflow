@@ -27,6 +27,10 @@
       }
     </mat-button-toggle-group>
 
+    @if (user() && demo().enabled) {
+      <span class="badge demo-badge" [title]="t('demo.indicatorHint')">{{ t('demo.indicator') }}</span>
+    }
+
     @if (user(); as current) {
       <app-notification-bell />
       <button mat-button type="button" class="account" [matMenuTriggerFor]="accountMenu" [attr.aria-label]="t('nav.account')">

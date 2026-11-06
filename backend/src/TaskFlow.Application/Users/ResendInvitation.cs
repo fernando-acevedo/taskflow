@@ -1,3 +1,4 @@
+using TaskFlow.Application.Demo;
 using TaskFlow.Domain.Common;
 
 namespace TaskFlow.Application.Users;
@@ -5,10 +6,15 @@ namespace TaskFlow.Application.Users;
 public sealed record ResendInvitationCommand(Guid UserId);
 
 /// <summary>Sends a fresh invitation link to a user who hasn't chosen a password yet.</summary>
-public sealed class ResendInvitationHandler(IIdentityService identity, IInvitationSender invitations)
+public sealed class ResendInvitationHandler(IIdentityService identity, IInvitationSender invitations, IDemoMode demo)
 {
     public async Task<Result> HandleAsync(ResendInvitationCommand command, CancellationToken cancellationToken)
     {
+        if (demo.IsEnabled)
+        {
+            return DemoErrors.ActionDisabled;
+        }
+
         var user = await identity.FindByIdAsync(command.UserId, cancellationToken);
         if (user is null)
         {

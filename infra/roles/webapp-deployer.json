@@ -1,0 +1,20 @@
+{
+  "Name": "TaskFlow Web App Deployer",
+  "IsCustom": true,
+  "Description": "Deploy a package to the TaskFlow web app with azure/webapps-deploy. Cannot list app settings or connection strings.",
+  "Actions": [
+    "Microsoft.Web/sites/read",
+    "Microsoft.Web/sites/config/read",
+    "Microsoft.Web/sites/publish/Action",
+    "Microsoft.Web/sites/restart/Action",
+    "Microsoft.Web/sites/basicPublishingCredentialsPolicies/read"
+  ],
+  "NotActions": [
+    "Microsoft.Web/sites/config/list/Action"
+  ],
+  "DataActions": [],
+  "NotDataActions": [],
+  "AssignableScopes": [
+    "<WEBAPP_RESOURCE_ID>"
+  ]
+}

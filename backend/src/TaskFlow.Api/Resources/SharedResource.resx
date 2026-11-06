@@ -7,6 +7,8 @@
   <data name="ApiWelcome" xml:space="preserve"><value>Welcome to the TaskFlow API.</value></data>
   <data name="UnexpectedError" xml:space="preserve"><value>An unexpected error occurred.</value></data>
   <data name="Users.NotFound" xml:space="preserve"><value>The user was not found.</value></data>
+  <data name="Demo.AccountProtected" xml:space="preserve"><value>This account is shared in the public demo and can't be deactivated or demoted.</value></data>
+  <data name="Demo.ActionDisabled" xml:space="preserve"><value>This action is disabled in the public demo.</value></data>
   <data name="Users.CannotChangeOwnStatus" xml:space="preserve"><value>You can't deactivate or reactivate your own account.</value></data>
   <data name="Users.CannotChangeOwnRole" xml:space="preserve"><value>You can't change your own role.</value></data>
   <data name="Users.EmailNotFound" xml:space="preserve"><value>No user is registered with that email.</value></data>

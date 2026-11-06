@@ -143,7 +143,7 @@ that don't need a database. `AuthApi` contains helpers for registering and loggi
 - `.editorconfig`: LF line endings (CRLF for `.cmd`/`.bat`), 2-space indent, 4 for C#, file-scoped namespaces.
 - CI (`.github/workflows/`) builds the backend in Release and runs the tests; for the frontend it runs
   lint, tests and build.
-- `infra/` is intentionally empty until phase 5 (Azure deployment).
+- `infra/` holds the Bicep template, deploy scripts and the deployer role for Azure (ADR 0011); `deploy-*.yml` workflows deploy on push to main through the `production` environment. The public demo reset lives in `Infrastructure/Demo` (ADR 0005) and needs `Demo:Enabled` + `Demo:AllowDataWipe`.
 
 ## Workflow multiagente y ahorro de tokens
 
