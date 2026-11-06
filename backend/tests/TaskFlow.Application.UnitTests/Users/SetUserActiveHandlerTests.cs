@@ -15,7 +15,7 @@ public sealed class SetUserActiveHandlerTests
     {
         var currentUser = Substitute.For<ICurrentUser>();
         currentUser.Id.Returns(CurrentUserId);
-        _handler = new SetUserActiveHandler(_identity, currentUser);
+        _handler = new SetUserActiveHandler(_identity, currentUser, Substitute.For<TaskFlow.Application.Demo.IDemoMode>());
     }
 
     [Fact]

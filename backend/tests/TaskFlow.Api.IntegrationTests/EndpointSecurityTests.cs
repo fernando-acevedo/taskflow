@@ -14,6 +14,7 @@ public sealed class EndpointSecurityTests(NoDatabaseApiFactory factory) : IClass
     [
         "health",
         "api/system/info",
+        "api/demo/status",
         "api/invitations/accept",
         "api/auth/register",
         "api/auth/login",

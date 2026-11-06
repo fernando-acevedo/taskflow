@@ -9,6 +9,7 @@ import { TranslocoDirective } from '@jsverse/transloco';
 import { Store } from '@ngrx/store';
 import { ShellActions } from './core/auth/store/auth.actions';
 import { authFeature } from './core/auth/store/auth.feature';
+import { DemoService } from './core/demo/demo.service';
 import { LanguageService } from './core/i18n/language.service';
 import { SUPPORTED_LANGUAGES } from './core/i18n/languages';
 import { NotificationBell } from './features/notifications/ui/notification-bell';
@@ -34,6 +35,7 @@ import { NotificationBell } from './features/notifications/ui/notification-bell'
 export class App {
   private readonly store = inject(Store);
   protected readonly language = inject(LanguageService);
+  protected readonly demo = inject(DemoService).status;
   protected readonly languages = SUPPORTED_LANGUAGES;
   protected readonly user = this.store.selectSignal(authFeature.selectUser);
   protected readonly isAdmin = this.store.selectSignal(authFeature.selectIsAdmin);

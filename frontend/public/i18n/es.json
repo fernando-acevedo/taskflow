@@ -19,6 +19,13 @@
     "greeting": "Hola, {{ name }}",
     "openProjects": "Ir a proyectos"
   },
+  "demo": {
+    "title": "Demo pública",
+    "useAccount": "Usar esta cuenta",
+    "resetsAt": "Los datos de la demo se restablecen el {{when}}; todo lo que cambies se borrará.",
+    "indicator": "Demo",
+    "indicatorHint": "Demo pública: los datos se restablecen periódicamente"
+  },
   "auth": {
     "email": "Email",
     "password": "Contraseña",
@@ -163,6 +170,10 @@
     "retry": "Reintentar"
   },
   "apiErrors": {
+    "Demo": {
+      "AccountProtected": "Esta cuenta se comparte en la demo pública y no se puede desactivar ni quitarle el rol de admin.",
+      "ActionDisabled": "Esta acción está deshabilitada en la demo pública."
+    },
     "validation": "Algunos campos no son válidos. Revísalos e inténtalo de nuevo.",
     "forbidden": "No tienes permiso para hacer esto.",
     "network": "No se puede conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.",

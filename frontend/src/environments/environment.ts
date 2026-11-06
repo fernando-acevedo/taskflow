@@ -1,5 +1,5 @@
 export const environment = {
   production: true,
-  // Set to the App Service URL when the Azure deployment lands (phase 5).
+  // Placeholder: the deploy-frontend workflow overwrites this file with vars.API_URL before building.
   apiUrl: '',
 };

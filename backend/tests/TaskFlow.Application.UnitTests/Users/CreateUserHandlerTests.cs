@@ -10,7 +10,7 @@ public sealed class CreateUserHandlerTests
     private readonly IInvitationSender _invitations = Substitute.For<IInvitationSender>();
     private readonly CreateUserHandler _handler;
 
-    public CreateUserHandlerTests() => _handler = new CreateUserHandler(_identity, _invitations, new CreateUserValidator());
+    public CreateUserHandlerTests() => _handler = new CreateUserHandler(_identity, _invitations, new CreateUserValidator(), Substitute.For<TaskFlow.Application.Demo.IDemoMode>());
 
     [Theory]
     [InlineData("not-an-email", "Someone", "email")]
@@ -69,4 +69,18 @@ public sealed class CreateUserHandlerTests
 
     private static UserDto NewPendingUser() =>
         new(Guid.NewGuid(), "new@tests.local", "New Person", true, [], DateTimeOffset.UtcNow, IsInvitationPending: true);
+
+    [Fact]
+    public async Task IsDisabledInTheDemo()
+    {
+        var demo = Substitute.For<TaskFlow.Application.Demo.IDemoMode>();
+        demo.IsEnabled.Returns(true);
+        var handler = new CreateUserHandler(_identity, _invitations, new CreateUserValidator(), demo);
+
+        var result = await handler.HandleAsync(new CreateUserCommand("new@example.com", "New User", true), TestContext.Current.CancellationToken);
+
+        result.Error.ShouldBe(TaskFlow.Application.Demo.DemoErrors.ActionDisabled);
+        await _identity.DidNotReceiveWithAnyArgs().CreateAsync(default!, TestContext.Current.CancellationToken);
+        await _invitations.DidNotReceiveWithAnyArgs().SendAsync(default!, default!, TestContext.Current.CancellationToken);
+    }
 }

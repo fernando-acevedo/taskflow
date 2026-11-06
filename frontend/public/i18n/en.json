@@ -19,6 +19,13 @@
     "greeting": "Hi, {{ name }}",
     "openProjects": "Go to projects"
   },
+  "demo": {
+    "title": "Public demo",
+    "useAccount": "Use this account",
+    "resetsAt": "Demo data resets at {{when}}; anything you change will be erased.",
+    "indicator": "Demo",
+    "indicatorHint": "Public demo: data is reset periodically"
+  },
   "auth": {
     "email": "Email",
     "password": "Password",
@@ -163,6 +170,10 @@
     "retry": "Try again"
   },
   "apiErrors": {
+    "Demo": {
+      "AccountProtected": "This account is shared in the public demo and can't be deactivated or demoted.",
+      "ActionDisabled": "This action is disabled in the public demo."
+    },
     "validation": "Some fields are not valid. Check them and try again.",
     "forbidden": "You don't have permission to do this.",
     "network": "Can't reach the server. Check your connection and try again.",

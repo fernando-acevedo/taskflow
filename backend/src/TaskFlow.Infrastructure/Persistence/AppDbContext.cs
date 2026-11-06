@@ -7,6 +7,7 @@ using TaskFlow.Domain.Clients;
 using TaskFlow.Domain.Notifications;
 using TaskFlow.Domain.Projects;
 using TaskFlow.Domain.Tasks;
+using TaskFlow.Infrastructure.Demo;
 using TaskFlow.Infrastructure.Identity;
 
 namespace TaskFlow.Infrastructure.Persistence;
@@ -33,6 +34,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<Notification> Notifications => Set<Notification>();
 
     public DbSet<NotificationPreferences> NotificationPreferences => Set<NotificationPreferences>();
+
+    public DbSet<DemoResetLog> DemoResetLogs => Set<DemoResetLog>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

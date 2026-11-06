@@ -170,7 +170,7 @@ otherwise a throwaway LocalDB database. In CI they always use the container.
 | 2 | Domain and API: clients, projects, members, tasks | Done |
 | 3 | Angular features with NgRx, Kanban with drag and drop | Done |
 | 4 | Dashboard | Done |
-| 5 | Azure deployment and the public demo with nightly reset | Next |
+| 5 | Azure deployment and the public demo with nightly reset | Code ready (`infra/`), first deploy pending |
 | 6 | Polish: screenshots, accessibility, docs | Planned |
 
 ## License
