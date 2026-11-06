@@ -61,6 +61,32 @@ Si dos tareas de la misma capa tienen que ir en paralelo, pedí que cada agente 
 - al despachar un agente con un encargo que menciona `T-xx`, la tarea pasa a "en progreso";
 - al terminar, se aplica su línea `Gantt: {...}`; si no la devolvió, la tarea queda "bloqueado" para revisar.
 
+**Sincronizar con TaskFlow (opcional, 0 tokens):** el mismo hook puede mandar cada actualización a un proyecto de
+TaskFlow con `POST /api/projects/{id}/tasks/sync` (ADR 0016 y 0017). Se activa solo si las tres variables están
+definidas en el entorno donde corre Claude Code:
+
+```bash
+TASKFLOW_URL=https://api.tu-taskflow.example     # sin barra final
+TASKFLOW_API_KEY=tf_...                          # una API key con scope Write (Ajustes > API keys), nunca se imprime
+TASKFLOW_PROJECT=<id del proyecto>               # el proyecto donde viven las tarjetas
+```
+
+- La key se crea con una cuenta que sea miembro del proyecto; no puede crear proyectos, así que el proyecto ya tiene
+  que existir.
+- Mapeo: `T-xx` → `externalKey`; estado → columna (`pendiente` ToDo, `en_progreso` InProgress, `hecho` Done);
+  `bloqueado` → `isBlocked` (la tarjeta conserva su columna); `notes` → `statusNote`; `start`/`end` →
+  `startDate`/`dueDate`; `deps` → `dependsOn`. El agente (D8) iría como etiqueta, pero el sync no maneja etiquetas:
+  por ahora va en la primera línea de la descripción (`Agente: backend-dev`), junto con el título completo cuando
+  pasa de 200 caracteres.
+- La API reemplaza todos los campos de la tarea, así que el hook completa la actualización con la tarea del SEED de
+  `docs/panel-gantt.html`; una tarea que no está en el SEED (ni trae `title`) no se manda.
+- Si faltan variables o la API falla, nada cambia: el hook sigue escribiendo `docs/gantt-updates.js` y el mensaje del
+  hook dice si TaskFlow respondió.
+- Carga inicial (una vez, repetible sin duplicar): `node .claude/skills/dev-flow/gantt-import.js` manda todo el SEED
+  en lotes de hasta 200. Con `--dry-run` imprime los payloads sin mandar nada y sin necesitar las variables.
+- Probar el hook sin escribir ni mandar: `echo '{"last_assistant_message":"Gantt: {\"id\":\"T-85\",\"status\":\"hecho\"}"}' | node .claude/hooks/gantt-sync.js stop --dry-run`.
+  Tests: `node --test .claude/hooks/taskflow-sync.test.js`.
+
 El link publicado en claude.ai no se sincroniza solo; el resto de esta sección es el camino manual.
 
 Cada agente termina con un bloque corto y una línea `Gantt: {"id":"T-01","status":"hecho","notes":"..."}`.
