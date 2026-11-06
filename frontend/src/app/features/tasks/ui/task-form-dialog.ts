@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -50,6 +51,7 @@ const MAX_ESTIMATE_MINUTES = 9999 * 60;
     DatePipe,
     ReactiveFormsModule,
     MatButtonModule,
+    MatCheckboxModule,
     MatDialogModule,
     MatFormFieldModule,
     MatIconModule,
@@ -124,7 +126,10 @@ export class TaskFormDialog {
     description: [this.data.task?.description ?? '', Validators.maxLength(4000)],
     priority: this.fb.control<TaskPriority>(this.data.task?.priority ?? 'Medium'),
     assigneeId: [this.data.task?.assigneeId ?? ''],
+    startDate: [this.data.task?.startDate ?? ''],
     dueDate: [this.data.task?.dueDate ?? ''],
+    isBlocked: [this.data.task?.isBlocked ?? false],
+    statusNote: [this.data.task?.statusNote ?? '', Validators.maxLength(500)],
     labelIds: [this.data.task?.labels.map((label) => label.id) ?? []],
     /** Hours and minutes ("2:30", "2h 30m") or decimal hours ("2.5"); empty for no estimate. */
     estimatedMinutes: [toClockText(this.data.task?.estimatedMinutes ?? null)],
@@ -137,9 +142,12 @@ export class TaskFormDialog {
   }
 
   protected submit(): void {
-    const { dueDate } = this.form.getRawValue();
+    const { dueDate, startDate } = this.form.getRawValue();
     if (this.minDate && dueDate && dueDate < this.minDate) {
       this.form.controls.dueDate.setErrors({ past: true });
+    }
+    if (startDate && dueDate && startDate > dueDate) {
+      this.form.controls.startDate.setErrors({ startAfterDue: true });
     }
     const estimateText = this.form.controls.estimatedMinutes.value.trim();
     const estimate = estimateText === '' ? null : parseDuration(estimateText);
@@ -150,7 +158,7 @@ export class TaskFormDialog {
       this.form.markAllAsTouched();
       return;
     }
-    const { title, description, priority, assigneeId, labelIds } = this.form.getRawValue();
+    const { title, description, priority, assigneeId, labelIds, isBlocked, statusNote } = this.form.getRawValue();
     this.saving.set(true);
     this.data
       .save({
@@ -158,7 +166,10 @@ export class TaskFormDialog {
         description: description.trim() || null,
         priority,
         assigneeId: assigneeId || null,
+        startDate: startDate || null,
         dueDate: dueDate || null,
+        isBlocked,
+        statusNote: statusNote.trim() || null,
         labelIds,
         estimatedMinutes: estimate,
       })
@@ -168,6 +179,11 @@ export class TaskFormDialog {
         if (error) {
           // A description of up to 4000 characters must not be lost to a rejected save.
           applyApiFieldErrors(this.form, error);
+          if (error.code === 'Tasks.StartAfterDue') {
+            // Not a field error for the API, but the user fixes it in the start date.
+            this.form.controls.startDate.setErrors({ startAfterDue: true });
+            this.form.controls.startDate.markAsTouched();
+          }
         } else {
           this.dialogRef.close();
         }

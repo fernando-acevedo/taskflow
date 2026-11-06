@@ -50,6 +50,11 @@ export interface TaskInput {
   readonly labelIds: readonly string[];
   /** Null for no estimate. */
   readonly estimatedMinutes: number | null;
+  /** `yyyy-MM-dd`; null for none. */
+  readonly startDate: string | null;
+  readonly isBlocked: boolean;
+  /** Up to 500 characters; null for none. */
+  readonly statusNote: string | null;
 }
 
 @Injectable({ providedIn: 'root' })

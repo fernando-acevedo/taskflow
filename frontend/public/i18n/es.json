@@ -288,7 +288,8 @@
       "NameTooLong": "El nombre de la etiqueta puede tener hasta 40 caracteres.",
       "InvalidColor": "Elige uno de los colores disponibles.",
       "NameTaken": "Este proyecto ya tiene una etiqueta con ese nombre.",
-      "NotInProject": "Una de las etiquetas no pertenece a este proyecto."
+      "NotInProject": "Una de las etiquetas no pertenece a este proyecto.",
+      "CreateNotAllowed": "Solo un propietario del proyecto con sesión de persona puede crear etiquetas. Creá esta etiqueta antes o pedíselo a un propietario."
     },
     "TaskComments": {
       "NotFound": "No se encontró el comentario. Puede que alguien lo haya eliminado.",
@@ -540,6 +541,7 @@
     "planning": "Planificación",
     "externalKey": "Clave externa",
     "startDate": "Fecha de inicio",
+    "startAfterDue": "La fecha de inicio no puede ser posterior al vencimiento.",
     "statusNote": "Nota de estado",
     "dependsOn": "Depende de"
   },
@@ -643,6 +645,7 @@
     "loadFailed": "No se pudo cargar la actividad.",
     "empty": "Todavía no hay actividad.",
     "loadMore": "Cargar más",
+    "viaApiKey": "vía API key",
     "none": "ninguna",
     "generic": "{{ actor }} hizo algo ({{ type }})",
     "types": {

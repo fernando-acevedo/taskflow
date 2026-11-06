@@ -47,6 +47,16 @@
         </mat-form-field>
 
         <mat-form-field appearance="outline">
+          <mat-label>{{ t('startDate') }}</mat-label>
+          <input matInput type="date" formControlName="startDate" />
+          @if (form.controls.startDate.getError('api'); as message) {
+            <mat-error>{{ message }}</mat-error>
+          } @else if (form.controls.startDate.hasError('startAfterDue')) {
+            <mat-error>{{ t('startAfterDue') }}</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
           <mat-label>{{ t('dueDate') }}</mat-label>
           <input matInput type="date" formControlName="dueDate" [min]="minDate" />
           @if (form.controls.dueDate.getError('api'); as message) {
@@ -56,6 +66,16 @@
           }
         </mat-form-field>
       </div>
+
+      <mat-checkbox formControlName="isBlocked">{{ t('blocked') }}</mat-checkbox>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ t('statusNote') }}</mat-label>
+        <textarea matInput formControlName="statusNote" rows="2" maxlength="500"></textarea>
+        @if (form.controls.statusNote.getError('api'); as message) {
+          <mat-error>{{ message }}</mat-error>
+        }
+      </mat-form-field>
 
       <mat-form-field appearance="outline">
         <mat-label>{{ t('estimate') }}</mat-label>
@@ -86,24 +106,13 @@
     </form>
 
     @if (data.task; as task) {
-      @if (task.externalKey || task.startDate || task.isBlocked || task.statusNote || dependencies.length > 0) {
+      @if (task.externalKey || dependencies.length > 0) {
         <section class="planning" [attr.aria-label]="t('planning')">
           <h3>{{ t('planning') }}</h3>
           <dl>
             @if (task.externalKey) {
               <dt>{{ t('externalKey') }}</dt>
               <dd><code>{{ task.externalKey }}</code></dd>
-            }
-            @if (task.startDate) {
-              <dt>{{ t('startDate') }}</dt>
-              <dd>{{ task.startDate | date: 'mediumDate' : 'UTC' : language.current() }}</dd>
-            }
-            @if (task.isBlocked) {
-              <dt>{{ t('blocked') }}</dt>
-              <dd>{{ task.statusNote ?? t('blockedYes') }}</dd>
-            } @else if (task.statusNote) {
-              <dt>{{ t('statusNote') }}</dt>
-              <dd>{{ task.statusNote }}</dd>
             }
             @if (dependencies.length > 0) {
               <dt>{{ t('dependsOn') }}</dt>
