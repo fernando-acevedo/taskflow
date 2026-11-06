@@ -78,6 +78,7 @@ public static class DependencyInjection
         services.AddMemoryCache();
         services.AddScoped<SessionValidator>();
         services.AddScoped<Tenancy.TenantAccess>();
+        services.AddScoped<ITenantAccessCache>(provider => provider.GetRequiredService<Tenancy.TenantAccess>());
 
         services.Configure<EmailOptions>(configuration.GetSection(EmailOptions.SectionName));
         if (string.IsNullOrWhiteSpace(configuration[$"{EmailOptions.SectionName}:Smtp:Host"]))

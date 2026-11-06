@@ -61,4 +61,16 @@ public static class TenantErrors
 
     public static readonly Error InvalidSlug =
         Error.Invalid("Tenants.InvalidSlug", "The slug may only contain lowercase letters, digits and single hyphens.");
+
+    public static readonly Error LastOwner =
+        Error.Conflict("Tenants.LastOwner", "A tenant must keep at least one Owner.");
+
+    public static readonly Error AlreadyMember =
+        Error.Conflict("Tenants.AlreadyMember", "This user already belongs to the tenant.");
+
+    public static readonly Error MemberNotFound =
+        Error.NotFound("Tenants.MemberNotFound", "This user is not a member of the tenant.");
+
+    public static readonly Error OwnerRequired =
+        Error.Forbidden("Tenants.OwnerRequired", "Only an Owner can add, change or remove an Owner.");
 }

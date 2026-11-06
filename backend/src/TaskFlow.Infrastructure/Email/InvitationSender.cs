@@ -32,6 +32,33 @@ internal sealed partial class InvitationSender(
         }
     }
 
+    public async Task<bool> SendTenantAddedAsync(UserDto user, string tenantName, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var link = LinkEmail.FrontendLink(emailOptions.Value, "login").TrimEnd('#');
+            var text = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "es" ? SpanishAdded : EnglishAdded;
+            await sender.SendAsync(
+                LinkEmail.Compose(
+                    user.Email,
+                    string.Format(CultureInfo.InvariantCulture, text.Subject, tenantName),
+                    string.Format(CultureInfo.InvariantCulture, text.Greeting, user.DisplayName),
+                    string.Format(CultureInfo.InvariantCulture, text.Intro, tenantName),
+                    text.Button,
+                    link,
+                    text.Footer),
+                cancellationToken);
+            return true;
+        }
+#pragma warning disable CA1031 // Any delivery failure (settings, network, SMTP) is reported to the admin as "not sent".
+        catch (Exception exception) when (exception is not OperationCanceledException)
+#pragma warning restore CA1031
+        {
+            LogSendFailed(logger, exception, user.Id);
+            return false;
+        }
+    }
+
     private string BuildLink(string email, string token) =>
         LinkEmail.FrontendLink(emailOptions.Value, "accept-invitation", ("email", email), ("token", token));
 
@@ -64,6 +91,22 @@ internal sealed partial class InvitationSender(
         "Un administrador te creó una cuenta en TaskFlow ({0}). Elige tu contraseña para iniciar sesión:",
         "Elegir mi contraseña",
         "El enlace sirve una sola vez y vence en {0} días. Si vence, pide a un administrador que te envíe uno nuevo.");
+
+    private sealed record AddedText(string Subject, string Greeting, string Intro, string Button, string Footer);
+
+    private static readonly AddedText EnglishAdded = new(
+        "You were added to {0} on TaskFlow",
+        "Hi {0},",
+        "An administrator added you to {0}. Sign in with your existing account to switch to it:",
+        "Open TaskFlow",
+        "Use the organization selector in the top bar to switch between your organizations.");
+
+    private static readonly AddedText SpanishAdded = new(
+        "Te agregaron a {0} en TaskFlow",
+        "Hola, {0}:",
+        "Un administrador te agregó a {0}. Inicia sesión con tu cuenta actual para cambiar a ella:",
+        "Abrir TaskFlow",
+        "Usa el selector de organización de la barra superior para cambiar entre tus organizaciones.");
 
     // The user id rather than the email: logs are kept longer and read by more people than the user list.
     [LoggerMessage(Level = LogLevel.Error, Message = "Could not send the invitation email to user {UserId}")]

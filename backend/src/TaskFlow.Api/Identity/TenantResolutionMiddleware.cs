@@ -61,6 +61,10 @@ internal sealed class TenantResolutionMiddleware(RequestDelegate next)
         if (error is null)
         {
             tenant.Use(tenantId, result.Role);
+            if (result.IsSupportAccess)
+            {
+                await access.RecordSupportAccessAsync(userId, tenantId, context.RequestAborted);
+            }
         }
 
         return error;

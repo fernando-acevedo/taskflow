@@ -4,6 +4,7 @@ using TaskFlow.Domain.Clients;
 using TaskFlow.Domain.Notifications;
 using TaskFlow.Domain.Projects;
 using TaskFlow.Domain.Tasks;
+using TaskFlow.Domain.Tenancy;
 
 namespace TaskFlow.Application.Abstractions;
 
@@ -13,6 +14,15 @@ namespace TaskFlow.Application.Abstractions;
 /// </summary>
 public interface IAppDbContext
 {
+    /// <summary>Not tenant-filtered: always constrain by the tenant or the user explicitly (ADR 0012).</summary>
+    DbSet<Tenant> Tenants { get; }
+
+    /// <summary>Not tenant-filtered: always constrain by the tenant or the user explicitly (ADR 0012).</summary>
+    DbSet<TenantMembership> TenantMemberships { get; }
+
+    /// <summary>Not tenant-filtered: always constrain by the tenant explicitly.</summary>
+    DbSet<TenantSupportAccess> TenantSupportAccesses { get; }
+
     DbSet<Client> Clients { get; }
 
     DbSet<Project> Projects { get; }

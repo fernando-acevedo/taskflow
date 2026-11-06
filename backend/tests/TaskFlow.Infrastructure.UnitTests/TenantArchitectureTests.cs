@@ -16,6 +16,7 @@ public sealed partial class TenantArchitectureTests
     {
         ["Tenant"] = "the tenant itself",
         ["TenantMembership"] = "links global users to tenants; read to resolve the tenant",
+        ["TenantSupportAccess"] = "audit of super-admin entries; read per tenant by explicit TenantId, written before the tenant is resolved",
         ["NotificationPreferences"] = "per user, not per tenant",
         ["DemoResetLog"] = "global audit of the demo reset",
         ["ApplicationUser"] = "Identity: users are global",

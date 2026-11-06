@@ -29,3 +29,14 @@ internal sealed class TenantMembershipConfiguration : IEntityTypeConfiguration<T
         builder.HasIndex(membership => membership.UserId);
     }
 }
+
+internal sealed class TenantSupportAccessConfiguration : IEntityTypeConfiguration<TenantSupportAccess>
+{
+    public void Configure(EntityTypeBuilder<TenantSupportAccess> builder)
+    {
+        builder.ToTable("TenantSupportAccesses");
+        builder.Property(access => access.Id).ValueGeneratedNever();
+        builder.HasOne<Tenant>().WithMany().HasForeignKey(access => access.TenantId).OnDelete(DeleteBehavior.Cascade);
+        builder.HasIndex(access => new { access.TenantId, access.At });
+    }
+}

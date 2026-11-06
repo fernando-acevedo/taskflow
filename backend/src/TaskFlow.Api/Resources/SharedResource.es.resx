@@ -26,6 +26,11 @@
   <data name="Tenants.Forbidden" xml:space="preserve"><value>No perteneces a esta organización.</value></data>
   <data name="Tenants.SlugTaken" xml:space="preserve"><value>Otra organización ya usa este identificador.</value></data>
   <data name="Tenants.InvalidSlug" xml:space="preserve"><value>El identificador solo puede contener minúsculas, dígitos y guiones simples.</value></data>
+  <data name="Tenants.LastOwner" xml:space="preserve"><value>Una organización debe conservar al menos un propietario.</value></data>
+  <data name="Tenants.AlreadyMember" xml:space="preserve"><value>Este usuario ya pertenece a la organización.</value></data>
+  <data name="Tenants.MemberNotFound" xml:space="preserve"><value>Este usuario no es miembro de la organización.</value></data>
+  <data name="Tenants.OwnerRequired" xml:space="preserve"><value>Solo un propietario puede agregar, cambiar o quitar a un propietario.</value></data>
+  <data name="Tenants.SuperAdminRequired" xml:space="preserve"><value>Solo un administrador de la plataforma puede hacerlo.</value></data>
   <data name="Projects.NameTaken" xml:space="preserve"><value>El cliente ya tiene un proyecto con ese nombre.</value></data>
   <data name="Projects.Archived" xml:space="preserve"><value>El proyecto está archivado y es de solo lectura.</value></data>
   <data name="Projects.AlreadyMember" xml:space="preserve"><value>El usuario ya es miembro del proyecto.</value></data>

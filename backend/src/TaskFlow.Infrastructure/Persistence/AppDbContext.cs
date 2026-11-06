@@ -31,6 +31,8 @@ public sealed class AppDbContext(
 
     public DbSet<TenantMembership> TenantMemberships => Set<TenantMembership>();
 
+    public DbSet<TenantSupportAccess> TenantSupportAccesses => Set<TenantSupportAccess>();
+
     public DbSet<Client> Clients => Set<Client>();
 
     public DbSet<Project> Projects => Set<Project>();

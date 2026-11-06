@@ -23,6 +23,7 @@ public static class DependencyInjection
         services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly, includeInternalTypes: true);
         services.AddScoped<ProjectAccess>();
         services.AddScoped<ActivityLog>();
+        services.AddScoped<Tenants.TenantMemberInviter>();
         services.AddScoped<Notifier>();
         services.TryAddSingleton(TimeProvider.System);
         return services;

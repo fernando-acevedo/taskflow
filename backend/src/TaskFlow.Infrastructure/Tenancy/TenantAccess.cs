@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using TaskFlow.Application.Abstractions;
 using TaskFlow.Domain.Common;
 using TaskFlow.Domain.Tenancy;
 using TaskFlow.Infrastructure.Persistence;
@@ -7,15 +8,22 @@ using TaskFlow.Infrastructure.Persistence;
 namespace TaskFlow.Infrastructure.Tenancy;
 
 /// <summary>What a user may do in a tenant. <see cref="Role"/> is <c>null</c> when they do not belong to it.</summary>
-public readonly record struct TenantAccessResult(bool TenantExists, TenantRole? Role);
+public readonly record struct TenantAccessResult(bool TenantExists, TenantRole? Role)
+{
+    /// <summary>A super-admin is in a tenant they do not belong to (support access, ADR 0013).</summary>
+    public bool IsSupportAccess { get; init; }
+}
 
 /// <summary>
 /// Checks the user's membership in a tenant (ADR 0013). The answer is cached per (user, tenant) for
 /// <see cref="CacheDuration"/>; this instance forgets it as soon as a membership changes (see <see cref="Forget"/>),
 /// other instances pick the change up within the cache duration.
 /// </summary>
-public sealed class TenantAccess(AppDbContext db, IMemoryCache cache)
+public sealed class TenantAccess(AppDbContext db, IMemoryCache cache, TimeProvider? time = null) : ITenantAccessCache
 {
+    /// <summary>At most one support-access row per (user, tenant) in this window.</summary>
+    public static readonly TimeSpan SupportAccessWindow = TimeSpan.FromMinutes(30);
+
     public static readonly TimeSpan CacheDuration = TimeSpan.FromSeconds(30);
 
     /// <summary>Resolves an explicit tenant. A super-admin gets Owner in any existing tenant.</summary>
@@ -32,7 +40,9 @@ public sealed class TenantAccess(AppDbContext db, IMemoryCache cache)
             return new TenantAccessResult(exists, role);
         });
 
-        return isSuperAdmin && entry.TenantExists ? entry with { Role = TenantRole.Owner } : entry;
+        return isSuperAdmin && entry.TenantExists
+            ? entry with { Role = TenantRole.Owner, IsSupportAccess = entry.Role is null }
+            : entry;
     }
 
     /// <summary>
@@ -52,6 +62,20 @@ public sealed class TenantAccess(AppDbContext db, IMemoryCache cache)
         });
 
         return memberships is { Count: 1 } ? (memberships[0].TenantId, memberships[0].Role) : null;
+    }
+
+    /// <summary>Records that a super-admin entered a tenant they do not belong to, at most once per window (same cache).</summary>
+    public async Task RecordSupportAccessAsync(Guid userId, Guid tenantId, CancellationToken cancellationToken)
+    {
+        var key = $"tenant-support:{userId}:{tenantId}";
+        if (cache.TryGetValue(key, out _))
+        {
+            return;
+        }
+
+        db.TenantSupportAccesses.Add(TenantSupportAccess.Create(tenantId, userId, (time ?? TimeProvider.System).GetUtcNow()));
+        await db.SaveChangesAsync(cancellationToken);
+        cache.Set(key, true, SupportAccessWindow);
     }
 
     /// <summary>Called after adding, removing or changing a membership, so this instance sees it at once.</summary>
