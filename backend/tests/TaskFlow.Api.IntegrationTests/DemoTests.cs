@@ -11,8 +11,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Time.Testing;
 using TaskFlow.Api.IntegrationTests.Infrastructure;
 using TaskFlow.Application.Demo;
+using TaskFlow.Application.Users;
 using TaskFlow.Infrastructure.Demo;
 using TaskFlow.Infrastructure.Identity;
+using TaskFlow.Domain.Notifications;
 using TaskFlow.Domain.Tenancy;
 using TaskFlow.Infrastructure.Persistence;
 using TaskFlow.Infrastructure.Tenancy;
@@ -185,6 +187,7 @@ public sealed class DemoTests(SqlServerApiFactory factory) : IAsyncLifetime
             db.Tenants.Add(Tenant.Create(acmeId, "Acme", "acme", isDemo: false, factory.Time.GetUtcNow()).Value);
             db.TenantMemberships.Add(TenantMembership.Create(acmeId, acmeUserId, TenantRole.Owner, factory.Time.GetUtcNow()));
             db.TenantMemberships.Add(TenantMembership.Create(TenantDefaults.DemoId, acmeUserId, TenantRole.Member, factory.Time.GetUtcNow()));
+            db.NotificationPreferences.Add(NotificationPreferences.CreateDefault(acmeUserId));
             await db.SaveChangesAsync(Ct);
         }
 
@@ -207,6 +210,7 @@ public sealed class DemoTests(SqlServerApiFactory factory) : IAsyncLifetime
             (await db.Users.AnyAsync(user => user.Id == acmeUserId, token)).ShouldBeTrue();
             (await db.Tenants.AnyAsync(tenant => tenant.Id == acmeId, token)).ShouldBeTrue();
             (await db.TenantMemberships.AnyAsync(m => m.TenantId == acmeId && m.UserId == acmeUserId, token)).ShouldBeTrue();
+            (await db.NotificationPreferences.AnyAsync(p => p.UserId == acmeUserId, token)).ShouldBeTrue();
         }, Ct);
 
         // The demo tenant itself was rebuilt, so the visitor-user who also belonged elsewhere is not a member of it any more.
@@ -217,6 +221,67 @@ public sealed class DemoTests(SqlServerApiFactory factory) : IAsyncLifetime
             (await db.Clients.CountAsync(token)).ShouldBe(4);
             (await db.TenantMemberships.AnyAsync(m => m.TenantId == TenantDefaults.DemoId && m.UserId == acmeUserId, token)).ShouldBeFalse();
         }, Ct);
+    }
+
+    [Fact]
+    public async Task AResetAbortsAndChangesNothingWhenADemoAccountBelongsToAnotherTenant()
+    {
+        using var host = DemoHost();
+        using var client = host.CreateClient();
+        await WaitForStartupResetAsync(host);
+
+        var otherTenantId = Guid.CreateVersion7();
+        await using (var scope = host.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var member = await db.Users.SingleAsync(user => user.Email == MemberEmail, Ct);
+            db.Tenants.Add(Tenant.Create(otherTenantId, "Real agency", "real-agency", isDemo: false, factory.Time.GetUtcNow()).Value);
+            db.TenantMemberships.Add(TenantMembership.Create(otherTenantId, member.Id, TenantRole.Owner, factory.Time.GetUtcNow()));
+            await db.SaveChangesAsync(Ct);
+        }
+
+        await using (var scope = host.Services.CreateAsyncScope())
+        {
+            await Should.ThrowAsync<InvalidOperationException>(
+                () => scope.ServiceProvider.GetRequiredService<DemoResetter>().ResetAsync(Ct));
+        }
+
+        await using (var scope = host.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            (await db.TenantMemberships.CountAsync(m => m.TenantId == otherTenantId, Ct)).ShouldBe(1);
+        }
+
+        // The password was not overwritten with the published demo one.
+        using var login = await client.LoginAsync(MemberEmail, MemberPassword);
+        login.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task AResetAbortsWhenADemoAccountIsASuperAdmin()
+    {
+        using var host = DemoHost();
+        using var client = host.CreateClient();
+        await WaitForStartupResetAsync(host);
+
+        await using (var scope = host.Services.CreateAsyncScope())
+        {
+            var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            var member = await users.FindByEmailAsync(MemberEmail);
+            (await users.AddToRoleAsync(member!, Roles.Admin)).Succeeded.ShouldBeTrue();
+        }
+
+        await using (var scope = host.Services.CreateAsyncScope())
+        {
+            await Should.ThrowAsync<InvalidOperationException>(
+                () => scope.ServiceProvider.GetRequiredService<DemoResetter>().ResetAsync(Ct));
+        }
+
+        await using (var scope = host.Services.CreateAsyncScope())
+        {
+            var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            (await users.IsInRoleAsync((await users.FindByEmailAsync(MemberEmail))!, Roles.Admin)).ShouldBeTrue();
+        }
     }
 
     [Fact]

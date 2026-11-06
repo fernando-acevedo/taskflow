@@ -2,7 +2,8 @@ namespace TaskFlow.Domain.Tenancy;
 
 /// <summary>
 /// A super-admin entered a tenant they do not belong to, by naming it in <c>X-Tenant</c> (ADR 0013). At most one row
-/// per (user, tenant) every 30 minutes; the tenant's Owners can read them.
+/// per (user, tenant) every 30 minutes, stored in the <c>TenantSupportAccesses</c> table (not in the activity log); the
+/// tenant's Owners and Admins can read them.
 /// </summary>
 public sealed class TenantSupportAccess
 {

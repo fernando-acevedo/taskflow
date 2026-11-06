@@ -121,6 +121,37 @@ public sealed class Project : ITenantOwned
         return Result.Success();
     }
 
+    /// <summary>
+    /// Takes a user out of the project because they left the tenant; works in archived projects too. When they were
+    /// the only Owner, <paramref name="successorId"/> (another member of the tenant) becomes Owner first, added as a
+    /// member if needed, so the project never ends up without an Owner.
+    /// </summary>
+    public bool Offboard(Guid userId, Guid successorId, DateTimeOffset now)
+    {
+        var role = RoleOf(userId);
+        if (role is null)
+        {
+            return false;
+        }
+
+        if (role == ProjectRole.Owner && _members.Count(member => member.Role == ProjectRole.Owner) == 1)
+        {
+            var successor = _members.SingleOrDefault(member => member.UserId == successorId);
+            if (successor is null)
+            {
+                _members.Add(new ProjectMember(Id, successorId, ProjectRole.Owner, now));
+            }
+            else
+            {
+                successor.Role = ProjectRole.Owner;
+            }
+        }
+
+        _members.RemoveAll(member => member.UserId == userId);
+        UpdatedAt = now;
+        return true;
+    }
+
     public Result ChangeMemberRole(Guid userId, ProjectRole role, DateTimeOffset now)
     {
         var check = CheckMemberChange(userId, leavesOwnerRole: role != ProjectRole.Owner);

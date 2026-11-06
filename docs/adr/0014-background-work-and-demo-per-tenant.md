@@ -24,6 +24,9 @@ wipes the whole database. That cannot stay once production and demo share a data
   false. This amends ADR 0005: the schedule and the catch-up stay as they are; what the reset deletes changes.
 - **`Demo:AllowDataWipe`** is kept, now meaning "allow the reset of the demo tenant". The reset still needs
   `Demo:Enabled` and this flag, and even with both on it can only reach the demo tenant.
+- **Demo accounts are demo-only.** If an account with a demo email already is a super-admin or belongs to another
+  tenant, the reset aborts with an error log and changes nothing, instead of overwriting a real account. The
+  notification preferences of users who also belong to another tenant are not deleted.
 - **Same database.** Production tenants and the demo live together. The few places that need raw SQL or
   `IgnoreQueryFilters` for this are on the allowed list of the architecture test (ADR 0012), each with its reason.
 
@@ -33,3 +36,11 @@ wipes the whole database. That cannot stay once production and demo share a data
 - The due-soon job makes one pass per tenant; with few tenants this is cheap.
 - Any new background job must go through `TenantScope`; one that queries without it returns nothing and logs the
   fail-closed warning instead of leaking data.
+
+## Migration of existing data
+
+The `AddTenants` migration moves all existing rows to the default tenant (ADR 0012). The public demo was never
+deployed (the first Azure deployment is still pending), so there is no production demo data to move. A database that
+did already hold demo data (for example a developer's) ends up with it in the default tenant, not in the demo tenant.
+To clean it by hand, delete that data (clients, projects, tasks and the demo users) in the default tenant and let the
+reset create the demo tenant, or restore the database; do not run the reset against the default tenant.

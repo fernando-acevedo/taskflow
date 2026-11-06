@@ -75,7 +75,7 @@ public sealed class TenantMembersTests(SqlServerApiFactory factory)
 
         response.StatusCode.ShouldBe(HttpStatusCode.Created);
         var invited = await response.ReadAsync<InvitedMemberResponse>();
-        invited.AccountCreated.ShouldBeFalse();
+        invited.AccountCreated.ShouldBeTrue();
         invited.Member.Role.ShouldBe("Member");
         factory.Emails.SentTo(existingEmail).ShouldNotContain(message => message.TextBody.Contains("accept-invitation", StringComparison.Ordinal));
 

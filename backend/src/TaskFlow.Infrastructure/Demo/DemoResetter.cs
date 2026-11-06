@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using TaskFlow.Application.Abstractions;
 using TaskFlow.Application.Demo;
@@ -22,7 +23,7 @@ namespace TaskFlow.Infrastructure.Demo;
 /// of the demo tenant, and a realistic agency dataset is added. Rows of every other tenant are never touched. All
 /// in one transaction, under an application lock so two instances never reset at the same time.
 /// </summary>
-internal sealed class DemoResetWork(
+internal sealed partial class DemoResetWork(
     AppDbContext db,
     ITenantContext tenant,
     UserManager<ApplicationUser> userManager,
@@ -30,7 +31,8 @@ internal sealed class DemoResetWork(
     TenantAccess tenantAccess,
     IOptions<DemoOptions> demoOptions,
     IOptions<AdminSeedOptions> adminSeed,
-    TimeProvider time)
+    TimeProvider time,
+    ILogger<DemoResetWork> logger)
 {
     private const string LockResource = "taskflow-demo-reset";
 
@@ -77,6 +79,7 @@ internal sealed class DemoResetWork(
                 }
             }
 
+            await EnsureAccountsAreSafeAsync(options, demoId, cancellationToken);
             await DeleteBusinessDataAsync(demoId, cancellationToken);
             await DeleteDemoUsersAsync(demoId, options, affectedUsers, cancellationToken);
             var accounts = await EnsureAccountsAsync(options, affectedUsers);
@@ -170,8 +173,10 @@ internal sealed class DemoResetWork(
         await db.Clients.ExecuteDeleteAsync(cancellationToken);
 
         // Preferences are per user, not per tenant: only those of the demo tenant's members go.
+        // Users who also belong to another tenant keep theirs.
         await db.NotificationPreferences
             .Where(preferences => db.TenantMemberships.Any(m => m.TenantId == demoId && m.UserId == preferences.UserId))
+            .Where(preferences => !db.TenantMemberships.Any(m => m.TenantId != demoId && m.UserId == preferences.UserId))
             .ExecuteDeleteAsync(cancellationToken);
         await db.TenantSupportAccesses.Where(access => access.TenantId == demoId).ExecuteDeleteAsync(cancellationToken);
     }
@@ -206,7 +211,39 @@ internal sealed class DemoResetWork(
         return [.. emails.Where(email => !string.IsNullOrWhiteSpace(email)).Select(email => userManager.NormalizeEmail(email!.Trim())!)];
     }
 
-    /// <summary>Creates or repairs each demo account: password, role, active, unlocked, and a fresh security stamp.</summary>
+    /// <summary>
+    /// A demo account is public: its password is published. If an account with a demo email already is a platform
+    /// super-admin (Identity role Admin) or belongs to a tenant other than the demo, it is a real account that
+    /// someone else registered under that email, so the reset aborts (rolled back, nothing changed) instead of
+    /// overwriting its password or deleting its data (ADR 0014).
+    /// </summary>
+    private async Task EnsureAccountsAreSafeAsync(DemoOptions options, Guid demoId, CancellationToken cancellationToken)
+    {
+        foreach (var account in options.Accounts)
+        {
+            var email = account.Email!.Trim();
+            if (await userManager.FindByEmailAsync(email) is not { } user)
+            {
+                continue;
+            }
+
+            var isSuperAdmin = await userManager.IsInRoleAsync(user, Roles.Admin);
+            var otherTenants = await db.TenantMemberships.AnyAsync(m => m.UserId == user.Id && m.TenantId != demoId, cancellationToken);
+            if (isSuperAdmin || otherTenants)
+            {
+                LogUnsafeAccount(logger, email, isSuperAdmin, otherTenants);
+                throw new InvalidOperationException(
+                    $"The demo reset aborted: the demo account '{email}' is a platform administrator or belongs to another tenant.");
+            }
+        }
+    }
+
+    [LoggerMessage(
+        Level = LogLevel.Error,
+        Message = "Demo reset aborted: account {Email} (super-admin: {IsSuperAdmin}, other tenants: {OtherTenants}) is not a demo-only account")]
+    private static partial void LogUnsafeAccount(ILogger logger, string email, bool isSuperAdmin, bool otherTenants);
+
+    /// <summary>Creates or repairs each demo account: password, active, unlocked, and a fresh security stamp.</summary>
     private async Task<List<DemoUser>> EnsureAccountsAsync(DemoOptions options, HashSet<Guid> affectedUsers)
     {
         var users = new List<DemoUser>();
@@ -230,13 +267,6 @@ internal sealed class DemoResetWork(
                 user.PasswordHash = userManager.PasswordHasher.HashPassword(user, account.Password!);
                 Ensure(await userManager.UpdateAsync(user));
                 Ensure(await userManager.ResetAccessFailedCountAsync(user));
-            }
-
-            // The Identity Admin role is the platform super-admin and reaches every tenant (ADR 0013): a shared
-            // public account must never have it. The demo "Admin" is an Owner of the demo tenant instead.
-            if (await userManager.IsInRoleAsync(user, Roles.Admin))
-            {
-                Ensure(await userManager.RemoveFromRoleAsync(user, Roles.Admin));
             }
 
             Ensure(await userManager.UpdateSecurityStampAsync(user));

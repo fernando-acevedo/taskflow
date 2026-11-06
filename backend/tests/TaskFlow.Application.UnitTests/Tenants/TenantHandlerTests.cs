@@ -104,7 +104,7 @@ public sealed class TenantHandlerTests
         var result = await CreateHandler().HandleAsync(new CreateTenantCommand("Acme", "acme", "owner@tests.local"), TestContext.Current.CancellationToken);
 
         result.IsSuccess.ShouldBeTrue();
-        result.Value.Owner!.AccountCreated.ShouldBeFalse();
+        result.Value.Owner!.AccountCreated.ShouldBeTrue();
         result.Value.Owner.Member.Role.ShouldBe(TenantRole.Owner);
         _db.TenantMemberships.Received(1).Add(Arg.Is<TenantMembership>(m => m.UserId == userId && m.Role == TenantRole.Owner));
     }

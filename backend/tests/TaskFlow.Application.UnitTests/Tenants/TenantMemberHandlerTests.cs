@@ -3,6 +3,9 @@ using TaskFlow.Application.Abstractions;
 using TaskFlow.Application.Demo;
 using TaskFlow.Application.Tenants;
 using TaskFlow.Application.Users;
+using TaskFlow.Domain.Clients;
+using TaskFlow.Domain.Projects;
+using TaskFlow.Domain.Tasks;
 using TaskFlow.Domain.Tenancy;
 
 namespace TaskFlow.Application.UnitTests.Tenants;
@@ -20,11 +23,18 @@ public sealed class TenantMemberHandlerTests
     private readonly ITenantAccessCache _cache = Substitute.For<ITenantAccessCache>();
     private readonly IDemoMode _demo = Substitute.For<IDemoMode>();
     private readonly ICurrentUser _currentUser = Substitute.For<ICurrentUser>();
+    private readonly ITransactionRunner _transactions = Substitute.For<ITransactionRunner>();
     private readonly List<TenantMembership> _memberships = [];
 
     public TenantMemberHandlerTests()
     {
         As(TenantRole.Owner);
+        _transactions.RunSerializableAsync(Arg.Any<Func<CancellationToken, Task<TaskFlow.Domain.Common.Result>>>(), Arg.Any<CancellationToken>())
+            .Returns(call => call.Arg<Func<CancellationToken, Task<TaskFlow.Domain.Common.Result>>>()(call.Arg<CancellationToken>()));
+        var projectSet = FakeDbSet.Of<Project>();
+        var taskSet = FakeDbSet.Of<TaskItem>();
+        _db.Projects.Returns(projectSet);
+        _db.Tasks.Returns(taskSet);
         var tenants = FakeDbSet.Of(Acme);
         _db.Tenants.Returns(tenants);
         Publish();
@@ -60,9 +70,9 @@ public sealed class TenantMemberHandlerTests
         new(_db, _currentUser, new InviteTenantMemberValidator(), Inviter(), _demo);
 
     private ChangeTenantMemberRoleHandler ChangeHandler() =>
-        new(_db, _identity, _currentUser, new ChangeTenantMemberRoleValidator(), _cache, _demo);
+        new(_db, _identity, _currentUser, new ChangeTenantMemberRoleValidator(), _cache, _demo, _transactions);
 
-    private RemoveTenantMemberHandler RemoveHandler() => new(_db, _identity, _currentUser, _cache, _demo);
+    private RemoveTenantMemberHandler RemoveHandler() => new(_db, _identity, _currentUser, _cache, _demo, _transactions, TimeProvider.System);
 
     private static UserDto User(Guid id, string email, bool pending = false) =>
         new(id, email, "Someone", true, [], Now, pending);
@@ -76,7 +86,7 @@ public sealed class TenantMemberHandlerTests
         var result = await InviteHandler().HandleAsync(new InviteTenantMemberCommand("old@tests.local", TenantRole.Member), TestContext.Current.CancellationToken);
 
         result.IsSuccess.ShouldBeTrue();
-        result.Value.AccountCreated.ShouldBeFalse();
+        result.Value.AccountCreated.ShouldBeTrue();
         result.Value.InvitationSent.ShouldBeTrue();
         _db.TenantMemberships.Received(1).Add(Arg.Is<TenantMembership>(m => m.UserId == userId && m.TenantId == TenantId && m.Role == TenantRole.Member));
         _cache.Received(1).Forget(userId, TenantId);
@@ -234,6 +244,34 @@ public sealed class TenantMemberHandlerTests
         result.IsSuccess.ShouldBeTrue();
         _db.TenantMemberships.Received(1).Remove(member);
         _cache.Received(1).Forget(member.UserId, TenantId);
+    }
+
+    [Fact]
+    public async Task RemovingAMemberTakesThemOutOfProjectsAndUnassignsTheirTasks()
+    {
+        var caller = Member(TenantRole.Owner, CallerId);
+        var leaver = Member(TenantRole.Member);
+        var client = Client.Create("Acme", null, null, Now);
+        var shared = Project.Create(client, "Shared", null, leaver.UserId, Now).Value;
+        shared.AddMember(caller.UserId, ProjectRole.Member, Now).IsSuccess.ShouldBeTrue();
+        var archived = Project.Create(client, "Old", null, leaver.UserId, Now).Value;
+        var task = TaskItem.Create(shared, "Design", null, TaskPriority.Medium, leaver.UserId, null, leaver.UserId, 0, Now).Value;
+        var archivedTask = TaskItem.Create(archived, "Legacy", null, TaskPriority.Medium, leaver.UserId, null, leaver.UserId, 0, Now).Value;
+        archived.Archive(Now);
+        var projectSet = FakeDbSet.Of(shared, archived);
+        var taskSet = FakeDbSet.Of(task, archivedTask);
+        _db.Projects.Returns(projectSet);
+        _db.Tasks.Returns(taskSet);
+
+        var result = await RemoveHandler().HandleAsync(new RemoveTenantMemberCommand(leaver.UserId), TestContext.Current.CancellationToken);
+
+        result.IsSuccess.ShouldBeTrue();
+        shared.IsMember(leaver.UserId).ShouldBeFalse();
+        shared.RoleOf(CallerId).ShouldBe(ProjectRole.Owner);
+        archived.IsMember(leaver.UserId).ShouldBeFalse();
+        archived.RoleOf(CallerId).ShouldBe(ProjectRole.Owner);
+        task.AssigneeId.ShouldBeNull();
+        archivedTask.AssigneeId.ShouldBeNull();
     }
 
     [Fact]

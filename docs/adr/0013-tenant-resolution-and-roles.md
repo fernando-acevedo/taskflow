@@ -27,8 +27,18 @@ header. `MapIdentityApi` does not let us add claims easily, and a claim would fo
   - The Identity role "Admin" becomes **super-admin** of the platform.
 - **Super-admin.** Tenants are created only by the super-admin for now (no self-registration; it can come later).
   A super-admin can enter any tenant for support, but only by choosing it explicitly in `X-Tenant`; it is never
-  implicit, and the entry is recorded in the activity log (ADR 0009). Inside it, the super-admin acts with Owner
-  rights.
+  implicit. Inside a tenant they do not belong to, they act with Owner rights (support access) and the entry is
+  recorded in the `TenantSupportAccesses` table (at most one row per user and tenant every 30 minutes), not in the
+  activity log; the tenant's Owners and Admins can read it. A super-admin who **is** a member of a tenant uses their
+  real role there, with or without the header; the implicit Owner applies only to tenants where they are not a
+  member and that they chose with `X-Tenant`.
+- **Accounts across tenants.** An account is global, a membership is not. Adding a project member by email only finds
+  users who belong to the current tenant (anyone else answers like an unknown email), and inviting an email returns
+  the same answer whether or not the account existed, so a tenant cannot probe for accounts of others. Removing a
+  membership is atomic with the "last Owner" check (Serializable transaction) and also takes the user out of the
+  tenant's projects and unassigns their tasks; if they were the only Owner of a project, the Owner who removes them
+  (or, failing that, the tenant's oldest other Owner) becomes that project's Owner. Notifications only go to members
+  of the current tenant.
 - **Invitations (ADR 0008).** Inviting an email that already has an account adds a membership to the current tenant
   and sends a notice email, with no password link. A new email creates the account as before, plus the membership.
   Deactivating a user deactivates the account in every tenant; removing someone from one tenant is a separate

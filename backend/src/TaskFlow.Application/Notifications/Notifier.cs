@@ -26,6 +26,7 @@ public sealed class Notifier(
     };
 
     private readonly List<Notification> _pending = [];
+    private readonly Dictionary<Guid, bool> _members = [];
     private string? _actorName;
 
     /// <param name="commentId">The comment that caused it, for mentions and comments.</param>
@@ -39,7 +40,7 @@ public sealed class Notifier(
         Guid? commentId,
         CancellationToken cancellationToken)
     {
-        if (recipientId == currentUser.Id)
+        if (recipientId == currentUser.Id || !await IsTenantMemberAsync(recipientId, cancellationToken))
         {
             return;
         }
@@ -49,6 +50,24 @@ public sealed class Notifier(
         var notification = Notification.Create(recipientId, type, projectId, taskId, currentUser.Id, data, time.GetUtcNow());
         db.Notifications.Add(notification);
         _pending.Add(notification);
+    }
+
+    /// <summary>Defense in depth: only members of the current tenant are notified (someone removed from it is not).</summary>
+    private async Task<bool> IsTenantMemberAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        if (currentUser.TenantId is not { } tenantId)
+        {
+            return false;
+        }
+
+        if (!_members.TryGetValue(userId, out var isMember))
+        {
+            isMember = await db.TenantMemberships.AnyAsync(
+                membership => membership.TenantId == tenantId && membership.UserId == userId, cancellationToken);
+            _members[userId] = isMember;
+        }
+
+        return isMember;
     }
 
     /// <summary>Emails the notifications added since the last call to the recipients whose preferences ask for it.</summary>

@@ -135,6 +135,16 @@ public sealed class TaskItem : ITenantOwned
     }
 
     /// <summary>
+    /// Clears the assignee because the person left the tenant. Unlike <see cref="Update"/> this also works in an
+    /// archived project: it is an administrative cleanup, not an edit by a project member.
+    /// </summary>
+    public void Unassign(DateTimeOffset now)
+    {
+        AssigneeId = null;
+        UpdatedAt = now;
+    }
+
+    /// <summary>
     /// Moves the task to a column. Entering Done sets <see cref="CompletedAt"/>; leaving it clears it.
     /// The caller renumbers the other tasks in the affected columns with <see cref="Reposition"/>.
     /// </summary>

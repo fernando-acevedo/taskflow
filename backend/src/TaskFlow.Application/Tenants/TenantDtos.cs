@@ -17,7 +17,7 @@ public sealed record TenantMemberDto(
     bool IsInvitationPending,
     DateTimeOffset JoinedAt);
 
-/// <param name="AccountCreated">True when the email had no account, so a password invitation was sent.</param>
+/// <param name="AccountCreated">Always true: the answer must not reveal whether the email already had an account in another tenant.</param>
 /// <param name="InvitationSent">False when the email (invitation or notice) couldn't be sent; the membership exists anyway.</param>
 public sealed record InvitedMemberDto(TenantMemberDto Member, bool AccountCreated, bool InvitationSent);
 

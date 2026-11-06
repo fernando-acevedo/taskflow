@@ -10,6 +10,7 @@ namespace TaskFlow.Application.Tenants;
 /// Adds an email to a tenant (ADR 0013). An existing account only gets the membership and a notice email; a new
 /// one is created without a password and receives the invitation of ADR 0008. The membership is saved either way,
 /// and a failed email is reported in the result instead of as an error.
+/// The result never tells an existing account from a new one (see <see cref="InvitedMemberDto"/>).
 /// </summary>
 public sealed class TenantMemberInviter(
     IAppDbContext db,
@@ -66,7 +67,11 @@ public sealed class TenantMemberInviter(
             sent = await invitations.SendTenantAddedAsync(user, tenantName, cancellationToken);
         }
 
-        return new InvitedMemberDto(ToMember(user, membership), created, sent);
+        // The answer is the same whether or not the account existed: nothing about an account that lives outside this
+        // tenant (name, state, whether it was just created) is revealed. The name shows in the member list afterwards.
+        var member = new TenantMemberDto(
+            user.Id, user.Email, DisplayNameFor(email, displayName), membership.Role, true, true, membership.JoinedAt);
+        return new InvitedMemberDto(member, true, sent);
     }
 
     public static TenantMemberDto ToMember(UserDto user, TenantMembership membership) =>

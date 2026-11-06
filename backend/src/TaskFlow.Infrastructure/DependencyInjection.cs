@@ -37,6 +37,7 @@ public static class DependencyInjection
                 new TenantSaveInterceptor(provider.GetRequiredService<ITenantContext>())));
         services.AddSingleton<IUniqueViolationDetector, Persistence.SqlServerUniqueViolationDetector>();
         services.AddScoped<IAppDbContext>(provider => provider.GetRequiredService<AppDbContext>());
+        services.AddScoped<ITransactionRunner, Persistence.TransactionRunner>();
 
         services.AddHealthChecks()
             .AddDbContextCheck<AppDbContext>("database");

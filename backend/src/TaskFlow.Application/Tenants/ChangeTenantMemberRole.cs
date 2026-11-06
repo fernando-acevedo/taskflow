@@ -16,14 +16,18 @@ public sealed class ChangeTenantMemberRoleValidator : AbstractValidator<ChangeTe
     public ChangeTenantMemberRoleValidator() => RuleFor(command => command.Role).IsInEnum();
 }
 
-/// <summary>Changes a member's role. The last Owner can't be demoted, and only an Owner touches Owners.</summary>
+/// <summary>
+/// Changes a member's role. The last Owner can't be demoted (checked and written in one Serializable transaction),
+/// and only an Owner touches Owners.
+/// </summary>
 public sealed class ChangeTenantMemberRoleHandler(
     IAppDbContext db,
     IIdentityService identity,
     ICurrentUser currentUser,
     IValidator<ChangeTenantMemberRoleCommand> validator,
     ITenantAccessCache accessCache,
-    IDemoMode demo)
+    IDemoMode demo,
+    ITransactionRunner transactions)
 {
     public async Task<Result> HandleAsync(ChangeTenantMemberRoleCommand command, CancellationToken cancellationToken)
     {
@@ -44,6 +48,17 @@ public sealed class ChangeTenantMemberRoleHandler(
         }
 
         var tenantId = currentUser.TenantId!.Value;
+        var result = await transactions.RunSerializableAsync(token => ChangeAsync(command, tenantId, token), cancellationToken);
+        if (result.IsSuccess)
+        {
+            accessCache.Forget(command.UserId, tenantId);
+        }
+
+        return result;
+    }
+
+    private async Task<Result> ChangeAsync(ChangeTenantMemberRoleCommand command, Guid tenantId, CancellationToken cancellationToken)
+    {
         var membership = await db.TenantMemberships.FirstOrDefaultAsync(
             member => member.TenantId == tenantId && member.UserId == command.UserId, cancellationToken);
         if (membership is null)
@@ -78,7 +93,6 @@ public sealed class ChangeTenantMemberRoleHandler(
 
         membership.ChangeRole(command.Role);
         await db.SaveChangesAsync(cancellationToken);
-        accessCache.Forget(command.UserId, tenantId);
         return Result.Success();
     }
 }

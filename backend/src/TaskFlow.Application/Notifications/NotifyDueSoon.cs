@@ -19,12 +19,18 @@ namespace TaskFlow.Application.Notifications;
 public sealed class NotifyDueSoonHandler(
     IAppDbContext db,
     IIdentityService identity,
+    ITenantContext tenant,
     INotificationEmailSender emails,
     TimeProvider time)
 {
     /// <returns>How many notifications were created.</returns>
     public async Task<Result<int>> HandleAsync(CancellationToken cancellationToken)
     {
+        if (tenant.TenantId is not { } tenantId)
+        {
+            return 0;
+        }
+
         var today = time.Today();
         var tomorrow = today.AddDays(1);
 
@@ -56,7 +62,14 @@ public sealed class NotifyDueSoonHandler(
             .ToHashSet();
 
         var recipientIds = due.Select(task => task.AssigneeId).Distinct().ToList();
-        var users = (await identity.FindByIdsAsync(recipientIds, cancellationToken))
+
+        // Defense in depth: only people who still belong to this tenant are notified (a removed member may be left
+        // as the assignee of data from before the removal, e.g. in an old backup or a manual change).
+        var members = await db.TenantMemberships.AsNoTracking()
+            .Where(membership => membership.TenantId == tenantId && recipientIds.Contains(membership.UserId))
+            .Select(membership => membership.UserId)
+            .ToListAsync(cancellationToken);
+        var users = (await identity.FindByIdsAsync(members, cancellationToken))
             .Where(user => user.IsActive)
             .ToDictionary(user => user.Id);
 

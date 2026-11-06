@@ -26,7 +26,7 @@ public sealed class TenantAccess(AppDbContext db, IMemoryCache cache, TimeProvid
 
     public static readonly TimeSpan CacheDuration = TimeSpan.FromSeconds(30);
 
-    /// <summary>Resolves an explicit tenant. A super-admin gets Owner in any existing tenant.</summary>
+    /// <summary>Resolves an explicit tenant. A super-admin gets Owner in any existing tenant they do not belong to.</summary>
     public async Task<TenantAccessResult> CheckAsync(Guid userId, Guid tenantId, bool isSuperAdmin, CancellationToken cancellationToken)
     {
         var entry = await cache.GetOrCreateAsync(AccessKey(userId, tenantId), async cacheEntry =>
@@ -40,8 +40,10 @@ public sealed class TenantAccess(AppDbContext db, IMemoryCache cache, TimeProvid
             return new TenantAccessResult(exists, role);
         });
 
-        return isSuperAdmin && entry.TenantExists
-            ? entry with { Role = TenantRole.Owner, IsSupportAccess = entry.Role is null }
+        // A super-admin who belongs to the tenant acts with their real role there; the implicit Owner is only for
+        // tenants they do not belong to (support access).
+        return isSuperAdmin && entry.TenantExists && entry.Role is null
+            ? entry with { Role = TenantRole.Owner, IsSupportAccess = true }
             : entry;
     }
 
