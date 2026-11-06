@@ -22,6 +22,15 @@
   <data name="Clients.Archived" xml:space="preserve"><value>The client is archived; restore it before adding projects.</value></data>
   <data name="Projects.NotFound" xml:space="preserve"><value>The project was not found.</value></data>
   <data name="Projects.Forbidden" xml:space="preserve"><value>You don't have permission to do this in the project.</value></data>
+  <data name="Tenants.NotFound" xml:space="preserve"><value>The tenant was not found.</value></data>
+  <data name="Tenants.Forbidden" xml:space="preserve"><value>You do not belong to this tenant.</value></data>
+  <data name="Tenants.SlugTaken" xml:space="preserve"><value>Another tenant already uses this slug.</value></data>
+  <data name="Tenants.InvalidSlug" xml:space="preserve"><value>The slug may only contain lowercase letters, digits and single hyphens.</value></data>
+  <data name="Tenants.LastOwner" xml:space="preserve"><value>A tenant must keep at least one Owner.</value></data>
+  <data name="Tenants.AlreadyMember" xml:space="preserve"><value>This user already belongs to the tenant.</value></data>
+  <data name="Tenants.MemberNotFound" xml:space="preserve"><value>This user is not a member of the tenant.</value></data>
+  <data name="Tenants.OwnerRequired" xml:space="preserve"><value>Only an Owner can add, change or remove an Owner.</value></data>
+  <data name="Tenants.SuperAdminRequired" xml:space="preserve"><value>Only a platform administrator can do this.</value></data>
   <data name="Projects.NameTaken" xml:space="preserve"><value>The client already has a project with this name.</value></data>
   <data name="Projects.Archived" xml:space="preserve"><value>The project is archived and read-only.</value></data>
   <data name="Projects.AlreadyMember" xml:space="preserve"><value>The user is already a member of the project.</value></data>

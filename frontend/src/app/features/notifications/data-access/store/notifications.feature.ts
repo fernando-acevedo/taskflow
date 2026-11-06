@@ -1,5 +1,6 @@
 import { createFeature, createReducer, on } from '@ngrx/store';
 import { AuthApiActions, ShellActions } from '../../../../core/auth/store/auth.actions';
+import { TenantActions } from '../../../../core/tenant/store/tenant.actions';
 import { ApiError } from '../../../../core/http/api-error';
 import { AppNotification, NotificationPreferences } from '../notifications-api.service';
 import {
@@ -35,9 +36,21 @@ export const notificationsFeature = createFeature({
   reducer: createReducer(
     initialNotificationsState,
     // Another user may sign in next in this tab; nothing of the previous session may show.
-    on(ShellActions.logoutClicked, AuthApiActions.sessionExpired, (): NotificationsState => initialNotificationsState),
-    on(NotificationsApiActions.unreadCountLoaded, (state, { count }): NotificationsState => ({ ...state, unreadCount: count })),
-    on(NotificationBellActions.opened, (state): NotificationsState => ({ ...state, loading: true, loadError: null })),
+    on(
+      ShellActions.logoutClicked,
+      AuthApiActions.sessionExpired,
+      TenantActions.tenantSwitched,
+      (): NotificationsState => initialNotificationsState,
+    ),
+    on(NotificationsApiActions.unreadCountLoaded, (state, { count }): NotificationsState => ({
+      ...state,
+      unreadCount: count,
+    })),
+    on(NotificationBellActions.opened, (state): NotificationsState => ({
+      ...state,
+      loading: true,
+      loadError: null,
+    })),
     on(NotificationsApiActions.notificationsLoaded, (state, { items }): NotificationsState => ({
       ...state,
       items,

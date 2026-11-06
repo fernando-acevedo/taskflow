@@ -1,5 +1,6 @@
 import { createFeature, createReducer, on } from '@ngrx/store';
 import { AuthApiActions, ShellActions } from '../../../../core/auth/store/auth.actions';
+import { TenantActions } from '../../../../core/tenant/store/tenant.actions';
 import { ApiError } from '../../../../core/http/api-error';
 import { ProjectDashboard } from '../dashboard-api.service';
 import { DashboardApiActions, ProjectOverviewActions } from './dashboard.actions';
@@ -22,7 +23,12 @@ export const projectDashboardFeature = createFeature({
   name: 'projectDashboard',
   reducer: createReducer(
     initialProjectDashboardState,
-    on(ShellActions.logoutClicked, AuthApiActions.sessionExpired, (): ProjectDashboardState => initialProjectDashboardState),
+    on(
+      ShellActions.logoutClicked,
+      AuthApiActions.sessionExpired,
+      TenantActions.tenantSwitched,
+      (): ProjectDashboardState => initialProjectDashboardState,
+    ),
     on(ProjectOverviewActions.opened, (state, { projectId }): ProjectDashboardState => ({
       projectId,
       // Another project's figures must not show while this one loads.

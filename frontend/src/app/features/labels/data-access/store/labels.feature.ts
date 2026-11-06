@@ -1,6 +1,7 @@
 import { EntityState, createEntityAdapter } from '@ngrx/entity';
 import { createFeature, createReducer, on } from '@ngrx/store';
 import { AuthApiActions, ShellActions } from '../../../../core/auth/store/auth.actions';
+import { TenantActions } from '../../../../core/tenant/store/tenant.actions';
 import { ApiError } from '../../../../core/http/api-error';
 import { Label } from '../labels-api.service';
 import { LabelsApiActions, LabelsPageActions } from './labels.actions';
@@ -25,7 +26,12 @@ export const labelsFeature = createFeature({
   name: 'labels',
   reducer: createReducer(
     initialLabelsState,
-    on(ShellActions.logoutClicked, AuthApiActions.sessionExpired, (): LabelsState => initialLabelsState),
+    on(
+      ShellActions.logoutClicked,
+      AuthApiActions.sessionExpired,
+      TenantActions.tenantSwitched,
+      (): LabelsState => initialLabelsState,
+    ),
     on(LabelsPageActions.opened, (state, { projectId }): LabelsState =>
       state.projectId === projectId
         ? { ...state, loading: true, loadError: null }

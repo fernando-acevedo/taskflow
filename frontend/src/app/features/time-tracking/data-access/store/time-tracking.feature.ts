@@ -2,6 +2,7 @@ import { EntityState, createEntityAdapter } from '@ngrx/entity';
 import { getRouterSelectors } from '@ngrx/router-store';
 import { createFeature, createReducer, createSelector, on } from '@ngrx/store';
 import { AuthApiActions, ShellActions } from '../../../../core/auth/store/auth.actions';
+import { TenantActions } from '../../../../core/tenant/store/tenant.actions';
 import { ApiError } from '../../../../core/http/api-error';
 import { TimeEntry, TimeSummary } from '../time-tracking-api.service';
 import { parseTimeFilters } from './time-filters';
@@ -46,7 +47,12 @@ export const timeTrackingFeature = createFeature({
   name: 'timeTracking',
   reducer: createReducer(
     initialTimeTrackingState,
-    on(ShellActions.logoutClicked, AuthApiActions.sessionExpired, (): TimeTrackingState => initialTimeTrackingState),
+    on(
+      ShellActions.logoutClicked,
+      AuthApiActions.sessionExpired,
+      TenantActions.tenantSwitched,
+      (): TimeTrackingState => initialTimeTrackingState,
+    ),
     on(TimeEntriesPageActions.opened, (state, { projectId, taskId }): TimeTrackingState =>
       state.taskId === taskId
         ? { ...state, loading: true, loadError: null }

@@ -26,11 +26,18 @@ public static class DependencyInjection
         var connectionString = configuration.GetConnectionString(ConnectionStringName)
             ?? throw new InvalidOperationException($"Connection string '{ConnectionStringName}' is not configured.");
 
+        // T-60 connects the request to this holder (X-Tenant header); background work uses it through TenantScope.
+        services.AddScoped<TenantContext>();
+        services.AddScoped<ITenantContext>(provider => provider.GetRequiredService<TenantContext>());
+        services.AddSingleton<Tenancy.TenantScope>();
         services.AddDbContext<AppDbContext>((provider, options) => options
             .UseSqlServer(connectionString, sql => sql.EnableRetryOnFailure())
-            .AddInterceptors(new CreationTimeInterceptor(provider.GetRequiredService<TimeProvider>())));
+            .AddInterceptors(
+                new CreationTimeInterceptor(provider.GetRequiredService<TimeProvider>()),
+                new TenantSaveInterceptor(provider.GetRequiredService<ITenantContext>())));
         services.AddSingleton<IUniqueViolationDetector, Persistence.SqlServerUniqueViolationDetector>();
         services.AddScoped<IAppDbContext>(provider => provider.GetRequiredService<AppDbContext>());
+        services.AddScoped<ITransactionRunner, Persistence.TransactionRunner>();
 
         services.AddHealthChecks()
             .AddDbContextCheck<AppDbContext>("database");
@@ -72,6 +79,8 @@ public static class DependencyInjection
         services.AddScoped<IIdentityService, IdentityService>();
         services.AddMemoryCache();
         services.AddScoped<SessionValidator>();
+        services.AddScoped<Tenancy.TenantAccess>();
+        services.AddScoped<ITenantAccessCache>(provider => provider.GetRequiredService<Tenancy.TenantAccess>());
 
         services.Configure<EmailOptions>(configuration.GetSection(EmailOptions.SectionName));
         if (string.IsNullOrWhiteSpace(configuration[$"{EmailOptions.SectionName}:Smtp:Host"]))
@@ -94,6 +103,7 @@ public static class DependencyInjection
         services.AddSingleton<IValidateOptions<DemoOptions>, DemoOptionsValidator>();
         services.AddSingleton<IDemoMode, DemoMode>();
         services.AddScoped<DemoResetter>();
+        services.AddScoped<DemoResetWork>();
         services.AddHostedService<DemoResetService>();
 
         // MapIdentityApi resolves it once, from the root provider, so it must not depend on scoped services.

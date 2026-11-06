@@ -1,3 +1,5 @@
+using TaskFlow.Domain.Tenancy;
+
 namespace TaskFlow.Domain.Projects;
 
 public enum ProjectRole
@@ -7,7 +9,7 @@ public enum ProjectRole
 }
 
 /// <summary>A user's membership in a project. Changed only through <see cref="Project"/>.</summary>
-public sealed class ProjectMember
+public sealed class ProjectMember : ITenantOwned
 {
     internal ProjectMember(Guid projectId, Guid userId, ProjectRole role, DateTimeOffset joinedAt)
     {

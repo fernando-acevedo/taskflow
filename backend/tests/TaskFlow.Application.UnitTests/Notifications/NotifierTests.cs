@@ -4,6 +4,7 @@ using TaskFlow.Application.Abstractions;
 using TaskFlow.Application.Notifications;
 using TaskFlow.Application.Users;
 using TaskFlow.Domain.Notifications;
+using TaskFlow.Domain.Tenancy;
 
 namespace TaskFlow.Application.UnitTests.Notifications;
 
@@ -12,6 +13,8 @@ public sealed class NotifierTests
     private static readonly DateTimeOffset Now = new(2026, 10, 19, 12, 0, 0, TimeSpan.Zero);
     private static readonly Guid ActorId = Guid.NewGuid();
     private static readonly Guid OtherId = Guid.NewGuid();
+    private static readonly Guid RemovedId = Guid.NewGuid();
+    private static readonly Guid TenantId = Guid.NewGuid();
 
     private readonly IAppDbContext _db = Substitute.For<IAppDbContext>();
     private readonly ICurrentUser _currentUser = Substitute.For<ICurrentUser>();
@@ -24,6 +27,12 @@ public sealed class NotifierTests
     public NotifierTests()
     {
         _currentUser.Id.Returns(ActorId);
+        _currentUser.TenantId.Returns(TenantId);
+        var memberships = FakeDbSet.Of(
+            TenantMembership.Create(TenantId, ActorId, TenantRole.Owner, Now),
+            TenantMembership.Create(TenantId, OtherId, TenantRole.Member, Now),
+            TenantMembership.Create(Guid.NewGuid(), RemovedId, TenantRole.Member, Now));
+        _db.TenantMemberships.Returns(memberships);
         _db.Notifications.Returns(_notifications);
         _identity.FindByIdAsync(ActorId, Arg.Any<CancellationToken>())
             .Returns(new UserDto(ActorId, "actor@tests.local", "Actor", true, [], Now));
@@ -34,6 +43,15 @@ public sealed class NotifierTests
     {
         await Notifier().NotifyAsync(
             NotificationType.TaskAssigned, ActorId, _projectId, "Website", _taskId, "Design", null, TestContext.Current.CancellationToken);
+
+        _notifications.DidNotReceive().Add(Arg.Any<Notification>());
+    }
+
+    [Fact]
+    public async Task NeverNotifiesSomeoneWhoDoesNotBelongToTheCurrentTenant()
+    {
+        await Notifier().NotifyAsync(
+            NotificationType.TaskAssigned, RemovedId, _projectId, "Website", _taskId, "Design", null, TestContext.Current.CancellationToken);
 
         _notifications.DidNotReceive().Add(Arg.Any<Notification>());
     }

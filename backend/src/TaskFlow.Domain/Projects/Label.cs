@@ -1,3 +1,4 @@
+using TaskFlow.Domain.Tenancy;
 using System.Text.RegularExpressions;
 using TaskFlow.Domain.Common;
 
@@ -8,7 +9,7 @@ namespace TaskFlow.Domain.Projects;
 /// (case-insensitive); the caller checks that against the project's other labels. Changes take the owning
 /// <see cref="Project"/> so that an archived project stays read-only.
 /// </summary>
-public sealed partial class Label
+public sealed partial class Label : ITenantOwned
 {
     public const int NameMaxLength = 40;
     public const int ColorLength = 7;

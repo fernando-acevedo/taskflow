@@ -1,5 +1,12 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using TaskFlow.Domain.Tenancy;
+using TaskFlow.Infrastructure.Identity;
+using TaskFlow.Infrastructure.Persistence;
+using TaskFlow.Infrastructure.Tenancy;
 
 namespace TaskFlow.Api.IntegrationTests.Infrastructure;
 
@@ -40,8 +47,8 @@ public static class AuthApi
         return await response.ReadAsync<TokenResponse>();
     }
 
-    /// <summary>Registers a new user and returns a client that sends that user's access token.</summary>
-    public static async Task<(HttpClient Client, string Email)> CreateUserClientAsync(this SqlServerApiFactory factory)
+    /// <summary>Registers a new user, adds them to the default tenant unless told otherwise, and returns a client with their access token.</summary>
+    public static async Task<(HttpClient Client, string Email)> CreateUserClientAsync(this SqlServerApiFactory factory, bool inDefaultTenant = true)
     {
         var email = NewEmail();
         var client = factory.CreateClient();
@@ -50,8 +57,32 @@ public static class AuthApi
             response.EnsureSuccessStatusCode();
         }
 
+        if (inDefaultTenant)
+        {
+            await factory.AddToTenantAsync(email, TenantDefaults.DefaultId);
+        }
+
         client.UseToken(await client.LoginForTokensAsync(email));
         return (client, email);
+    }
+
+    /// <summary>
+    /// Gives an existing account a membership straight in the database (no emails), the way the platform would after an
+    /// invitation. Registration alone leaves a user without a tenant (ADR 0013), so test users need this to reach any data.
+    /// </summary>
+    public static async Task AddToTenantAsync(this SqlServerApiFactory factory, string email, Guid tenantId, TenantRole role = TenantRole.Member)
+    {
+        await using var scope = factory.Services.CreateAsyncScope();
+        var user = await scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>().FindByEmailAsync(email)
+            ?? throw new InvalidOperationException($"No account for {email}.");
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        if (!await db.TenantMemberships.AnyAsync(m => m.TenantId == tenantId && m.UserId == user.Id, TestContext.Current.CancellationToken))
+        {
+            db.TenantMemberships.Add(TenantMembership.Create(tenantId, user.Id, role, factory.Time.GetUtcNow()));
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
+        scope.ServiceProvider.GetRequiredService<TenantAccess>().Forget(user.Id, tenantId);
     }
 
     public static async Task<HttpClient> CreateAdminClientAsync(this SqlServerApiFactory factory)

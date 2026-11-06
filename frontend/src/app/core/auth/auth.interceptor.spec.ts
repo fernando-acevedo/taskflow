@@ -19,7 +19,13 @@ describe('authInterceptor', () => {
   beforeEach(() => {
     localStorage.clear();
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(withInterceptors([authInterceptor])), provideHttpClientTesting(), provideMockStore()],
+      providers: [
+        provideHttpClient(withInterceptors([authInterceptor])),
+        provideHttpClientTesting(),
+        provideMockStore({
+          initialState: { tenant: { tenants: [], currentId: null, status: 'ready' } },
+        }),
+      ],
     });
     http = TestBed.inject(HttpClient);
     httpMock = TestBed.inject(HttpTestingController);
@@ -40,6 +46,66 @@ describe('authInterceptor', () => {
 
     expect(httpMock.expectOne(`${api}/users/me`).request.headers.get('Authorization')).toBe('Bearer old-access');
     expect(httpMock.expectOne(`${api}/auth/login`).request.headers.has('Authorization')).toBe(false);
+  });
+
+  describe('tenant', () => {
+    it('adds the current tenant to API calls', () => {
+      store.setState({ tenant: { tenants: [], currentId: 'tenant-1', status: 'ready' } });
+      http.get(`${api}/projects`).subscribe();
+
+      expect(httpMock.expectOne(`${api}/projects`).request.headers.get('X-Tenant')).toBe(
+        'tenant-1',
+      );
+    });
+
+    it('adds nothing when no tenant is chosen', () => {
+      http.get(`${api}/projects`).subscribe();
+
+      expect(httpMock.expectOne(`${api}/projects`).request.headers.has('X-Tenant')).toBe(false);
+    });
+
+    it('leaves out the auth endpoints and the list of own tenants', () => {
+      store.setState({ tenant: { tenants: [], currentId: 'tenant-1', status: 'ready' } });
+      http.post(`${api}/auth/login`, {}).subscribe();
+      http.get(`${api}/tenants/mine`).subscribe();
+
+      expect(httpMock.expectOne(`${api}/auth/login`).request.headers.has('X-Tenant')).toBe(false);
+      expect(httpMock.expectOne(`${api}/tenants/mine`).request.headers.has('X-Tenant')).toBe(false);
+    });
+
+    it('keeps the tenant on the retry after a refresh', () => {
+      store.setState({ tenant: { tenants: [], currentId: 'tenant-1', status: 'ready' } });
+      http.get(`${api}/projects`).subscribe();
+      httpMock.expectOne(`${api}/projects`).flush(null, unauthorized);
+      httpMock
+        .expectOne(`${api}/auth/refresh`)
+        .flush({
+          tokenType: 'Bearer',
+          accessToken: 'new-access',
+          expiresIn: 3600,
+          refreshToken: 'refresh-2',
+        });
+
+      const retry = httpMock.expectOne(`${api}/projects`);
+      expect(retry.request.headers.get('X-Tenant')).toBe('tenant-1');
+      expect(retry.request.headers.get('Authorization')).toBe('Bearer new-access');
+      retry.flush([]);
+    });
+  });
+
+  it('retries with the tenant that is current after the refresh, not the one of the first attempt', () => {
+    store.setState({ tenant: { tenants: [], currentId: 'tenant-1', status: 'ready' } });
+    http.get(`${api}/projects`).subscribe();
+    httpMock.expectOne(`${api}/projects`).flush(null, unauthorized);
+
+    store.setState({ tenant: { tenants: [], currentId: 'tenant-2', status: 'ready' } });
+    httpMock
+      .expectOne(`${api}/auth/refresh`)
+      .flush({ tokenType: 'Bearer', accessToken: 'new-access', expiresIn: 3600, refreshToken: 'refresh-2' });
+
+    const retry = httpMock.expectOne(`${api}/projects`);
+    expect(retry.request.headers.get('X-Tenant')).toBe('tenant-2');
+    retry.flush([]);
   });
 
   it('refreshes once for concurrent 401s and retries every request with the new token', () => {

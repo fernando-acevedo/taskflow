@@ -15,6 +15,8 @@ import { routes } from './app.routes';
 import { authInterceptor } from './core/auth/auth.interceptor';
 import { hideSecrets, hideStateSecrets } from './core/auth/devtools-sanitizer';
 import { restoreSession } from './core/auth/session';
+import * as tenantEffects from './core/tenant/store/tenant.effects';
+import { tenantFeature } from './core/tenant/store/tenant.feature';
 import * as authEffects from './core/auth/store/auth.effects';
 import { authFeature } from './core/auth/store/auth.feature';
 import { TranslatedTitleStrategy } from './core/title/translated-title.strategy';
@@ -38,11 +40,13 @@ export const appConfig: ApplicationConfig = {
     provideStore({
       router: routerReducer,
       [authFeature.name]: authFeature.reducer,
+      // Root too: the interceptor and every guard need the current tenant before any route loads.
+      [tenantFeature.name]: tenantFeature.reducer,
       // Registered at the root, like auth, instead of on a route: the bell lives in the always-present shell
       // toolbar, so its state must exist on every page for as long as the app does (ADR 0010).
       [notificationsFeature.name]: notificationsFeature.reducer,
     }),
-    provideEffects(authEffects, notificationsEffects),
+    provideEffects(authEffects, tenantEffects, notificationsEffects),
     provideRouterStore(),
     // Development only: in production anyone with the extension could read every action and the state.
     ...(isDevMode()

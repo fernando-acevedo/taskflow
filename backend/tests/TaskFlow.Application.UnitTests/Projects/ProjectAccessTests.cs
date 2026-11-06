@@ -25,12 +25,12 @@ public sealed class ProjectAccessTests
     [InlineData("owner", false, true, true, true)]
     [InlineData("member", false, true, true, false)]
     [InlineData("outsider", false, false, false, false)]
-    [InlineData("outsider", true, true, false, false)]
+    [InlineData("outsider", true, true, false, false)] // tenant Admin or Owner
     public void AccessDependsOnTheProjectRoleAndAdminsOnlyRead(string who, bool isAdmin, bool view, bool work, bool manage)
     {
         var user = Substitute.For<ICurrentUser>();
         user.Id.Returns(who switch { "owner" => OwnerId, "member" => MemberId, _ => OutsiderId });
-        user.IsAdmin.Returns(isAdmin);
+        user.IsTenantAdmin.Returns(isAdmin);
 
         ProjectAccess.Allows(_project, ProjectAccessLevel.View, user).ShouldBe(view);
         ProjectAccess.Allows(_project, ProjectAccessLevel.Work, user).ShouldBe(work);

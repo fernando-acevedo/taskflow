@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TaskFlow.Api.Identity;
 using TaskFlow.Application.Clients;
 using TaskFlow.Application.Common;
 using TaskFlow.Application.Users;
@@ -7,7 +8,7 @@ using TaskFlow.Application.Users;
 namespace TaskFlow.Api.Controllers;
 
 /// <summary>
-/// The agency's clients, with their contact details: admins only. Everyone else gets the pickers' list of names
+/// The agency's clients, with their contact details: tenant admins only. Everyone else gets the pickers' list of names
 /// from <c>GET /api/clients/options</c>.
 /// </summary>
 [Authorize]
@@ -16,7 +17,7 @@ public sealed class ClientsController : ApiControllerBase
 {
     /// <summary>Lists clients by name, active ones only unless <paramref name="includeArchived"/> is set.</summary>
     [HttpGet]
-    [Authorize(Roles = Roles.Admin)]
+    [Authorize(Policy = AuthPolicies.TenantAdmin)]
     [ProducesResponseType<PagedResult<ClientDto>>(StatusCodes.Status200OK)]
     public async Task<ActionResult<PagedResult<ClientDto>>> List(
         [FromQuery] string? search,
@@ -36,14 +37,14 @@ public sealed class ClientsController : ApiControllerBase
         OkOrProblem(await handler.HandleAsync(cancellationToken));
 
     [HttpGet("{clientId:guid}")]
-    [Authorize(Roles = Roles.Admin)]
+    [Authorize(Policy = AuthPolicies.TenantAdmin)]
     [ProducesResponseType<ClientDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ClientDto>> Get(Guid clientId, [FromServices] GetClientHandler handler, CancellationToken cancellationToken) =>
         OkOrProblem(await handler.HandleAsync(clientId, cancellationToken));
 
     [HttpPost]
-    [Authorize(Roles = Roles.Admin)]
+    [Authorize(Policy = AuthPolicies.TenantAdmin)]
     [ProducesResponseType<ClientDto>(StatusCodes.Status201Created)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
@@ -54,7 +55,7 @@ public sealed class ClientsController : ApiControllerBase
         CreatedOrProblem(await handler.HandleAsync(command, cancellationToken), nameof(Get), client => new { clientId = client.Id });
 
     [HttpPut("{clientId:guid}")]
-    [Authorize(Roles = Roles.Admin)]
+    [Authorize(Policy = AuthPolicies.TenantAdmin)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
@@ -69,14 +70,14 @@ public sealed class ClientsController : ApiControllerBase
 
     /// <summary>Hides the client from pickers. Fails while it has active projects.</summary>
     [HttpPost("{clientId:guid}/archive")]
-    [Authorize(Roles = Roles.Admin)]
+    [Authorize(Policy = AuthPolicies.TenantAdmin)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
     public async Task<ActionResult> Archive(Guid clientId, [FromServices] SetClientArchivedHandler handler, CancellationToken cancellationToken) =>
         NoContentOrProblem(await handler.HandleAsync(new SetClientArchivedCommand(clientId, IsArchived: true), cancellationToken));
 
     [HttpPost("{clientId:guid}/restore")]
-    [Authorize(Roles = Roles.Admin)]
+    [Authorize(Policy = AuthPolicies.TenantAdmin)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<ActionResult> Restore(Guid clientId, [FromServices] SetClientArchivedHandler handler, CancellationToken cancellationToken) =>
         NoContentOrProblem(await handler.HandleAsync(new SetClientArchivedCommand(clientId, IsArchived: false), cancellationToken));

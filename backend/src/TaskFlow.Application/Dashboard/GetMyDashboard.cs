@@ -46,7 +46,7 @@ public sealed class GetMyDashboardHandler(IAppDbContext db, ICurrentUser current
         var weekEnd = today.AddDays(6);
 
         var activeProjects = db.Projects.Where(project => !project.IsArchived);
-        var visibleProjects = currentUser.IsAdmin
+        var visibleProjects = currentUser.IsTenantAdmin
             ? activeProjects
             : activeProjects.Where(project => project.Members.Any(member => member.UserId == userId));
 

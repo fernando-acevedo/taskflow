@@ -13,6 +13,7 @@ internal sealed class ClientConfiguration : IEntityTypeConfiguration<Client>
         builder.Property(client => client.Name).HasMaxLength(Client.NameMaxLength);
         builder.Property(client => client.ContactEmail).HasMaxLength(Client.ContactEmailMaxLength);
         builder.Property(client => client.Notes).HasMaxLength(Client.NotesMaxLength);
-        builder.HasIndex(client => client.Name).IsUnique();
+        builder.Property<Guid>(AppDbContext.TenantIdProperty);
+        builder.HasIndex(AppDbContext.TenantIdProperty, nameof(Client.Name)).IsUnique();
     }
 }

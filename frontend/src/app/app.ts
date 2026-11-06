@@ -9,6 +9,8 @@ import { TranslocoDirective } from '@jsverse/transloco';
 import { Store } from '@ngrx/store';
 import { ShellActions } from './core/auth/store/auth.actions';
 import { authFeature } from './core/auth/store/auth.feature';
+import { TenantSwitcher } from './core/tenant/tenant-switcher';
+import { tenantFeature } from './core/tenant/store/tenant.feature';
 import { DemoService } from './core/demo/demo.service';
 import { LanguageService } from './core/i18n/language.service';
 import { SUPPORTED_LANGUAGES } from './core/i18n/languages';
@@ -35,6 +37,7 @@ const languageNames = new Map<string, string>(
     RouterLink,
     RouterLinkActive,
     RouterOutlet,
+    TenantSwitcher,
     TranslocoDirective,
   ],
   templateUrl: './app.html',
@@ -47,7 +50,10 @@ export class App {
   protected readonly demo = inject(DemoService).status;
   protected readonly languages = SUPPORTED_LANGUAGES;
   protected readonly user = this.store.selectSignal(authFeature.selectUser);
+  /** The platform's super-admin. */
   protected readonly isAdmin = this.store.selectSignal(authFeature.selectIsAdmin);
+  /** Owner or Admin of the current tenant. */
+  protected readonly canManage = this.store.selectSignal(tenantFeature.selectCanManage);
 
   /** A skip link must move focus too: the router would treat the bare #main anchor as a navigation. */
   protected skipToContent(event: Event, main: HTMLElement): void {

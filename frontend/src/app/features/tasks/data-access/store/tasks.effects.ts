@@ -8,6 +8,7 @@ import { LabelsApiActions } from '../../../labels/data-access/store/labels.actio
 import { TasksApiService } from '../tasks-api.service';
 import { TasksApiActions, TasksPageActions } from './tasks.actions';
 import { tasksFeature } from './tasks.feature';
+import { untilTenantChanges } from '../../../../shared/data-access/until-tenant-changes';
 
 export const loadTasks = createEffect(
   (actions$ = inject(Actions), store = inject(Store), api = inject(TasksApiService)) =>
@@ -25,6 +26,7 @@ export const loadTasks = createEffect(
       filter((projectId): projectId is string => projectId !== null),
       switchMap((projectId) =>
         api.list(projectId).pipe(
+          untilTenantChanges(actions$),
           map((tasks) => TasksApiActions.tasksLoaded({ projectId, tasks })),
           catchError((error: unknown) => of(TasksApiActions.tasksLoadFailed({ error: toApiError(error) }))),
         ),

@@ -4,6 +4,7 @@ import { catchError, map, of, switchMap } from 'rxjs';
 import { toApiError } from '../../../../core/http/api-error';
 import { DashboardApiService } from '../dashboard-api.service';
 import { DashboardApiActions, ProjectOverviewActions } from './dashboard.actions';
+import { untilTenantChanges } from '../../../../shared/data-access/until-tenant-changes';
 
 export const loadProjectDashboard = createEffect(
   (actions$ = inject(Actions), api = inject(DashboardApiService)) =>
@@ -11,6 +12,7 @@ export const loadProjectDashboard = createEffect(
       ofType(ProjectOverviewActions.opened),
       switchMap(({ projectId }) =>
         api.project(projectId).pipe(
+          untilTenantChanges(actions$),
           map((dashboard) => DashboardApiActions.projectDashboardLoaded({ dashboard })),
           catchError((error: unknown) =>
             of(DashboardApiActions.projectDashboardLoadFailed({ projectId, error: toApiError(error) })),
