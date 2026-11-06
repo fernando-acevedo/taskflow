@@ -19,6 +19,11 @@ export function aTask(overrides: Partial<Task> & Pick<Task, 'id'>): Task {
     updatedAt: '2026-10-19T12:00:00Z',
     completedAt: null,
     rowVersion: `v-${overrides.id}`,
+    externalKey: null,
+    startDate: null,
+    isBlocked: false,
+    statusNote: null,
+    dependsOn: [],
     ...overrides,
   };
 }

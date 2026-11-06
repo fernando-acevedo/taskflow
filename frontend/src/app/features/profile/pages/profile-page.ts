@@ -12,6 +12,7 @@ import { tenantFeature } from '../../../core/tenant/store/tenant.feature';
 import { authFeature } from '../../../core/auth/store/auth.feature';
 import { ErrorTextPipe } from '../../../core/i18n/error-text.pipe';
 import { ThemePreferenceCard } from '../../../core/theme/theme-preference-card';
+import { ApiKeysCard } from '../../api-keys/ui/api-keys-card';
 import { NotificationPreferencesCard } from '../../notifications/ui/notification-preferences';
 
 @Component({
@@ -25,6 +26,7 @@ import { NotificationPreferencesCard } from '../../notifications/ui/notification
     MatProgressBarModule,
     TranslocoDirective,
     ErrorTextPipe,
+    ApiKeysCard,
     NotificationPreferencesCard,
     ThemePreferenceCard,
   ],

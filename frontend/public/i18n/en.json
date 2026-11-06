@@ -113,7 +113,53 @@
     "saved": "Saved",
     "emailNotConfirmed": "Your email isn't confirmed yet. Confirm it so you can reset your password if you forget it.",
     "resendConfirmation": "Send confirmation email",
-    "confirmationSent": "We sent a confirmation link to {{email}}. Check your inbox and spam folder."
+    "confirmationSent": "We sent a confirmation link to {{email}}. Check your inbox and spam folder.",
+    "apiKeys": {
+      "title": "API keys",
+      "intro": "Keys let scripts and integrations call the API on your behalf. A key is shown only once, when you create it.",
+      "create": "New API key",
+      "createTitle": "New API key",
+      "name": "Name",
+      "nameRule": "Enter a name of up to 100 characters.",
+      "scope": "Scope",
+      "scopes": {
+        "Read": "Read only",
+        "Write": "Read and write"
+      },
+      "expiresAt": "Expires on",
+      "expiresHint": "Leave empty for 90 days. At most one year.",
+      "expiresRule": "Choose a date in the future, within one year.",
+      "cancel": "Cancel",
+      "save": "Create key",
+      "empty": "You have no API keys.",
+      "loadFailed": "The API keys couldn't be loaded.",
+      "loading": "Loading…",
+      "retry": "Try again",
+      "prefix": "Key",
+      "expires": "Expires",
+      "lastUsed": "Last used",
+      "neverUsed": "Never",
+      "status": "Status",
+      "actions": "Actions",
+      "statuses": {
+        "active": "Active",
+        "revoked": "Revoked",
+        "expired": "Expired"
+      },
+      "revoke": "Revoke",
+      "revokeLabel": "Revoke “{{ name }}”",
+      "revokeTitle": "Revoke this API key?",
+      "revokeMessage": "“{{ name }}” will stop working immediately. This can't be undone.",
+      "created": "API key created",
+      "revoked": "API key revoked",
+      "secretTitle": "Copy your API key",
+      "secretWarning": "This is the only time the key is shown. Copy it now and keep it somewhere safe; you won't be able to see it again.",
+      "secretLabel": "API key",
+      "copy": "Copy",
+      "copied": "Copied",
+      "copyFailed": "Couldn't copy. Select the key and copy it manually.",
+      "done": "I've copied it"
+    }
   },
   "errors": {
     "DuplicateUserName": "An account with this email already exists.",
@@ -488,7 +534,14 @@
     "anyLabel": "Any label",
     "estimate": "Estimate",
     "estimateHint": "Hours and minutes (2:30, 2h 30m) or decimal hours (2.5)",
-    "estimateRule": "Enter a duration such as 2:30, 2h 30m or 2.5."
+    "estimateRule": "Enter a duration such as 2:30, 2h 30m or 2.5.",
+    "blocked": "Blocked",
+    "blockedYes": "Blocked",
+    "planning": "Planning",
+    "externalKey": "External key",
+    "startDate": "Start date",
+    "statusNote": "Status note",
+    "dependsOn": "Depends on"
   },
   "dashboard": {
     "intro": "Here is what needs your attention across your projects.",

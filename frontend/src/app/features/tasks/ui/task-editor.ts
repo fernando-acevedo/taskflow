@@ -7,6 +7,7 @@ import { confirm } from '../../../shared/ui/confirm-dialog';
 import { labelsFeature } from '../../labels/data-access/store/labels.feature';
 import { projectsFeature } from '../../projects/data-access/store/projects.feature';
 import { Task, TaskInput } from '../data-access/tasks-api.service';
+import { tasksFeature } from '../data-access/store/tasks.feature';
 import { TasksPageActions } from '../data-access/store/tasks.actions';
 import { TaskFormData, TaskFormDialog, TaskFormResult } from './task-form-dialog';
 
@@ -22,6 +23,7 @@ export class TaskEditor {
   private readonly dialog = inject(MatDialog);
   private readonly members = this.store.selectSignal(projectsFeature.selectMembers);
   private readonly labels = this.store.selectSignal(labelsFeature.selectAll);
+  private readonly allTasks = this.store.selectSignal(tasksFeature.selectAll);
   private readonly canEdit = this.store.selectSignal(projectsFeature.selectCanEditTasks);
 
   open(task: Task | null = null): void {
@@ -34,7 +36,7 @@ export class TaskEditor {
 
     const closed = this.dialog
       .open<TaskFormDialog, TaskFormData, TaskFormResult>(TaskFormDialog, {
-        data: { task, members: this.members(), labels: this.labels(), readOnly: !this.canEdit(), save },
+        data: { task, members: this.members(), labels: this.labels(), tasks: this.allTasks(), readOnly: !this.canEdit(), save },
         width: '600px',
         maxWidth: 'calc(100vw - 32px)',
       })

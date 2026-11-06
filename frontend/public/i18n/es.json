@@ -113,7 +113,53 @@
     "saved": "Guardado",
     "emailNotConfirmed": "Tu email todavía no está confirmado. Confírmalo para poder restablecer tu contraseña si la olvidas.",
     "resendConfirmation": "Enviar email de confirmación",
-    "confirmationSent": "Enviamos un enlace de confirmación a {{email}}. Revisa tu bandeja de entrada y la carpeta de spam."
+    "confirmationSent": "Enviamos un enlace de confirmación a {{email}}. Revisa tu bandeja de entrada y la carpeta de spam.",
+    "apiKeys": {
+      "title": "API keys",
+      "intro": "Las keys permiten que scripts e integraciones llamen a la API en tu nombre. La key se muestra una sola vez, al crearla.",
+      "create": "Nueva API key",
+      "createTitle": "Nueva API key",
+      "name": "Nombre",
+      "nameRule": "Ingresá un nombre de hasta 100 caracteres.",
+      "scope": "Alcance",
+      "scopes": {
+        "Read": "Solo lectura",
+        "Write": "Lectura y escritura"
+      },
+      "expiresAt": "Vence el",
+      "expiresHint": "Vacío para 90 días. Máximo un año.",
+      "expiresRule": "Elegí una fecha futura, dentro de un año.",
+      "cancel": "Cancelar",
+      "save": "Crear key",
+      "empty": "No tenés API keys.",
+      "loadFailed": "No se pudieron cargar las API keys.",
+      "loading": "Cargando…",
+      "retry": "Reintentar",
+      "prefix": "Key",
+      "expires": "Vencimiento",
+      "lastUsed": "Último uso",
+      "neverUsed": "Nunca",
+      "status": "Estado",
+      "actions": "Acciones",
+      "statuses": {
+        "active": "Activa",
+        "revoked": "Revocada",
+        "expired": "Vencida"
+      },
+      "revoke": "Revocar",
+      "revokeLabel": "Revocar “{{ name }}”",
+      "revokeTitle": "¿Revocar esta API key?",
+      "revokeMessage": "“{{ name }}” dejará de funcionar de inmediato. No se puede deshacer.",
+      "created": "API key creada",
+      "revoked": "API key revocada",
+      "secretTitle": "Copiá tu API key",
+      "secretWarning": "Esta es la única vez que se muestra la key. Copiala ahora y guardala en un lugar seguro; no vas a poder verla de nuevo.",
+      "secretLabel": "API key",
+      "copy": "Copiar",
+      "copied": "Copiada",
+      "copyFailed": "No se pudo copiar. Seleccioná la key y copiala a mano.",
+      "done": "Ya la copié"
+    }
   },
   "errors": {
     "DuplicateUserName": "Ya existe una cuenta con este email.",
@@ -488,7 +534,14 @@
     "anyLabel": "Cualquiera",
     "estimate": "Estimado",
     "estimateHint": "Horas y minutos (2:30, 2h 30m) u horas decimales (2.5)",
-    "estimateRule": "Ingresá una duración como 2:30, 2h 30m o 2.5."
+    "estimateRule": "Ingresá una duración como 2:30, 2h 30m o 2.5.",
+    "blocked": "Bloqueada",
+    "blockedYes": "Bloqueada",
+    "planning": "Planificación",
+    "externalKey": "Clave externa",
+    "startDate": "Fecha de inicio",
+    "statusNote": "Nota de estado",
+    "dependsOn": "Depende de"
   },
   "dashboard": {
     "intro": "Esto es lo que necesita tu atención en tus proyectos.",

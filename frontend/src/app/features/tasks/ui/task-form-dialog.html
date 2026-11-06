@@ -85,7 +85,39 @@
       </mat-form-field>
     </form>
 
-    @if (data.task) {
+    @if (data.task; as task) {
+      @if (task.externalKey || task.startDate || task.isBlocked || task.statusNote || dependencies.length > 0) {
+        <section class="planning" [attr.aria-label]="t('planning')">
+          <h3>{{ t('planning') }}</h3>
+          <dl>
+            @if (task.externalKey) {
+              <dt>{{ t('externalKey') }}</dt>
+              <dd><code>{{ task.externalKey }}</code></dd>
+            }
+            @if (task.startDate) {
+              <dt>{{ t('startDate') }}</dt>
+              <dd>{{ task.startDate | date: 'mediumDate' : 'UTC' : language.current() }}</dd>
+            }
+            @if (task.isBlocked) {
+              <dt>{{ t('blocked') }}</dt>
+              <dd>{{ task.statusNote ?? t('blockedYes') }}</dd>
+            } @else if (task.statusNote) {
+              <dt>{{ t('statusNote') }}</dt>
+              <dd>{{ task.statusNote }}</dd>
+            }
+            @if (dependencies.length > 0) {
+              <dt>{{ t('dependsOn') }}</dt>
+              <dd>
+                <ul>
+                  @for (title of dependencies; track $index) {
+                    <li>{{ title }}</li>
+                  }
+                </ul>
+              </dd>
+            }
+          </dl>
+        </section>
+      }
       <app-task-time [projectId]="data.task.projectId" [taskId]="data.task.id" />
       <app-task-comments [projectId]="data.task.projectId" [taskId]="data.task.id" />
       <app-task-history [projectId]="data.task.projectId" [taskId]="data.task.id" />

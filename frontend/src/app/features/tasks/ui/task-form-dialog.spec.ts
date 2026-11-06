@@ -43,6 +43,19 @@ describe('TaskFormDialog', () => {
     await expectNoAxeViolations(render({}));
   });
 
+  it('shows the external key, the dates and the titles of the dependencies, read-only', async () => {
+    const fixture = render({
+      task: aTask({ id: 'a', externalKey: 'EXT-1', startDate: '2026-11-02', isBlocked: true, statusNote: 'Waiting', dependsOn: ['b'] }),
+      tasks: [aTask({ id: 'b', title: 'Design' })],
+    });
+    const text = (fixture.nativeElement as HTMLElement).querySelector('.planning')?.textContent ?? '';
+
+    expect(text).toContain('EXT-1');
+    expect(text).toContain('Waiting');
+    expect(text).toContain('Design');
+    await expectNoAxeViolations(fixture);
+  });
+
   it('has no accessibility violations when editing, with comments, time and history', async () => {
     await expectNoAxeViolations(render({ task: aTask({ id: 'a', title: 'Write brief' }) }));
   });

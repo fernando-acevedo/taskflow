@@ -8,7 +8,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
+import { DatePipe } from '@angular/common';
 import { TranslocoDirective } from '@jsverse/transloco';
+import { LanguageService } from '../../../core/i18n/language.service';
 import { applyApiFieldErrors } from '../../../shared/data-access/api-field-errors';
 import { SaveFn } from '../../../shared/data-access/submission';
 import { parseDuration, toClockText } from '../../../shared/ui/duration';
@@ -26,6 +28,8 @@ export interface TaskFormData {
   readonly members: readonly ProjectMember[];
   /** The project's labels. */
   readonly labels: readonly Label[];
+  /** The project's tasks, to show the titles of the ones this task depends on. */
+  readonly tasks?: readonly Task[];
   readonly readOnly: boolean;
   readonly save: SaveFn<TaskInput>;
 }
@@ -43,6 +47,7 @@ const MAX_ESTIMATE_MINUTES = 9999 * 60;
 @Component({
   selector: 'app-task-form-dialog',
   imports: [
+    DatePipe,
     ReactiveFormsModule,
     MatButtonModule,
     MatDialogModule,
@@ -70,6 +75,27 @@ const MAX_ESTIMATE_MINUTES = 9999 * 60;
     .row mat-form-field {
       flex: 1 1 180px;
     }
+    .planning h3 {
+      font: var(--mat-sys-title-small);
+      margin: 16px 0 4px;
+    }
+    .planning dl {
+      display: grid;
+      grid-template-columns: max-content 1fr;
+      gap: 4px 16px;
+      margin: 0;
+    }
+    .planning dt {
+      color: var(--mat-sys-on-surface-variant);
+    }
+    .planning dd {
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+    .planning ul {
+      margin: 0;
+      padding-left: 16px;
+    }
     .spacer {
       flex: 1;
     }
@@ -86,6 +112,11 @@ export class TaskFormDialog {
   protected readonly minDate = this.data.task ? null : localToday();
 
   protected readonly assignees = this.assigneeOptions();
+  protected readonly language = inject(LanguageService);
+  /** Titles of the tasks this one depends on; a deleted task's id shows as the id. */
+  protected readonly dependencies = (this.data.task?.dependsOn ?? []).map(
+    (id) => this.data.tasks?.find((task) => task.id === id)?.title ?? id,
+  );
 
   private readonly fb = inject(NonNullableFormBuilder);
   protected readonly form = this.fb.group({

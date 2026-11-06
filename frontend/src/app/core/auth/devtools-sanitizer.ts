@@ -8,6 +8,8 @@ const SECRET_KEYS = new Set([
   'confirmationCode',
   'accessToken',
   'refreshToken',
+  // The one-time secret of a new API key.
+  'secret',
 ]);
 const MASK = '••••••';
 const TOKEN_IN_URL = /((?:^|[?&#])(?:token|code)=)[^&#]*/g;

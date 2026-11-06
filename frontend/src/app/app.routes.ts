@@ -2,6 +2,8 @@ import { Routes } from '@angular/router';
 import { provideEffects } from '@ngrx/effects';
 import { provideState } from '@ngrx/store';
 import { authGuard, guestGuard, tenantAdminGuard } from './core/auth/auth.guards';
+import * as apiKeysEffects from './features/api-keys/data-access/store/api-keys.effects';
+import { apiKeysFeature } from './features/api-keys/data-access/store/api-keys.feature';
 import * as statusEffects from './features/status/data-access/store/status.effects';
 import { statusFeature } from './features/status/data-access/store/status.feature';
 
@@ -60,6 +62,7 @@ export const routes: Routes = [
       {
         path: 'profile',
         title: 'titles.profile',
+        providers: [provideState(apiKeysFeature), provideEffects(apiKeysEffects)],
         loadComponent: () => import('./features/profile/pages/profile-page').then((m) => m.ProfilePage),
       },
       {
