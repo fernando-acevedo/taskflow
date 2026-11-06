@@ -129,7 +129,7 @@ interface CommentView {
     .meta time,
     .edited,
     .note {
-      color: var(--mat-sys-on-surface-variant, #444);
+      color: var(--mat-sys-on-surface-variant);
     }
     .spacer {
       flex: 1;
@@ -141,8 +141,8 @@ interface CommentView {
     }
     .mention {
       font-weight: 500;
-      color: var(--mat-sys-primary, #1a56c6);
-      background: var(--mat-sys-primary-container, #dbe5ff);
+      color: var(--mat-sys-primary);
+      background: var(--mat-sys-primary-container);
       border-radius: 4px;
       padding: 0 2px;
     }

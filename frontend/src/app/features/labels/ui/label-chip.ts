@@ -16,6 +16,8 @@ import { textColorFor } from './label-colors';
       max-width: 100%;
       padding: 1px 8px;
       border-radius: 999px;
+      // Dark label colors vanish against the dark surface; the outline keeps the chip's edge visible.
+      box-shadow: inset 0 0 0 1px var(--mat-sys-outline);
       font: var(--mat-sys-label-medium);
       overflow: hidden;
       text-overflow: ellipsis;

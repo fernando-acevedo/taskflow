@@ -76,13 +76,13 @@ const LEVELS = ['', 'weak', 'fair', 'good', 'strong'] as const;
         --level-color: var(--mat-sys-error);
       }
       &[data-level='fair'] {
-        --level-color: #eb6834;
+        --level-color: light-dark(#eb6834, #f0743a);
       }
       &[data-level='good'] {
         --level-color: #eda100;
       }
       &[data-level='strong'] {
-        --level-color: #1baf7a;
+        --level-color: light-dark(#1baf7a, #2fb98a);
       }
 
       span {

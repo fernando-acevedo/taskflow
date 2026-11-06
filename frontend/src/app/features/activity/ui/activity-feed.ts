@@ -77,22 +77,22 @@ import { describeActivity } from './activity-text';
       margin-top: 2px;
       padding-left: 16px;
       font-size: 0.875rem;
-      color: var(--mat-sys-on-surface-variant, #444);
+      color: var(--mat-sys-on-surface-variant);
     }
     time,
     .note {
       font-size: 0.8125rem;
-      color: var(--mat-sys-on-surface-variant, #444);
+      color: var(--mat-sys-on-surface-variant);
     }
     .task-link {
       all: unset;
       cursor: pointer;
       font-weight: 500;
-      color: var(--mat-sys-primary, #1a56c6);
+      color: var(--mat-sys-primary);
       text-decoration: underline;
     }
     .task-link:focus-visible {
-      outline: 2px solid var(--mat-sys-primary, #1a56c6);
+      outline: 2px solid var(--mat-sys-primary);
       outline-offset: 2px;
     }
   `,
