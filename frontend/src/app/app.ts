@@ -11,6 +11,7 @@ import { ShellActions } from './core/auth/store/auth.actions';
 import { authFeature } from './core/auth/store/auth.feature';
 import { LanguageService } from './core/i18n/language.service';
 import { SUPPORTED_LANGUAGES } from './core/i18n/languages';
+import { NotificationBell } from './features/notifications/ui/notification-bell';
 
 @Component({
   selector: 'app-root',
@@ -20,6 +21,7 @@ import { SUPPORTED_LANGUAGES } from './core/i18n/languages';
     MatIconModule,
     MatMenuModule,
     MatToolbarModule,
+    NotificationBell,
     RouterLink,
     RouterLinkActive,
     RouterOutlet,

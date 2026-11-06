@@ -88,6 +88,7 @@ public sealed class SqlServerApiFactory : WebApplicationFactory<Program>, IAsync
         builder.UseSetting("Seed:Admin:Password", AdminPassword);
         builder.UseSetting("RateLimiting:Auth:PermitLimit", "10000");
         builder.UseSetting("Email:FrontendUrl", "http://localhost:4200");
+        builder.UseSetting("Notifications:DueSoonEnabled", "false");
         builder.ConfigureTestServices(services =>
         {
             services.AddSingleton<IEmailSender>(Emails);

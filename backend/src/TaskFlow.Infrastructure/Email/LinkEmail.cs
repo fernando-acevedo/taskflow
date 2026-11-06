@@ -17,6 +17,15 @@ internal static class LinkEmail
         return $"{frontendUrl.TrimEnd('/')}/{page}#{fragment}";
     }
 
+    /// <summary>The project board of the frontend, opening <paramref name="taskId"/> through the <c>task</c> query parameter.</summary>
+    public static string TaskLink(EmailOptions options, Guid projectId, Guid? taskId)
+    {
+        var frontendUrl = options.FrontendUrl
+            ?? throw new InvalidOperationException("Email:FrontendUrl is not configured.");
+        var link = $"{frontendUrl.TrimEnd('/')}/projects/{projectId}/board";
+        return taskId is null ? link : $"{link}?task={taskId}";
+    }
+
     public static EmailMessage Compose(string to, string subject, string greeting, string intro, string button, string link, string footer)
     {
         var textBody = $"{greeting}\n\n{intro}\n\n{link}\n\n{footer}\n";

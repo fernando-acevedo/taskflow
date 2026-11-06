@@ -5,9 +5,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TaskFlow.Application.Abstractions;
+using TaskFlow.Application.Notifications;
 using TaskFlow.Application.Users;
 using TaskFlow.Infrastructure.Email;
 using TaskFlow.Infrastructure.Identity;
+using TaskFlow.Infrastructure.Notifications;
 using TaskFlow.Infrastructure.Persistence;
 
 namespace TaskFlow.Infrastructure;
@@ -79,6 +81,10 @@ public static class DependencyInjection
         }
 
         services.AddScoped<IInvitationSender, InvitationSender>();
+        services.AddScoped<INotificationEmailSender, NotificationEmailSender>();
+
+        services.Configure<NotificationOptions>(configuration.GetSection(NotificationOptions.SectionName));
+        services.AddHostedService<DueSoonNotificationService>();
 
         // MapIdentityApi resolves it once, from the root provider, so it must not depend on scoped services.
         services.AddSingleton<IEmailSender<ApplicationUser>, IdentityEmailSender>();

@@ -131,6 +131,32 @@
       "database": "Database"
     }
   },
+  "notifications": {
+    "bell": "Notifications",
+    "bellUnread": "Notifications, {{ count }} unread",
+    "title": "Notifications",
+    "markAllRead": "Mark all as read",
+    "empty": "You are all caught up.",
+    "loading": "Loading...",
+    "unread": "unread",
+    "messages": {
+      "TaskAssigned": "{{ actor }} assigned you \"{{ task }}\"",
+      "Mentioned": "{{ actor }} mentioned you on \"{{ task }}\"",
+      "CommentOnYourTask": "{{ actor }} commented on \"{{ task }}\"",
+      "TaskDueSoon": "\"{{ task }}\" is due {{ dueDate }}"
+    },
+    "preferences": {
+      "title": "Email notifications",
+      "hint": "In-app notifications are always on. Choose which ones also reach your inbox.",
+      "emailOnAssigned": "When a task is assigned to me",
+      "emailOnMentioned": "When I am mentioned in a comment",
+      "emailOnCommentOnMyTask": "When someone comments on a task assigned to me",
+      "emailDailyDigest": "A daily digest",
+      "save": "Save",
+      "saved": "Preferences saved",
+      "retry": "Try again"
+    }
+  },
   "common": {
     "cancel": "Cancel",
     "dismiss": "Dismiss",
@@ -196,6 +222,9 @@
       "InvalidRange": "Choose a start and an end date, the start not after the end, within a range of up to 366 days.",
       "InvalidMinutes": "The duration must be between 1 minute and 24 hours.",
       "NoteTooLong": "The note can't be longer than 500 characters."
+    },
+    "Notifications": {
+      "NotFound": "The notification was not found."
     }
   },
   "clients": {

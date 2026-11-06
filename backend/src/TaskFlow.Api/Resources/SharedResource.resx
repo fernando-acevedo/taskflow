@@ -35,6 +35,7 @@
   <data name="Labels.NameTaken" xml:space="preserve"><value>The project already has a label with this name.</value></data>
   <data name="Labels.NotInProject" xml:space="preserve"><value>One or more labels don't belong to the project.</value></data>
   <data name="TaskComments.NotFound" xml:space="preserve"><value>The comment was not found.</value></data>
+  <data name="Notifications.NotFound" xml:space="preserve"><value>The notification was not found.</value></data>
   <data name="TaskComments.BodyRequired" xml:space="preserve"><value>The comment can't be empty.</value></data>
   <data name="TaskComments.BodyTooLong" xml:space="preserve"><value>The comment is too long.</value></data>
   <data name="TaskComments.MentionNotMember" xml:space="preserve"><value>Only members of the project can be mentioned.</value></data>

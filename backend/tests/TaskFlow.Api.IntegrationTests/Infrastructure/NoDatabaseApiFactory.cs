@@ -10,5 +10,6 @@ public sealed class NoDatabaseApiFactory : WebApplicationFactory<Program>
     {
         builder.UseEnvironment("Testing");
         builder.UseSetting("ConnectionStrings:TaskFlow", "Server=unused;Database=unused");
+        builder.UseSetting("Notifications:DueSoonEnabled", "false");
     }
 }
