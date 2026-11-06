@@ -8,6 +8,7 @@ import { myDashboardFeature } from './data-access/store/my-dashboard.feature';
 export const dashboardRoutes: Routes = [
   {
     path: '',
+    title: 'titles.home',
     providers: [provideState(myDashboardFeature), provideEffects(myDashboardEffects)],
     loadComponent: () => import('./pages/dashboard-page').then((m) => m.DashboardPage),
   },

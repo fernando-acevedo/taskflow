@@ -132,13 +132,28 @@ body {
   }
 }
 
-// Chart colors. Status uses the first four categorical slots in a fixed order (validated for CVD separation on
-// this surface); magnitude bars use one hue. Values and labels always use text tokens, never these colors.
+// Chart colors, all at least 3:1 against the surface (WCAG 1.4.11). Measured contrast: todo #2a78d6 4.29, in-progress
+// #dc5a22 3.69, review #14946a 3.73, done #b87e00 3.39. Status uses the first four categorical slots in a fixed order;
+// the colors changed since their CVD separation was checked, so recheck it when the dark palette lands (F8). The app is
+// light-only today. Magnitude bars use one hue. Values and labels always use text tokens, never these colors.
 html {
   --tf-chart-todo: #2a78d6;
-  --tf-chart-in-progress: #eb6834;
-  --tf-chart-review: #1baf7a;
-  --tf-chart-done: #eda100;
+  --tf-chart-in-progress: #dc5a22;
+  --tf-chart-review: #14946a;
+  --tf-chart-done: #b87e00;
   --tf-chart-bar: #2a78d6;
   --tf-chart-track: var(--mat-sys-surface-container-high);
+}
+
+// Honor the OS setting: no sliding, fading or spinning. Progress bars keep moving, since they are the only sign
+// that something is loading.
+@media (prefers-reduced-motion: reduce) {
+  :not(mat-progress-bar, mat-progress-bar *),
+  :not(mat-progress-bar, mat-progress-bar *)::before,
+  :not(mat-progress-bar, mat-progress-bar *)::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

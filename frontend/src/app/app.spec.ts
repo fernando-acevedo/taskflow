@@ -7,6 +7,7 @@ import { App } from './app';
 import { authFeature } from './core/auth/store/auth.feature';
 import { DemoService, DemoStatus } from './core/demo/demo.service';
 import { LanguageService } from './core/i18n/language.service';
+import { expectNoAxeViolations } from './shared/testing/axe';
 import { notificationsFeature } from './features/notifications/data-access/store/notifications.feature';
 
 const demoOn: DemoStatus = { enabled: true, nextResetAt: null, accounts: [] };
@@ -47,5 +48,28 @@ describe('App demo indicator', () => {
 
   it('is hidden when signed out', () => {
     expect(render(demoOn, false).querySelector('.demo-badge')).toBeNull();
+  });
+
+  it('has no accessibility violations, signed in or out', async () => {
+    await expectNoAxeViolations(render(demoOn, true));
+    TestBed.resetTestingModule();
+    await expectNoAxeViolations(render(demoOn, false));
+  });
+});
+
+describe('App shell', () => {
+  it('moves focus to the main region from the skip link', () => {
+    const root = render(demoOn, true);
+    const main = root.querySelector<HTMLElement>('#main')!;
+    root.querySelector<HTMLElement>('.skip-link')!.click();
+
+    expect(document.activeElement).toBe(main);
+  });
+
+  it('names each language in its own language for assistive technology', () => {
+    const root = render(demoOn, true);
+    const labels = [...root.querySelectorAll('mat-button-toggle button')].map((b) => b.getAttribute('aria-label'));
+
+    expect(labels).toEqual(['English', 'Espa\u00f1ol']);
   });
 });

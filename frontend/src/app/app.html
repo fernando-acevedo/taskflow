@@ -1,5 +1,6 @@
 <ng-container *transloco="let t">
-  <mat-toolbar class="toolbar">
+  <a class="skip-link" href="#main" (click)="skipToContent($event, main)">{{ t('app.skipToContent') }}</a>
+  <mat-toolbar class="toolbar" role="banner">
     <a class="brand" routerLink="/">{{ t('app.title') }}</a>
     <span class="tagline">{{ t('app.tagline') }}</span>
 
@@ -23,7 +24,7 @@
       (change)="language.use($event.value)"
     >
       @for (lang of languages; track lang) {
-        <mat-button-toggle [value]="lang">{{ lang.toUpperCase() }}</mat-button-toggle>
+        <mat-button-toggle [value]="lang" [attr.lang]="lang" [aria-label]="languageName(lang)">{{ lang.toUpperCase() }}</mat-button-toggle>
       }
     </mat-button-toggle-group>
 
@@ -73,7 +74,7 @@
     }
   </mat-toolbar>
 
-  <main>
+  <main id="main" tabindex="-1" #main>
     <router-outlet />
   </main>
 </ng-container>

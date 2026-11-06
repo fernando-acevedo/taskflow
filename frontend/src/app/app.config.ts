@@ -5,7 +5,7 @@ import {
   provideAppInitializer,
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
-import { provideRouter, withComponentInputBinding } from '@angular/router';
+import { TitleStrategy, provideRouter, withComponentInputBinding } from '@angular/router';
 import { provideTransloco } from '@jsverse/transloco';
 import { provideEffects } from '@ngrx/effects';
 import { provideRouterStore, routerReducer } from '@ngrx/router-store';
@@ -17,6 +17,7 @@ import { hideSecrets, hideStateSecrets } from './core/auth/devtools-sanitizer';
 import { restoreSession } from './core/auth/session';
 import * as authEffects from './core/auth/store/auth.effects';
 import { authFeature } from './core/auth/store/auth.feature';
+import { TranslatedTitleStrategy } from './core/title/translated-title.strategy';
 import { acceptLanguageInterceptor } from './core/i18n/accept-language.interceptor';
 import {
   DEFAULT_LANGUAGE,
@@ -32,6 +33,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes, withComponentInputBinding()),
+    { provide: TitleStrategy, useExisting: TranslatedTitleStrategy },
     provideHttpClient(withFetch(), withInterceptors([acceptLanguageInterceptor, authInterceptor])),
     provideStore({
       router: routerReducer,

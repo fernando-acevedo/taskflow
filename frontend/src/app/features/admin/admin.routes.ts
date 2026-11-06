@@ -7,6 +7,7 @@ import { adminUsersFeature } from './data-access/store/admin-users.feature';
 export const adminRoutes: Routes = [
   {
     path: 'users',
+    title: 'titles.users',
     providers: [provideState(adminUsersFeature), provideEffects(adminUsersEffects)],
     loadComponent: () => import('./pages/users-page').then((m) => m.UsersPage),
   },

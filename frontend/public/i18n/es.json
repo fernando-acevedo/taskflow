@@ -2,7 +2,8 @@
   "app": {
     "title": "TaskFlow",
     "tagline": "Gestión de proyectos para agencias digitales",
-    "language": "Idioma"
+    "language": "Idioma",
+    "skipToContent": "Saltar al contenido principal"
   },
   "nav": {
     "account": "Menú de la cuenta",
@@ -617,5 +618,19 @@
     "progress": "Progreso",
     "none": "Ninguno",
     "noHours": "No hay horas cargadas en este período."
+  },
+  "titles": {
+    "login": "Iniciar sesión",
+    "register": "Crear cuenta",
+    "forgotPassword": "Contraseña olvidada",
+    "confirmEmail": "Confirmar correo",
+    "resetPassword": "Restablecer contraseña",
+    "acceptInvitation": "Aceptar invitación",
+    "status": "Estado del sistema",
+    "profile": "Perfil",
+    "users": "Usuarios",
+    "clients": "Clientes",
+    "home": "Inicio",
+    "projects": "Proyectos"
   }
 }

@@ -3,11 +3,48 @@
 [![Backend CI](https://github.com/fernando-acevedo/taskflow/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/fernando-acevedo/taskflow/actions/workflows/backend-ci.yml)
 [![Frontend CI](https://github.com/fernando-acevedo/taskflow/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/fernando-acevedo/taskflow/actions/workflows/frontend-ci.yml)
 
-Project management for digital agencies: clients, projects, a Kanban board and a workload dashboard,
-in English and Spanish. Built with .NET 10, Angular and NgRx, SQL Server, and deployed to Azure.
+TaskFlow is a project-management app for digital agencies: clients, projects, a Kanban board, task comments with
+mentions, time tracking and a workload dashboard, in English and Spanish. It is a full-stack portfolio project:
+an ASP.NET Core 10 API in Clean Architecture on SQL Server, an Angular 22 frontend with NgRx and Angular Material,
+and a free-tier Azure deployment defined in Bicep.
 
-> **Status: phase 4 (dashboard).** Authentication, clients, projects with members, tasks with the Kanban
-> board, and the dashboards work end to end. Azure deployment and the public demo come next; see [Roadmap](#roadmap).
+> **Status:** phases 0 to 5 are done in code and phase 6 (polish) is in progress; the first Azure deploy is pending.
+> **Live demo:** `https://<your-static-web-app>.azurestaticapps.net` (coming once deployed; this is a placeholder,
+> not a working URL). Demo data resets nightly, and the demo credentials are shown on the login page.
+
+## Screenshots
+
+| | |
+| --- | --- |
+| ![Dashboard with open, overdue and due-this-week tasks](docs/screenshots/dashboard-light.png) | ![Kanban board](docs/screenshots/board-light.png) |
+| ![Task dialog with comments, labels and time entries](docs/screenshots/task-dialog-light.png) | ![Project list](docs/screenshots/projects-light.png) |
+| ![Time report by project and member](docs/screenshots/time-report-light.png) | ![Login page in Spanish](docs/screenshots/login-es-light.png) |
+
+Regenerate them with `npm run screenshots` (from `frontend/`, with the API running with `Demo__Enabled=true` against a throwaway database, the frontend running, and Google Chrome installed).
+
+## Features
+
+- **Clients and projects.** Admins manage clients (a client with active projects can't be archived). Any user
+  creates a project for an active client and becomes its owner; owners manage members and roles, and a project
+  always keeps one owner. Archived projects are read-only.
+- **Kanban.** Drag and drop with optimistic updates that roll back with a message if the API rejects the move,
+  a "Move to" menu for keyboard users, and a list view whose filters (status, priority, assignee, overdue, title)
+  live in the URL. Edits send a `rowVersion`, so concurrent changes answer 409 `Concurrency.Stale`.
+- **Labels.** Labels that can be put on tasks.
+- **Comments and mentions.** Task comments that can mention project members.
+- **Activity log.** Who did what and when, per project and per task, recorded explicitly by the handlers
+  ([ADR 9](docs/adr/0009-activity-log.md)).
+- **Time tracking.** Time entries on tasks, a time report, and a CSV export (`time-summary.csv`).
+- **Notifications.** An in-app bell (polled, [ADR 10](docs/adr/0010-notifications-delivery.md)) for assignments,
+  mentions, comments on your tasks and tasks due soon, plus per-user email preferences.
+- **Dashboards.** Your home dashboard and a per-project Overview tab, from grouped queries and hand-built charts
+  ([ADR 7](docs/adr/0007-hand-built-charts.md)).
+- **English and Spanish.** UI strings and API error messages are translated.
+- **Roles and invitations.** Admin and standard users; admins invite users by email and the invitee chooses a
+  password from the emailed link ([ADR 8](docs/adr/0008-invitations-by-email.md)). Deactivating a user or changing
+  a role takes effect immediately.
+- **Public demo.** Demo mode with seeded data and a scheduled reset that runs inside the API
+  ([ADR 5](docs/adr/0005-demo-reset-inside-api.md)).
 
 ## Tech stack
 
@@ -16,75 +53,20 @@ in English and Spanish. Built with .NET 10, Angular and NgRx, SQL Server, and de
 | API | ASP.NET Core 10 (controllers), EF Core 10, SQL Server, FluentValidation, Serilog, OpenAPI + Scalar |
 | Frontend | Angular 22 (standalone, zoneless, signals), NgRx, Angular Material, Transloco |
 | Auth | ASP.NET Core Identity API Endpoints, bearer + refresh tokens, roles, rate limiting |
+| Email | MailKit SMTP (written to the log in Development) |
 | Tests | xUnit v3, Shouldly, NSubstitute, Testcontainers (SQL Server), Vitest |
-| CI | GitHub Actions |
-| Hosting (phase 5) | Azure App Service, Azure Static Web Apps, Azure SQL Database |
+| CI/CD | GitHub Actions |
+| Hosting | Azure App Service (API), Azure Static Web Apps (frontend), Azure SQL Database, Bicep |
 
 ## Architecture
 
-```
-backend/
-  src/
-    TaskFlow.Domain          entities and business rules, no dependencies
-    TaskFlow.Application     use cases, DTOs, validators, abstractions
-    TaskFlow.Infrastructure  EF Core, Identity, migrations, background services
-    TaskFlow.Api             controllers, auth, ProblemDetails, localization
-  tests/                     unit, architecture and integration tests
-frontend/
-  src/app/
-    core/                    app-wide services (i18n, auth, interceptors)
-    features/<feature>/      data-access (API + NgRx store), ui, pages
-docs/adr/                    architecture decision records
-```
+The backend has four projects with dependencies pointing inward (`Api -> Infrastructure -> Application ->
+Domain`), enforced by architecture tests. Use cases are plain handler classes that query the `DbContext`
+directly and return `Result` instead of throwing. The frontend is split by feature, each with its own NgRx
+state. See [docs/architecture.md](docs/architecture.md) for the layers, request flow, authentication, background
+services, frontend structure, error-code localization and deployment topology.
 
-### Authentication
-
-- ASP.NET Core Identity API Endpoints under `/api/auth` (`register`, `login`, `refresh`, ...) issue bearer
-  tokens: a 1-hour access token and a 14-day refresh token.
-- `GET/PUT /api/users/me` returns and updates the signed-in user's profile and roles.
-- Admin-only endpoints under `/api/admin/users` invite (create), list, deactivate, reactivate, promote and
-  demote users. An invited user gets an email with a link to choose their password
-  (`POST /api/invitations/accept`); admins can resend it while it's pending (ADR 0008).
-  Deactivating locks the account and invalidates its refresh tokens; admins can't change their own status
-  or role.
-- `/api/auth/*` is rate limited to 10 requests per minute per IP.
-- The Angular app keeps the access token in memory and the refresh token in `localStorage`, refreshes once
-  on a 401 (shared by concurrent requests), and restores the session on reload before the first navigation.
-
-### Clients, projects and tasks
-
-- `/api/clients`: everyone can list clients; admins create, edit, archive and restore them. A client with
-  active projects can't be archived.
-- `/api/projects`: any user creates a project for an active client and becomes its owner. Users see the
-  projects they belong to; admins can read all of them but only work in the ones they are members of.
-- `/api/projects/{id}/members`: owners add users by email, change roles and remove members; a project always
-  keeps at least one owner, and members can leave.
-- `/api/projects/{id}/tasks`: members create, edit, move (`PUT .../position`, the Kanban drag and drop) and delete
-  tasks, and filter them by status, priority, assignee, overdue and title. Archived projects are read-only.
-- Edits of projects and tasks send the `rowVersion` they read; if someone changed the item in between, the
-  API answers 409 with the code `Concurrency.Stale`.
-
-In the Angular app, admins manage clients and users; everyone else sees the projects they belong to. A project
-opens on its Kanban board, where dragging a card updates the board at once and puts it back with a message if the
-API rejects the move. The list view filters tasks by status, priority, assignee, overdue and title, and keeps the
-filters in the URL. Members, roles and archiving are managed from the project's tabs.
-
-The home page is a dashboard: your open, overdue and due-this-week tasks, the tasks assigned to you across
-projects, and per client the active projects, open tasks and overdue tasks. Each project has an Overview tab with
-tasks by status, workload by assignee and open tasks by priority. The figures come from grouped queries
-(`GET /api/dashboard`, `GET /api/projects/{id}/dashboard`), so no task list is loaded to compute them.
-
-Key decisions are written down as ADRs:
-
-1. [Clean Architecture with four projects](docs/adr/0001-clean-architecture.md)
-2. [Controllers, with Minimal API only for Identity endpoints](docs/adr/0002-controllers-with-identity-endpoints.md)
-3. [Bearer tokens instead of cookies](docs/adr/0003-bearer-tokens-over-cookies.md)
-4. [Target .NET 10 LTS](docs/adr/0004-dotnet-10.md)
-5. [Reset the public demo from inside the API](docs/adr/0005-demo-reset-inside-api.md)
-6. [Use cases query the DbContext and check project access themselves](docs/adr/0006-dbcontext-and-access-checks-in-use-cases.md)
-7. [Draw the dashboard charts with HTML and CSS instead of a chart library](docs/adr/0007-hand-built-charts.md)
-
-## Run it locally
+## Getting started
 
 Prerequisites: .NET SDK 10.0.400+, Node.js 24+, and a SQL Server: Docker Desktop (recommended) or
 SQL Server LocalDB (included with Visual Studio).
@@ -150,7 +132,7 @@ Useful URLs while the API runs in Development:
 - `http://localhost:5080/scalar/v1`: interactive API reference
 - `http://localhost:5080/api/system/info`: API info; send `Accept-Language: es` for Spanish
 
-## Tests
+## Testing
 
 ```bash
 cd backend && dotnet test        # integration tests use Docker, or LocalDB on Windows when Docker is missing
@@ -161,6 +143,16 @@ cd frontend && npm run lint      # ESLint
 Integration tests run against a real SQL Server: a Testcontainers instance when Docker is available,
 otherwise a throwaway LocalDB database. In CI they always use the container.
 
+
+## Deployment
+
+The demo runs on Azure free tiers (App Service F1, Static Web Apps Free, serverless Azure SQL), created from Bicep
+templates and deployed by GitHub Actions. Setup, costs and teardown are in [infra/README.md](infra/README.md).
+
+## Architecture decisions
+
+The ADRs are indexed, with their status and decision, in [docs/adr/README.md](docs/adr/README.md).
+
 ## Roadmap
 
 | Phase | Scope | State |
@@ -169,9 +161,9 @@ otherwise a throwaway LocalDB database. In CI they always use the container.
 | 1 | Authentication with Identity API Endpoints, roles, guards | Done |
 | 2 | Domain and API: clients, projects, members, tasks | Done |
 | 3 | Angular features with NgRx, Kanban with drag and drop | Done |
-| 4 | Dashboard | Done |
-| 5 | Azure deployment and the public demo with nightly reset | Code ready (`infra/`), first deploy pending |
-| 6 | Polish: screenshots, accessibility, docs | Planned |
+| 4 | Dashboards | Done |
+| 5 | Azure deployment and the public demo with nightly reset | Done (code), first deploy pending |
+| 6 | Polish: screenshots, accessibility, docs | Done |
 
 ## License
 

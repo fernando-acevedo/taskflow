@@ -5,6 +5,7 @@ import { TranslocoTestingModule } from '@jsverse/transloco';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { ResetPasswordPageActions } from '../../../core/auth/store/auth.actions';
 import { authFeature } from '../../../core/auth/store/auth.feature';
+import { expectNoAxeViolations } from '../../../shared/testing/axe';
 import { ResetPasswordPage } from './reset-password-page';
 
 describe('ResetPasswordPage', () => {
@@ -23,6 +24,13 @@ describe('ResetPasswordPage', () => {
         }),
       ],
     });
+  });
+
+  it('has no accessibility violations', async () => {
+    const harness = await RouterTestingHarness.create('/reset-password#email=ana%40example.com&code=abc');
+    await harness.fixture.whenStable();
+
+    await expectNoAxeViolations(harness.routeNativeElement!);
   });
 
   it('explains that a link without its code is invalid', async () => {
