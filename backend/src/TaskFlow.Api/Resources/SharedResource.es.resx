@@ -64,4 +64,12 @@
   <data name="ApiKeys.TooMany" xml:space="preserve"><value>Tenés demasiadas claves de API activas. Revocá una primero.</value></data>
   <data name="ApiKeys.ScopeInsufficient" xml:space="preserve"><value>El alcance de esta clave de API no permite esta acción.</value></data>
   <data name="ApiKeys.NotAllowedWithKey" xml:space="preserve"><value>Las claves de API no sirven para esto. Iniciá sesión como persona.</value></data>
+  <data name="Tasks.ExternalKeyInvalid" xml:space="preserve"><value>La clave externa solo puede tener letras, números, puntos, dos puntos, guiones bajos y guiones, hasta 100 caracteres.</value></data>
+  <data name="Tasks.ExternalKeyLocked" xml:space="preserve"><value>La tarea ya tiene otra clave externa y no se puede cambiar.</value></data>
+  <data name="Tasks.ExternalKeyTaken" xml:space="preserve"><value>Otra tarea del proyecto ya usa esta clave externa.</value></data>
+  <data name="Tasks.StartAfterDue" xml:space="preserve"><value>La fecha de inicio no puede ser posterior al vencimiento.</value></data>
+  <data name="Tasks.DependencyOnSelf" xml:space="preserve"><value>Una tarea no puede depender de sí misma.</value></data>
+  <data name="Tasks.DependencyNotInProject" xml:space="preserve"><value>Una tarea solo puede depender de tareas del mismo proyecto.</value></data>
+  <data name="Tasks.DependencyCycle" xml:space="preserve"><value>Estas dependencias harían que las tareas se esperen entre sí en un ciclo.</value></data>
+  <data name="Tasks.TooManyDependencies" xml:space="preserve"><value>Una tarea puede depender de 50 tareas como máximo.</value></data>
 </root>

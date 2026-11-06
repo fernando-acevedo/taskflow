@@ -42,6 +42,8 @@ public sealed class AppDbContext(
 
     public DbSet<TaskItem> Tasks => Set<TaskItem>();
 
+    public DbSet<TaskDependency> TaskDependencies => Set<TaskDependency>();
+
     public DbSet<TaskComment> TaskComments => Set<TaskComment>();
 
     public DbSet<TimeEntry> TimeEntries => Set<TimeEntry>();

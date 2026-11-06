@@ -219,7 +219,15 @@
       "AssigneeNotMember": "El responsable debe ser miembro del proyecto."
     },
     "Tasks": {
-      "NotFound": "No se encontró la tarea. Puede que alguien la haya eliminado."
+      "NotFound": "No se encontró la tarea. Puede que alguien la haya eliminado.",
+      "ExternalKeyInvalid": "La clave externa solo puede tener letras, números, puntos, dos puntos, guiones bajos y guiones, hasta 100 caracteres.",
+      "ExternalKeyLocked": "La tarea ya tiene otra clave externa y no se puede cambiar.",
+      "ExternalKeyTaken": "Otra tarea del proyecto ya usa esta clave externa.",
+      "StartAfterDue": "La fecha de inicio no puede ser posterior al vencimiento.",
+      "DependencyOnSelf": "Una tarea no puede depender de sí misma.",
+      "DependencyNotInProject": "Una tarea solo puede depender de tareas del mismo proyecto.",
+      "DependencyCycle": "Estas dependencias harían que las tareas se esperen entre sí en un ciclo.",
+      "TooManyDependencies": "Una tarea puede depender de 50 tareas como máximo."
     },
     "Concurrency": {
       "Stale": "Otra persona modificó esto mientras tanto. Lo recargamos; inténtalo de nuevo."

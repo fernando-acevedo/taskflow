@@ -219,7 +219,15 @@
       "AssigneeNotMember": "The assignee must be a member of the project."
     },
     "Tasks": {
-      "NotFound": "The task was not found. Someone may have deleted it."
+      "NotFound": "The task was not found. Someone may have deleted it.",
+      "ExternalKeyInvalid": "The external key may only contain letters, digits, dots, colons, underscores and hyphens, and is at most 100 characters.",
+      "ExternalKeyLocked": "The task already has another external key, which can't be changed.",
+      "ExternalKeyTaken": "Another task of the project already uses this external key.",
+      "StartAfterDue": "The start date can't be after the due date.",
+      "DependencyOnSelf": "A task can't depend on itself.",
+      "DependencyNotInProject": "A task can only depend on tasks of the same project.",
+      "DependencyCycle": "These dependencies would make tasks wait for each other in a loop.",
+      "TooManyDependencies": "A task can depend on at most 50 tasks."
     },
     "Concurrency": {
       "Stale": "Someone else changed this in the meantime. We reloaded it; try again."

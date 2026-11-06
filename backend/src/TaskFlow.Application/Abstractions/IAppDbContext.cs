@@ -32,6 +32,8 @@ public interface IAppDbContext
 
     DbSet<TaskItem> Tasks { get; }
 
+    DbSet<TaskDependency> TaskDependencies { get; }
+
     DbSet<TaskComment> TaskComments { get; }
 
     DbSet<TimeEntry> TimeEntries { get; }

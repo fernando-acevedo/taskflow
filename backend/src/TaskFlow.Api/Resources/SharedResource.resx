@@ -64,4 +64,12 @@
   <data name="ApiKeys.TooMany" xml:space="preserve"><value>You have too many active API keys. Revoke one first.</value></data>
   <data name="ApiKeys.ScopeInsufficient" xml:space="preserve"><value>This API key's scope doesn't allow this action.</value></data>
   <data name="ApiKeys.NotAllowedWithKey" xml:space="preserve"><value>API keys can't be used for this. Sign in as a person.</value></data>
+  <data name="Tasks.ExternalKeyInvalid" xml:space="preserve"><value>The external key may only contain letters, digits, dots, colons, underscores and hyphens, and is at most 100 characters.</value></data>
+  <data name="Tasks.ExternalKeyLocked" xml:space="preserve"><value>The task already has another external key, which can't be changed.</value></data>
+  <data name="Tasks.ExternalKeyTaken" xml:space="preserve"><value>Another task of the project already uses this external key.</value></data>
+  <data name="Tasks.StartAfterDue" xml:space="preserve"><value>The start date can't be after the due date.</value></data>
+  <data name="Tasks.DependencyOnSelf" xml:space="preserve"><value>A task can't depend on itself.</value></data>
+  <data name="Tasks.DependencyNotInProject" xml:space="preserve"><value>A task can only depend on tasks of the same project.</value></data>
+  <data name="Tasks.DependencyCycle" xml:space="preserve"><value>These dependencies would make tasks wait for each other in a loop.</value></data>
+  <data name="Tasks.TooManyDependencies" xml:space="preserve"><value>A task can depend on at most 50 tasks.</value></data>
 </root>
