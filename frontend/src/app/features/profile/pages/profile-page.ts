@@ -10,6 +10,7 @@ import { Store } from '@ngrx/store';
 import { ProfilePageActions } from '../../../core/auth/store/auth.actions';
 import { authFeature } from '../../../core/auth/store/auth.feature';
 import { ErrorTextPipe } from '../../../core/i18n/error-text.pipe';
+import { ThemePreferenceCard } from '../../../core/theme/theme-preference-card';
 import { NotificationPreferencesCard } from '../../notifications/ui/notification-preferences';
 
 @Component({
@@ -24,6 +25,7 @@ import { NotificationPreferencesCard } from '../../notifications/ui/notification
     TranslocoDirective,
     ErrorTextPipe,
     NotificationPreferencesCard,
+    ThemePreferenceCard,
   ],
   templateUrl: './profile-page.html',
   styleUrl: './profile-page.scss',

@@ -5,6 +5,14 @@
     "language": "Language",
     "skipToContent": "Skip to main content"
   },
+  "theme": {
+    "label": "Theme",
+    "title": "Appearance",
+    "hint": "Light or dark colors for the app.",
+    "System": "System",
+    "Light": "Light",
+    "Dark": "Dark"
+  },
   "nav": {
     "account": "Account menu",
     "profile": "Profile",

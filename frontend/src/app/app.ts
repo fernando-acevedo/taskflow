@@ -12,6 +12,7 @@ import { authFeature } from './core/auth/store/auth.feature';
 import { DemoService } from './core/demo/demo.service';
 import { LanguageService } from './core/i18n/language.service';
 import { SUPPORTED_LANGUAGES } from './core/i18n/languages';
+import { ThemeMenu } from './core/theme/theme-menu';
 import { NotificationBell } from './features/notifications/ui/notification-bell';
 
 const languageNames = new Map<string, string>(
@@ -30,6 +31,7 @@ const languageNames = new Map<string, string>(
     MatMenuModule,
     MatToolbarModule,
     NotificationBell,
+    ThemeMenu,
     RouterLink,
     RouterLinkActive,
     RouterOutlet,
