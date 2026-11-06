@@ -9,6 +9,7 @@ import { groupByStatus } from '../data-access/store/board';
 import { TasksPageActions } from '../data-access/store/tasks.actions';
 import { tasksFeature } from '../data-access/store/tasks.feature';
 import { aTask } from '../data-access/store/testing';
+import { expectNoAxeViolations } from '../../../shared/testing/axe';
 import { TaskEditor } from '../ui/task-editor';
 import { BoardPage } from './board-page';
 
@@ -73,6 +74,14 @@ describe('BoardPage', () => {
     TestBed.tick();
     return [...document.querySelectorAll<HTMLButtonElement>('.mat-mdc-menu-panel button[mat-menu-item]')];
   }
+
+  it('has no accessibility violations, with the move menu open too', async () => {
+    const element = render();
+    await expectNoAxeViolations(element);
+
+    openMoveMenu(element, 'Write brief');
+    await expectNoAxeViolations(document.body);
+  });
 
   it('moves a task to another column from the keyboard-reachable menu', () => {
     const element = render();

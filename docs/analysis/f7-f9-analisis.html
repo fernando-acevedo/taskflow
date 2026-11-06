@@ -1,0 +1,320 @@
+<title>Análisis F7–F9 TaskFlow</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: índice fijo a la izquierda en escritorio (una columna en teléfono); cada fase es una sección con estado actual, diseño, riesgos y decisiones; las tarjetas cierran cada fase en una tabla. */
+:root {
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --ink: #18202c;
+  --muted: #5a6474;
+  --line: #dde2ea;
+  --accent: #3a4fb8;
+  --accent-soft: #e8ebfa;
+  --f7: #3a4fb8;
+  --f8: #8a5a00;
+  --f9: #0f7a62;
+  --warn-bg: #fff3e0;
+  --warn-fg: #8a3b0a;
+  --code-bg: #eef1f6;
+  --display: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #10141b; --surface: #171c25; --ink: #e5e9f0; --muted: #9aa4b4; --line: #2a313d;
+    --accent: #8f9ff0; --accent-soft: #232a47; --f7: #8f9ff0; --f8: #e0b25c; --f9: #5cc9a8;
+    --warn-bg: #3a2614; --warn-fg: #f4be8c; --code-bg: #1f2530; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #10141b; --surface: #171c25; --ink: #e5e9f0; --muted: #9aa4b4; --line: #2a313d;
+  --accent: #8f9ff0; --accent-soft: #232a47; --f7: #8f9ff0; --f8: #e0b25c; --f9: #5cc9a8;
+  --warn-bg: #3a2614; --warn-fg: #f4be8c; --code-bg: #1f2530; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 64px;
+}
+.shell { max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 40px; }
+@media (max-width: 880px) { .shell { grid-template-columns: minmax(0, 1fr); gap: 24px; } nav.toc { position: static !important; } }
+nav.toc { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 24px); align-self: start; display: grid; gap: 6px; font-size: 0.88rem; }
+nav.toc a { color: var(--muted); text-decoration: none; padding: 3px 0 3px 10px; border-left: 2px solid var(--line); }
+nav.toc a:hover, nav.toc a:focus-visible { color: var(--ink); border-left-color: var(--accent); }
+nav.toc .grp { font-family: var(--display); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.72rem; color: var(--muted); margin-top: 10px; }
+main { display: grid; gap: 44px; min-width: 0; }
+h1, h2, h3 { font-family: var(--display); line-height: 1.2; text-wrap: balance; margin: 0; }
+h1 { font-size: 2.1rem; font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 1.55rem; font-weight: 700; }
+h3 { font-size: 1.08rem; font-weight: 600; margin-top: 6px; }
+p, ul, ol { margin: 0; max-width: 70ch; }
+ul, ol { padding-left: 1.2em; display: grid; gap: 4px; }
+section { display: grid; gap: 14px; min-width: 0; scroll-margin-top: 20px; }
+.eyebrow { font-family: var(--display); text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.75rem; font-weight: 600; color: var(--muted); }
+.lede { font-size: 1.05rem; color: var(--muted); }
+code, .mono { font-family: var(--mono); font-size: 0.86em; }
+code { background: var(--code-bg); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.phases { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+.phase { background: var(--surface); border: 1px solid var(--line); border-top: 3px solid var(--c); border-radius: 6px; padding: 14px 16px; display: grid; gap: 6px; align-content: start; }
+.phase .tag { font-family: var(--display); font-weight: 700; color: var(--c); font-size: 0.95rem; }
+.phase .size { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); }
+.c7 { --c: var(--f7); } .c8 { --c: var(--f8); } .c9 { --c: var(--f9); }
+.order { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-family: var(--display); font-weight: 600; }
+.order .step { border: 1px solid var(--line); background: var(--surface); padding: 4px 10px; border-radius: 4px; color: var(--c); }
+.order .sep { color: var(--muted); }
+
+.head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; border-bottom: 2px solid var(--c); padding-bottom: 8px; }
+.head .meta { font-family: var(--mono); font-size: 0.82rem; color: var(--muted); }
+.callout { background: var(--warn-bg); color: var(--warn-fg); border-radius: 6px; padding: 10px 14px; max-width: 76ch; }
+.callout b { font-weight: 600; }
+.reco { background: var(--accent-soft); border-radius: 6px; padding: 10px 14px; max-width: 76ch; }
+
+.tbl { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 0.88rem; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-family: var(--display); font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); background: var(--bg); }
+tr:last-child td { border-bottom: 0; }
+td.id { font-family: var(--mono); white-space: nowrap; color: var(--c); font-weight: 500; }
+td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+td.agent { font-family: var(--mono); font-size: 0.82rem; white-space: nowrap; }
+td .note { color: var(--muted); font-size: 0.82rem; display: block; margin-top: 2px; }
+
+.decisions { display: grid; gap: 8px; counter-reset: q; }
+.q { background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--c); border-radius: 6px; padding: 10px 14px; display: grid; gap: 2px; max-width: 80ch; }
+.q .who { font-family: var(--display); font-size: 0.75rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--c); }
+.q .rec { color: var(--muted); font-size: 0.88rem; }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.two > div { display: grid; gap: 8px; align-content: start; min-width: 0; }
+footer { color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--line); padding-top: 14px; }
+</style>
+
+<div class="shell">
+  <nav class="toc" aria-label="Índice">
+    <span class="grp">Análisis</span>
+    <a href="#resumen">Resumen y orden</a>
+    <a href="#decisiones">Decisiones tuyas</a>
+    <span class="grp">Fases</span>
+    <a href="#f7">F7 Multitenant</a>
+    <a href="#f8">F8 Tema</a>
+    <a href="#f9">F9 API keys</a>
+    <a href="#gantt">F9 · Brecha con el Gantt</a>
+    <span class="grp">Cierre</span>
+    <a href="#adrs">ADRs a escribir</a>
+  </nav>
+
+  <main>
+    <section id="resumen">
+      <span class="eyebrow">TaskFlow · análisis previo · 6 nov 2026</span>
+      <h1>Multitenant, tema por usuario y API keys</h1>
+      <p class="lede">Tres requerimientos, tres fases. Este documento resume cómo está hoy el código, qué conviene hacer en cada caso, los riesgos y lo que tenés que decidir antes de arrancar. Las tarjetas ya están cargadas en el Panel Gantt (T-58 a T-88).</p>
+
+      <div class="phases">
+        <div class="phase c7"><span class="tag">F7 · Multitenant</span><span class="size">L · ~14 días · 11 tarjetas</span><span>Una base compartida con <code>TenantId</code> y filtros globales de EF. La demo pasa a ser un tenant propio.</span></div>
+        <div class="phase c8"><span class="tag">F8 · Tema claro/oscuro</span><span class="size">S · ~4 días · 7 tarjetas</span><span>Sistema, claro u oscuro, guardado en el usuario y aplicado antes del primer pintado.</span></div>
+        <div class="phase c9"><span class="tag">F9 · API keys</span><span class="size">L · ~13 días · 13 tarjetas</span><span>Keys <code>tf_…</code> por tenant y usuario, con scopes. Campos nuevos en tareas para reemplazar el Gantt.</span></div>
+      </div>
+
+      <h3>Orden recomendado</h3>
+      <div class="order" aria-label="Orden de ejecución">
+        <span class="step c8">F8 Tema</span><span class="sep">en paralelo con</span><span class="step c7">F7 Multitenant</span><span class="sep">→</span><span class="step c9">F9 API keys</span>
+      </div>
+      <p>F8 casi no toca lo mismo que F7: solo hay que hacer las dos migraciones en serie. F9 va al final porque cada key pertenece a un tenant. Si se hace antes, el modelo, la autenticación y los tests se rehacen después. La numeración F7/F8/F9 sigue tu pedido; las dependencias de las tarjetas reflejan este orden.</p>
+    </section>
+
+    <section id="decisiones">
+      <h2>Decisiones que son tuyas</h2>
+      <p>Cada una tiene una recomendación. Las de F7 conviene cerrarlas en T-58; las de F9, en T-76.</p>
+      <div class="decisions">
+        <div class="q c7"><span class="who">F7</span><span>¿Un usuario puede pertenecer a varios tenants desde el primer día?</span><span class="rec">Recomiendo que sí: el costo extra es chico y evita rehacer el modelo.</span></div>
+        <div class="q c7"><span class="who">F7</span><span>¿Cómo se crean los tenants: auto-registro de la agencia o solo el super-admin?</span><span class="rec">Para la demo alcanza con el super-admin; el auto-registro puede venir después.</span></div>
+        <div class="q c7"><span class="who">F7</span><span>¿El super-admin puede entrar a cualquier tenant para dar soporte?</span><span class="rec">Sí, eligiéndolo de forma explícita y quedando registrado en la actividad.</span></div>
+        <div class="q c7"><span class="who">F7</span><span>¿Se conserva <code>Demo:AllowDataWipe</code>?</span><span class="rec">Pasa a significar "permitir el reset del tenant demo", ya que el reset deja de borrar toda la base.</span></div>
+        <div class="q c8"><span class="who">F8</span><span>¿Alcanza con sistema, claro y oscuro, o querés también alto contraste?</span><span class="rec">Tres valores; alto contraste queda para otra fase.</span></div>
+        <div class="q c8"><span class="who">F8</span><span>El botón de la barra superior, ¿cicla entre los tres o abre un menú?</span><span class="rec">Menú: con tres opciones es más claro qué va a pasar.</span></div>
+        <div class="q c8"><span class="who">F8</span><span>¿El tema se aplica también en el login (desde el navegador) o solo con sesión?</span><span class="rec">También en el login, con el valor guardado en el navegador.</span></div>
+        <div class="q c9"><span class="who">F9</span><span>El "agente" del Gantt, ¿es una etiqueta (<code>agent:backend-dev</code>) o un usuario de servicio?</span><span class="rec">Etiqueta: no requiere cambios en el modelo y ya se puede filtrar.</span></div>
+        <div class="q c9"><span class="who">F9</span><span>"Bloqueado", ¿es una marca sobre la tarea o un quinto estado del Kanban?</span><span class="rec">Marca <code>IsBlocked</code>: un estado nuevo toca el tablero, los gráficos, los dashboards y las traducciones.</span></div>
+        <div class="q c9"><span class="who">F9</span><span>Las notas del Gantt, ¿van en un campo <code>StatusNote</code> o como comentarios?</span><span class="rec"><code>StatusNote</code>: el agente la sobrescribe sin llenar el hilo de comentarios.</span></div>
+        <div class="q c9"><span class="who">F9</span><span>¿Querés una vista Timeline/Gantt dentro de TaskFlow en esta fase?</span><span class="rec">Está como tarjeta opcional (T-83); la lista y el tablero ya muestran el estado.</span></div>
+        <div class="q c9"><span class="who">F9</span><span>¿Quién crea keys (cualquier miembro o solo admins del tenant)? ¿Vencimiento obligatorio?</span><span class="rec">Cualquier miembro, con vencimiento por defecto de 90 días.</span></div>
+        <div class="q c9"><span class="who">F9</span><span>¿Se publica la referencia de la API (Scalar/OpenAPI) en producción?</span><span class="rec">Sí, sin datos: facilita usar las keys.</span></div>
+      </div>
+    </section>
+
+    <section id="f7" class="c7">
+      <div class="head"><h2>F7 · Multitenant</h2><span class="meta">L · ~14 días · T-58 a T-68</span></div>
+
+      <h3>Cómo está hoy</h3>
+      <ul>
+        <li><code>AppDbContext</code> no tiene tenant ni filtros globales. Los handlers consultan <code>IAppDbContext</code> directo (ADR 0006) y todo lo que depende de un proyecto pasa por <code>ProjectAccess</code>.</li>
+        <li><code>ICurrentUser</code> solo tiene <code>Id</code> e <code>IsAdmin</code>. El rol "Admin" de Identity es global y se usa en <code>ClientsController</code>, <code>AdminUsersController</code>, <code>ProjectAccess</code>, <code>ListProjects</code>, <code>GetMyDashboard</code>, la creación de usuarios, el seed y el reset de la demo.</li>
+        <li>El único índice único que hay que cambiar es <code>Client.Name</code>, que hoy es global. Los de etiquetas y proyectos ya son por proyecto o por cliente.</li>
+        <li>Los procesos en segundo plano (avisos de vencimiento y reset de la demo) corren sin request y recorren toda la base.</li>
+      </ul>
+      <div class="callout"><b>El reset de la demo borra toda la base.</b> <code>DemoResetter</code> hace <code>ExecuteDelete</code> sobre todas las tablas y un <code>DELETE FROM [TaskLabels]</code> en SQL directo. Con la demo como tenant propio, el reset borra solo ese tenant, y producción y demo pueden convivir en la misma base.</div>
+
+      <h3>Opciones</h3>
+      <div class="tbl"><table>
+        <thead><tr><th></th><th>Base compartida + <code>TenantId</code></th><th>Schema por tenant</th><th>Base por tenant</th></tr></thead>
+        <tbody>
+          <tr><td>Azure SQL gratis</td><td>Una base, entra</td><td>Una base, migraciones por schema</td><td>No entra (límite de bases y de vCore)</td></tr>
+          <tr><td>Migraciones</td><td>Una sola</td><td>Una por schema y modelo de EF por schema</td><td>Una por base</td></tr>
+          <tr><td>Aislamiento</td><td>Lógico (filtros y tests)</td><td>Medio</td><td>Fuerte</td></tr>
+          <tr><td>Cambio en el código</td><td>Medio y mecánico</td><td>Alto</td><td>Alto</td></tr>
+          <tr><td>Reset de la demo</td><td><code>WHERE TenantId</code></td><td>Borrar el schema</td><td>Borrar la base</td></tr>
+        </tbody>
+      </table></div>
+      <p class="reco"><b>Recomendación:</b> base compartida con <code>TenantId</code> y filtros globales. Encaja con el plan gratis y con una sola migración. Más adelante se puede sumar Row-Level Security de SQL Server como segunda defensa.</p>
+
+      <h3>Diseño</h3>
+      <div class="two">
+        <div>
+          <p><b>Modelo.</b> Tablas nuevas <code>Tenant</code> (nombre, slug, <code>IsDemo</code>) y <code>TenantMembership</code> (tenant, usuario, rol Owner/Admin/Member). El usuario de Identity sigue siendo global.</p>
+          <p><b><code>TenantId</code> en las tablas de negocio:</b> clientes, proyectos, miembros, etiquetas, tareas, comentarios, menciones, horas, actividad y notificaciones. Va como propiedad oculta de EF, así el Domain casi no cambia. Las preferencias de notificación quedan por usuario y <code>DemoResetLog</code> queda global.</p>
+          <p><b>Falla cerrado.</b> Si no hay tenant resuelto, las consultas devuelven cero filas. Un interceptor completa el <code>TenantId</code> al crear y falla si una edición trae otro tenant.</p>
+        </div>
+        <div>
+          <p><b>Qué tenant usa cada request.</b> Lo indica el header <code>X-Tenant</code> y se valida contra la membresía, con caché de 30 s por usuario y tenant. Si falta, se usa el tenant por defecto del usuario. No va en el token porque <code>MapIdentityApi</code> no deja agregar claims con facilidad, y cambiar de tenant obligaría a pedir un token nuevo.</p>
+          <p><b>Roles.</b> "Admin" de Identity pasa a ser super-admin de la plataforma. Dentro de cada tenant mandan Owner y Admin, que hacen lo que hoy hace "Admin". <code>ProjectAccess</code> casi no cambia.</p>
+          <p><b>Invitaciones (ADR 0008).</b> Invitar un email que ya existe solo agrega la membresía y avisa por mail. Desactivar un usuario lo desactiva en todos los tenants; sacarlo de uno es otra operación.</p>
+        </div>
+      </div>
+      <p><b>Migración de datos.</b> Crea el tenant por defecto con un id fijo, completa <code>TenantId</code> en los datos existentes, crea las membresías (Admin pasa a Owner, el resto a Member) y cambia el índice de <code>Client.Name</code> a <code>(TenantId, Name)</code>.</p>
+      <p><b>Procesos en segundo plano.</b> <code>TenantScope.RunAsync</code> corre cada trabajo dentro de un tenant. El aviso de vencimientos recorre los tenants uno por uno.</p>
+
+      <h3>Riesgos</h3>
+      <ul>
+        <li>Olvidar el filtro en una entidad nueva. Se cubre con un test de arquitectura que falla si una entidad no está marcada como del tenant ni en la lista de excepciones.</li>
+        <li>SQL directo o <code>IgnoreQueryFilters</code> saltean los filtros. Se cubre con un test que busca esos usos en el código y con la revisión de código.</li>
+        <li>Las cachés (sesión, membresía) tienen que usar usuario y tenant como clave, nunca solo el usuario.</li>
+        <li>Fallar cerrado puede esconder bugs como "no me aparece nada": se loguea una advertencia cuando se consulta sin tenant.</li>
+      </ul>
+
+      <h3>Tarjetas</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>Id</th><th>Tarea</th><th>Agente</th><th>Depende de</th><th>Días</th></tr></thead>
+        <tbody>
+          <tr><td class="id">T-58</td><td>ADRs 0012–0014: modelo, resolución y roles, demo por tenant<span class="note">Cerrar las decisiones de F7 antes de T-59.</span></td><td class="agent">backend-dev</td><td class="mono">—</td><td class="num">0,5</td></tr>
+          <tr><td class="id">T-59</td><td>Tenant, TenantMembership, ITenantContext, filtros globales e interceptor<span class="note">Client.Name pasa a (TenantId, Name).</span></td><td class="agent">backend-dev</td><td class="mono">T-58</td><td class="num">3</td></tr>
+          <tr><td class="id">T-60</td><td>Header X-Tenant con membresía en caché; ICurrentUser con tenant y rol<span class="note">ProjectAccess, ListProjects, GetMyDashboard y la policy TenantAdmin.</span></td><td class="agent">backend-dev</td><td class="mono">T-59</td><td class="num">2,5</td></tr>
+          <tr><td class="id">T-62</td><td>Usuarios e invitaciones por tenant; endpoints de tenants y cambio de tenant</td><td class="agent">backend-dev</td><td class="mono">T-60</td><td class="num">2,5</td></tr>
+          <tr><td class="id">T-63</td><td>Procesos y demo por tenant: TenantScope, vencimientos, reset solo del tenant demo</td><td class="agent">backend-dev</td><td class="mono">T-62</td><td class="num">2,5</td></tr>
+          <tr><td class="id">T-61</td><td>Migración AddTenants: tenant por defecto, datos existentes, membresías, índices<span class="note">No correrla en paralelo con T-70.</span></td><td class="agent">db-migrator</td><td class="mono">T-63</td><td class="num">1,5</td></tr>
+          <tr><td class="id">T-64</td><td>Frontend: selector de tenant, header en el interceptor, reset de stores, miembros del tenant</td><td class="agent">frontend-dev</td><td class="mono">T-62</td><td class="num">3</td></tr>
+          <tr><td class="id">T-65</td><td>Tests de aislamiento: dos tenants, test de arquitectura, cruces por controller, procesos y demo</td><td class="agent">backend-dev</td><td class="mono">T-61</td><td class="num">2,5</td></tr>
+          <tr><td class="id">T-66</td><td>Tests del lote (back + front)</td><td class="agent">test-runner</td><td class="mono">T-64, T-65</td><td class="num">0,5</td></tr>
+          <tr><td class="id">T-67</td><td>Revisión del diff<span class="note">Foco en filtros olvidados, SQL directo y cachés sin tenant.</span></td><td class="agent">code-reviewer</td><td class="mono">T-66</td><td class="num">0,5</td></tr>
+          <tr><td class="id">T-68</td><td>Correcciones de la revisión</td><td class="agent">backend-dev</td><td class="mono">T-67</td><td class="num">1</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="f8" class="c8">
+      <div class="head"><h2>F8 · Tema claro y oscuro por usuario</h2><span class="meta">S · ~4 días · T-69 a T-75</span></div>
+      <div class="callout"><b>Hoy la app no sigue al sistema operativo.</b> <code>styles.scss</code> fija <code>color-scheme: light</code> en <code>body</code> y no hay código de tema. Los componentes de Material ya traen tokens <code>light-dark()</code>, así que alcanza con cambiar <code>color-scheme</code>. Los colores de los gráficos son valores fijos y hay que darles una versión oscura.</div>
+      <div class="two">
+        <div>
+          <p><b>Valores.</b> Sistema (por defecto), claro y oscuro.</p>
+          <p><b>Cómo se aplica.</b> Con <code>color-scheme</code> en <code>&lt;html&gt;</code>, sin clases. Un script chico en <code>index.html</code> lo lee del navegador antes de cargar los estilos, para que no se vea un destello del tema equivocado.</p>
+          <p><b>Dónde se guarda.</b> En una columna <code>ThemePreference</code> de <code>ApplicationUser</code>. Es un valor del usuario como su nombre, y con multitenant es el mismo en todos los tenants. Se copia en el navegador para el login y, al iniciar sesión, manda el valor del servidor.</p>
+        </div>
+        <div>
+          <p><b>Interfaz.</b> Botón en la barra superior junto al idioma, y la misma opción en Perfil. Textos en en/es.</p>
+          <p><b>Gráficos y etiquetas.</b> Los <code>--tf-chart-*</code> pasan a <code>light-dark(claro, oscuro)</code> con contraste de 3:1 contra la superficie oscura. Hay que revisar los colores de etiqueta usados como punto o borde: <code>#616161</code>, <code>#512DA8</code> y <code>#D32F2F</code> quedan con poco contraste sobre oscuro.</p>
+          <p><b>Riesgos.</b> El destello al cargar si una política de seguridad bloquea el script, el contraste en oscuro, y la migración, que no puede correr a la vez que la de F7.</p>
+        </div>
+      </div>
+      <div class="tbl"><table>
+        <thead><tr><th>Id</th><th>Tarea</th><th>Agente</th><th>Depende de</th><th>Días</th></tr></thead>
+        <tbody>
+          <tr><td class="id">T-69</td><td>ADR 0015 + ThemePreference en el usuario, GET /api/users/me y PUT de preferencias</td><td class="agent">backend-dev</td><td class="mono">—</td><td class="num">1</td></tr>
+          <tr><td class="id">T-70</td><td>Migración AddThemePreference<span class="note">No correrla en paralelo con T-61.</span></td><td class="agent">db-migrator</td><td class="mono">T-69</td><td class="num">0,25</td></tr>
+          <tr><td class="id">T-71</td><td>ThemeService, script anti-destello, botón en la barra, opción en Perfil, i18n</td><td class="agent">frontend-dev</td><td class="mono">T-69</td><td class="num">1,5</td></tr>
+          <tr><td class="id">T-72</td><td>Paleta oscura de los gráficos y contraste de colores sueltos y etiquetas</td><td class="agent">frontend-dev</td><td class="mono">T-71</td><td class="num">1</td></tr>
+          <tr><td class="id">T-73</td><td>Tests del lote (back + front)</td><td class="agent">test-runner</td><td class="mono">T-70, T-72</td><td class="num">0,25</td></tr>
+          <tr><td class="id">T-74</td><td>Revisión del diff</td><td class="agent">code-reviewer</td><td class="mono">T-73</td><td class="num">0,25</td></tr>
+          <tr><td class="id">T-75</td><td>Correcciones de la revisión</td><td class="agent">frontend-dev</td><td class="mono">T-74</td><td class="num">0,25</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="f9" class="c9">
+      <div class="head"><h2>F9 · API keys para acceso por REST</h2><span class="meta">L · ~13 días · T-76 a T-88</span></div>
+      <p>El objetivo es que Claude Code y sus hooks actualicen las tareas en TaskFlow en lugar del Panel Gantt.</p>
+      <div class="callout"><b>Dos trampas del pipeline actual.</b> 1) <code>SessionValidationMiddleware</code> rechazaría cualquier key con 401, porque la key no trae el security stamp: hay que saltearlo cuando el acceso es por key y validar en cambio que el dueño siga activo. 2) <code>UseRateLimiter</code> corre antes de la autenticación, así que un límite por key no puede leer quién es: hay que moverlo después.</div>
+      <div class="two">
+        <div>
+          <p><b>La key.</b> <code>ApiKey</code> con tenant, usuario dueño, nombre, prefijo, hash del secreto, scopes, vencimiento, último uso y revocación. Formato <code>tf_&lt;prefijo&gt;_&lt;secreto&gt;</code>. Se muestra completa una sola vez y se guarda solo su SHA-256, comparado en tiempo constante.</p>
+          <p><b>Scopes.</b> Lectura y escritura, con restricción opcional a ciertos proyectos. Una key siempre pertenece al tenant de su dueño e ignora <code>X-Tenant</code>.</p>
+          <p><b>Autenticación.</b> Va en <code>Authorization: Bearer tf_…</code>, que funciona con curl y con Scalar. Un selector elige el esquema de key o el de Identity según el prefijo, sin romper <code>/api/auth</code>.</p>
+        </div>
+        <div>
+          <p><b>Permisos.</b> La key actúa como su dueño pero nunca con más permisos: ver requiere lectura y trabajar requiere escritura. Gestionar un proyecto (editarlo, sus miembros) siempre se niega a las keys. Perfil, administración de usuarios y gestión de keys solo funcionan con sesión.</p>
+          <p><b>Límite y auditoría.</b> Límite de pedidos por key, con 429 y <code>Retry-After</code>. La actividad registra "vía API key «nombre»". El último uso se graba como mucho cada 5 minutos.</p>
+          <p><b>Interfaz.</b> Sección "API keys" en Perfil para crear (secreto visible una vez), ver el último uso y revocar. Deshabilitada en la demo.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="gantt" class="c9">
+      <h2>Qué les falta a las tareas para reemplazar el Gantt</h2>
+      <div class="tbl"><table>
+        <thead><tr><th>Campo del Gantt</th><th>TaskFlow hoy</th><th>Propuesta</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">id (T-53)</td><td>Solo un Guid</td><td><code>ExternalKey</code>, única por proyecto</td></tr>
+          <tr><td class="mono">title</td><td><code>Title</code></td><td>Sin cambios</td></tr>
+          <tr><td class="mono">agent</td><td>No existe; el responsable es un miembro</td><td>Etiqueta <code>agent:backend-dev</code>, sin cambios de modelo</td></tr>
+          <tr><td class="mono">status</td><td>ToDo, InProgress, Review, Done</td><td>pendiente → ToDo, en_progreso → InProgress, hecho → Done; bloqueado → marca <code>IsBlocked</code></td></tr>
+          <tr><td class="mono">start</td><td>No existe</td><td><code>StartDate</code>, anterior o igual al vencimiento</td></tr>
+          <tr><td class="mono">end</td><td><code>DueDate</code></td><td>Sin cambios</td></tr>
+          <tr><td class="mono">deps</td><td>No existe</td><td>Tabla <code>TaskDependency</code>, mismo proyecto y sin ciclos</td></tr>
+          <tr><td class="mono">notes</td><td><code>Description</code> (texto para personas)</td><td><code>StatusNote</code> de hasta 500 caracteres</td></tr>
+        </tbody>
+      </table></div>
+      <p><b>Alta o actualización por clave externa.</b> <code>PUT /api/projects/{p}/tasks/by-key/{externalKey}</code> crea la tarea (201) o actualiza solo los campos enviados (200). <code>POST /api/projects/{p}/tasks/sync</code> aplica un lote de hasta unos 200 ítems en una transacción, igual que "Fusionar por id" del panel, y resuelve las dependencias por clave externa.</p>
+      <p><b>Cliente.</b> <code>.claude/hooks/gantt-sync.js</code> pasa a llamar a la API con <code>TASKFLOW_URL</code>, <code>TASKFLOW_API_KEY</code> y <code>TASKFLOW_PROJECT</code>. Si la API no responde, sigue escribiendo <code>docs/gantt-updates.js</code>. Un script carga el estado actual del panel. La key va en una variable de entorno, nunca en el repo.</p>
+      <div class="tbl"><table>
+        <thead><tr><th>Id</th><th>Tarea</th><th>Agente</th><th>Depende de</th><th>Días</th></tr></thead>
+        <tbody>
+          <tr><td class="id">T-76</td><td>ADRs 0016–0017: keys y modelo de tareas para el Gantt<span class="note">Cerrar las decisiones de F9 antes.</span></td><td class="agent">backend-dev</td><td class="mono">T-68</td><td class="num">0,5</td></tr>
+          <tr><td class="id">T-77</td><td>ApiKey, generación y hash, esquema Bearer tf_, scopes en ICurrentUser y ProjectAccess</td><td class="agent">backend-dev</td><td class="mono">T-76</td><td class="num">3</td></tr>
+          <tr><td class="id">T-78</td><td>Endpoints de gestión, límite por key, ApiKeyId en la actividad, esquema en OpenAPI</td><td class="agent">backend-dev</td><td class="mono">T-77</td><td class="num">2</td></tr>
+          <tr><td class="id">T-79</td><td>ExternalKey, StartDate, IsBlocked, StatusNote y dependencias en las tareas</td><td class="agent">backend-dev</td><td class="mono">T-78</td><td class="num">3</td></tr>
+          <tr><td class="id">T-80</td><td>PUT by-key y POST sync con dependencias por clave externa</td><td class="agent">backend-dev</td><td class="mono">T-79</td><td class="num">2</td></tr>
+          <tr><td class="id">T-81</td><td>Migración AddApiKeysAndGanttFields</td><td class="agent">db-migrator</td><td class="mono">T-80</td><td class="num">1</td></tr>
+          <tr><td class="id">T-82</td><td>Frontend: API keys en Perfil, "vía API key" en Actividad, campos nuevos en la tarea</td><td class="agent">frontend-dev</td><td class="mono">T-80</td><td class="num">3</td></tr>
+          <tr><td class="id">T-83</td><td>Opcional: vista Timeline/Gantt del proyecto</td><td class="agent">frontend-dev</td><td class="mono">T-82</td><td class="num">3</td></tr>
+          <tr><td class="id">T-84</td><td>Cliente: gantt-sync.js contra la API, con respaldo en archivo, y script de importación</td><td class="agent">backend-dev</td><td class="mono">T-80</td><td class="num">1</td></tr>
+          <tr><td class="id">T-85</td><td>Tests: scopes, keys revocadas o vencidas, Manage negado, cruces de tenant, límite, idempotencia</td><td class="agent">backend-dev</td><td class="mono">T-81</td><td class="num">2</td></tr>
+          <tr><td class="id">T-86</td><td>Tests del lote (back + front)</td><td class="agent">test-runner</td><td class="mono">T-82, T-85</td><td class="num">0,5</td></tr>
+          <tr><td class="id">T-87</td><td>Revisión del diff<span class="note">Foco en secretos en logs, hash y escalada por scopes.</span></td><td class="agent">code-reviewer</td><td class="mono">T-86</td><td class="num">0,5</td></tr>
+          <tr><td class="id">T-88</td><td>Correcciones de la revisión</td><td class="agent">backend-dev</td><td class="mono">T-87</td><td class="num">1</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="adrs">
+      <h2>ADRs a escribir</h2>
+      <div class="tbl"><table>
+        <thead><tr><th>Número</th><th>Decisión</th><th>Fase</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">0012</td><td>Multitenancy: base compartida, <code>TenantId</code>, filtros globales que fallan cerrado, interceptor</td><td>F7</td></tr>
+          <tr><td class="mono">0013</td><td>Header <code>X-Tenant</code>, membresía de un usuario en varios tenants, roles por tenant y super-admin</td><td>F7</td></tr>
+          <tr><td class="mono">0014</td><td>Demo como tenant (enmienda a 0005) y procesos por tenant</td><td>F7</td></tr>
+          <tr><td class="mono">0015</td><td>Preferencia de tema: columna en el usuario, copia local y <code>color-scheme</code></td><td>F8</td></tr>
+          <tr><td class="mono">0016</td><td>API keys: formato, hash, scopes, autenticación, límite y auditoría</td><td>F9</td></tr>
+          <tr><td class="mono">0017</td><td>Campos de tareas para el Gantt y alta o actualización por clave externa</td><td>F9</td></tr>
+        </tbody>
+      </table></div>
+      <footer>Análisis de solo lectura sobre la rama <code>feature/polish</code>; no se cambió código. Estimaciones en días de trabajo con agentes, incluyendo tests, revisión y correcciones. Archivo fuente: <code>docs/analysis/f7-f9-analisis.html</code>.</footer>
+    </section>
+  </main>
+</div>

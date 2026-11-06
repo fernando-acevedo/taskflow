@@ -7,6 +7,7 @@ import { clientsFeature } from './data-access/store/clients.feature';
 export const clientsRoutes: Routes = [
   {
     path: '',
+    title: 'titles.clients',
     providers: [provideState(clientsFeature), provideEffects(clientsEffects)],
     loadComponent: () => import('./pages/clients-page').then((m) => m.ClientsPage),
   },

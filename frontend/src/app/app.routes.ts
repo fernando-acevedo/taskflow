@@ -8,36 +8,43 @@ import { statusFeature } from './features/status/data-access/store/status.featur
 export const routes: Routes = [
   {
     path: 'login',
+    title: 'titles.login',
     canActivate: [guestGuard],
     loadComponent: () => import('./features/auth/pages/login-page').then((m) => m.LoginPage),
   },
   {
     path: 'register',
+    title: 'titles.register',
     canActivate: [guestGuard],
     loadComponent: () => import('./features/auth/pages/register-page').then((m) => m.RegisterPage),
   },
   {
     path: 'forgot-password',
+    title: 'titles.forgotPassword',
     canActivate: [guestGuard],
     loadComponent: () => import('./features/auth/pages/forgot-password-page').then((m) => m.ForgotPasswordPage),
   },
   {
     // No guard: registering signs the user in, so the link is usually opened while signed in.
     path: 'confirm-email',
+    title: 'titles.confirmEmail',
     loadComponent: () => import('./features/auth/pages/confirm-email-page').then((m) => m.ConfirmEmailPage),
   },
   {
     // No guard, like accept-invitation: the link may be opened in a browser where someone else is signed in.
     path: 'reset-password',
+    title: 'titles.resetPassword',
     loadComponent: () => import('./features/auth/pages/reset-password-page').then((m) => m.ResetPasswordPage),
   },
   {
     // No guard: the invited user may open the link in a browser where someone else is signed in.
     path: 'accept-invitation',
+    title: 'titles.acceptInvitation',
     loadComponent: () => import('./features/auth/pages/accept-invitation-page').then((m) => m.AcceptInvitationPage),
   },
   {
     path: 'status',
+    title: 'titles.status',
     loadComponent: () => import('./features/status/pages/status-page').then((m) => m.StatusPage),
     providers: [provideState(statusFeature), provideEffects(statusEffects)],
   },
@@ -52,6 +59,7 @@ export const routes: Routes = [
       },
       {
         path: 'profile',
+        title: 'titles.profile',
         loadComponent: () => import('./features/profile/pages/profile-page').then((m) => m.ProfilePage),
       },
       {

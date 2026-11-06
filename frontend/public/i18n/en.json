@@ -2,7 +2,8 @@
   "app": {
     "title": "TaskFlow",
     "tagline": "Project management for digital agencies",
-    "language": "Language"
+    "language": "Language",
+    "skipToContent": "Skip to main content"
   },
   "nav": {
     "account": "Account menu",
@@ -617,5 +618,19 @@
     "progress": "Progress",
     "none": "None",
     "noHours": "No time logged in this period."
+  },
+  "titles": {
+    "login": "Sign in",
+    "register": "Create account",
+    "forgotPassword": "Forgot password",
+    "confirmEmail": "Confirm email",
+    "resetPassword": "Reset password",
+    "acceptInvitation": "Accept invitation",
+    "status": "System status",
+    "profile": "Profile",
+    "users": "Users",
+    "clients": "Clients",
+    "home": "Home",
+    "projects": "Projects"
   }
 }
