@@ -7,6 +7,7 @@ import { Notifier } from '../../../../core/notifications/notifier';
 import { ClientsApiService } from '../clients-api.service';
 import { ClientsApiActions, ClientsPageActions } from './clients.actions';
 import { clientsFeature } from './clients.feature';
+import { untilTenantChanges } from '../../../../shared/data-access/until-tenant-changes';
 
 export const loadClients = createEffect(
   (actions$ = inject(Actions), store = inject(Store), api = inject(ClientsApiService)) =>
@@ -15,6 +16,7 @@ export const loadClients = createEffect(
       withLatestFrom(store.select(clientsFeature.selectQuery)),
       switchMap(([, query]) =>
         api.list(query).pipe(
+          untilTenantChanges(actions$),
           map((page) => ClientsApiActions.clientsLoaded({ page })),
           catchError((error: unknown) => of(ClientsApiActions.clientsLoadFailed({ error: toApiError(error) }))),
         ),

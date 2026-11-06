@@ -11,7 +11,14 @@
           <dt>{{ t('profile.email') }}</dt>
           <dd>{{ current.email }}</dd>
           <dt>{{ t('profile.role') }}</dt>
-          <dd>{{ isAdmin() ? t('profile.roles.admin') : t('profile.roles.member') }}</dd>
+          <dd>
+            @if (tenantRole(); as role) {
+              {{ t('tenant.roles.' + role) }}
+            }
+            @if (isAdmin()) {
+              <span class="badge">{{ t('profile.roles.superAdmin') }}</span>
+            }
+          </dd>
         </dl>
 
         @if (!current.isEmailConfirmed) {
@@ -53,6 +60,8 @@
         </form>
       </mat-card-content>
     </mat-card>
+
+    <app-theme-preference />
 
     <app-notification-preferences />
   }

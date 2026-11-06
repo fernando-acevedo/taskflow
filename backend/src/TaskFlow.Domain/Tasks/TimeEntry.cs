@@ -1,3 +1,4 @@
+using TaskFlow.Domain.Tenancy;
 using TaskFlow.Domain.Common;
 using TaskFlow.Domain.Projects;
 
@@ -7,7 +8,7 @@ namespace TaskFlow.Domain.Tasks;
 /// Time a user logged on a task for one day. Changes take the owning <see cref="Project"/> so that an archived
 /// project stays read-only; the owner of the entry, or a project manager, edits or deletes it.
 /// </summary>
-public sealed class TimeEntry
+public sealed class TimeEntry : ITenantOwned
 {
     public const int MinMinutes = 1;
     public const int MaxMinutes = 1440;

@@ -1,4 +1,5 @@
 import { createActionGroup, emptyProps, props } from '@ngrx/store';
+import { ThemePreference } from '../../theme/theme';
 import { Credentials, EmailConfirmation, InvitationAcceptance, LoginErrorCode, PasswordReset, User } from '../auth.models';
 
 export const LoginPageActions = createActionGroup({
@@ -82,6 +83,7 @@ export const AuthApiActions = createActionGroup({
     'Email Confirmation Failed': props<{ status: 'invalid' | 'unexpected' }>(),
     'Profile Updated': props<{ displayName: string }>(),
     'Profile Update Failed': props<{ errors: string[] }>(),
+    'Theme Preference Saved': props<{ themePreference: ThemePreference }>(),
     'Session Expired': emptyProps(),
   },
 });

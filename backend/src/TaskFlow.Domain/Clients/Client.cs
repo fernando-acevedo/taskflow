@@ -1,9 +1,10 @@
+using TaskFlow.Domain.Tenancy;
 using TaskFlow.Domain.Common;
 
 namespace TaskFlow.Domain.Clients;
 
 /// <summary>A customer of the agency. Every project belongs to one; only admins manage them.</summary>
-public sealed class Client
+public sealed class Client : ITenantOwned
 {
     public const int NameMaxLength = 100;
     public const int ContactEmailMaxLength = 256;

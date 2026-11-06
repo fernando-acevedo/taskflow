@@ -108,6 +108,10 @@ export const authFeature = createFeature({
       (state, { errors }): AuthState => ({ ...state, pending: false, formErrors: errors }),
     ),
     on(
+      AuthApiActions.themePreferenceSaved,
+      (state, { themePreference }): AuthState => ({ ...state, user: state.user ? { ...state.user, themePreference } : null }),
+    ),
+    on(
       AuthApiActions.profileUpdated,
       (state, { displayName }): AuthState => ({
         ...state,

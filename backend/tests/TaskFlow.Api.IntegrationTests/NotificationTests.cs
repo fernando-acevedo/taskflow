@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using TaskFlow.Api.IntegrationTests.Infrastructure;
 using TaskFlow.Application.Notifications;
 using TaskFlow.Infrastructure.Email;
+using TaskFlow.Infrastructure.Tenancy;
 
 namespace TaskFlow.Api.IntegrationTests;
 
@@ -276,12 +277,21 @@ public sealed class NotificationTests(SqlServerApiFactory factory)
     private IReadOnlyList<EmailMessage> NotificationEmails(string email) =>
         [.. factory.Emails.SentTo(email).Where(message => !message.Subject.Contains("Confirm", StringComparison.Ordinal))];
 
-    private async Task<int> RunDueSoonAsync()
+    private Task<int> RunDueSoonAsync(Guid? tenantId = null) => RunDueSoonInAsync(tenantId ?? TenantDefaults.DefaultId);
+
+    /// <summary>Runs the daily job for one tenant, the way the background service does (ADR 0014).</summary>
+    private async Task<int> RunDueSoonInAsync(Guid tenantId)
     {
-        await using var scope = factory.Services.CreateAsyncScope();
-        var result = await scope.ServiceProvider.GetRequiredService<NotifyDueSoonHandler>().HandleAsync(Ct);
-        result.IsSuccess.ShouldBeTrue();
-        return result.Value;
+        var scope = factory.Services.GetRequiredService<TenantScope>();
+        return await scope.RunAsync(
+            tenantId,
+            async (services, token) =>
+            {
+                var result = await services.GetRequiredService<NotifyDueSoonHandler>().HandleAsync(token);
+                result.IsSuccess.ShouldBeTrue();
+                return result.Value;
+            },
+            Ct);
     }
 
     private static Task<PagedResponse<NotificationResponse>> ListAsync(HttpClient client) =>

@@ -90,9 +90,9 @@ import { ActiveMention, Mentionable, activeMention, insertMention, mentionedIds,
       list-style: none;
       margin: 4px 0 0;
       padding: 4px 0;
-      border: 1px solid var(--mat-sys-outline-variant, #c4c7c5);
+      border: 1px solid var(--mat-sys-outline-variant);
       border-radius: 8px;
-      background: var(--mat-sys-surface-container, #f3f3f3);
+      background: var(--mat-sys-surface-container);
       max-height: 180px;
       overflow-y: auto;
     }
@@ -102,7 +102,7 @@ import { ActiveMention, Mentionable, activeMention, insertMention, mentionedIds,
     }
     .suggestions li.active,
     .suggestions li:hover {
-      background: var(--mat-sys-secondary-container, #dde3ea);
+      background: var(--mat-sys-secondary-container);
     }
     .actions {
       display: flex;

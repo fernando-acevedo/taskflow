@@ -1,21 +1,11 @@
 import { Actions } from '@ngrx/effects';
 import { Action } from '@ngrx/store';
 import { Subject, of } from 'rxjs';
-import { User } from '../../../../core/auth/auth.models';
 import { AuthApiActions, ShellActions } from '../../../../core/auth/store/auth.actions';
+import { TenantApiActions } from '../../../../core/tenant/store/tenant.actions';
 import { NotificationsApiService, POLL_INTERVAL_MS } from '../notifications-api.service';
 import { NotificationsApiActions } from './notifications.actions';
 import { pollUnreadCount } from './notifications.effects';
-
-const user: User = {
-  id: '1',
-  email: 'ada@tests.local',
-  displayName: 'Ada',
-  isActive: true,
-  roles: [],
-  isInvitationPending: false,
-  isEmailConfirmed: true,
-};
 
 describe('pollUnreadCount', () => {
   let actions: Subject<Action>;
@@ -41,7 +31,7 @@ describe('pollUnreadCount', () => {
   });
 
   it('asks at once and then every 30 seconds after the session is restored', () => {
-    actions.next(AuthApiActions.sessionRestored({ user }));
+    actions.next(TenantApiActions.tenantsLoaded({ tenants: [], preferredId: null }));
     vi.advanceTimersByTime(POLL_INTERVAL_MS * 2);
 
     expect(unreadCount).toHaveBeenCalledTimes(3);
@@ -49,7 +39,7 @@ describe('pollUnreadCount', () => {
   });
 
   it('starts after a login and stops on logout', () => {
-    actions.next(AuthApiActions.loginSucceeded({ user, returnUrl: '/' }));
+    actions.next(TenantApiActions.tenantsLoaded({ tenants: [], preferredId: null }));
     vi.advanceTimersByTime(0);
     expect(unreadCount).toHaveBeenCalledTimes(1);
 
@@ -60,7 +50,7 @@ describe('pollUnreadCount', () => {
   });
 
   it('stops when the session expires', () => {
-    actions.next(AuthApiActions.sessionRestored({ user }));
+    actions.next(TenantApiActions.tenantsLoaded({ tenants: [], preferredId: null }));
     actions.next(AuthApiActions.sessionExpired());
     unreadCount.mockClear();
     vi.advanceTimersByTime(POLL_INTERVAL_MS * 3);

@@ -1,10 +1,12 @@
 using System.Security.Claims;
 using TaskFlow.Application.Abstractions;
 using TaskFlow.Application.Users;
+using TaskFlow.Domain.Tenancy;
+using TaskFlow.Infrastructure.Persistence;
 
 namespace TaskFlow.Api.Identity;
 
-internal sealed class HttpContextCurrentUser(IHttpContextAccessor httpContextAccessor) : ICurrentUser
+internal sealed class HttpContextCurrentUser(IHttpContextAccessor httpContextAccessor, TenantContext tenant) : ICurrentUser
 {
     public Guid Id
     {
@@ -17,5 +19,9 @@ internal sealed class HttpContextCurrentUser(IHttpContextAccessor httpContextAcc
         }
     }
 
-    public bool IsAdmin => httpContextAccessor.HttpContext?.User.IsInRole(Roles.Admin) ?? false;
+    public bool IsSuperAdmin => httpContextAccessor.HttpContext?.User.IsInRole(Roles.Admin) ?? false;
+
+    public Guid? TenantId => tenant.TenantId;
+
+    public TenantRole? TenantRole => tenant.Role;
 }

@@ -3,6 +3,19 @@
   <head>
     <meta charset="utf-8" />
     <title>TaskFlow</title>
+    <script>
+      // Applies the saved theme before Angular starts, to avoid a flash (ADR 0015). The key and the values must
+      // match THEME_STORAGE_KEY / THEME_PREFERENCES in src/app/core/theme/theme.ts.
+      (function () {
+        var scheme = 'light dark';
+        try {
+          var saved = localStorage.getItem('taskflow.theme');
+          if (saved === 'Light') scheme = 'light';
+          else if (saved === 'Dark') scheme = 'dark';
+        } catch (e) {}
+        document.documentElement.style.colorScheme = scheme;
+      })();
+    </script>
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/x-icon" href="favicon.ico" />

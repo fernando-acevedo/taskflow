@@ -14,6 +14,11 @@ export class Notifier {
     this.snackBar.open(this.transloco.translate(key), undefined, { duration: 3000 });
   }
 
+  /** A problem that isn't an API answer (a load that failed in the background), by translation key. */
+  warning(key: string): void {
+    this.snackBar.open(this.transloco.translate(key), this.transloco.translate('common.dismiss'), { duration: 8000 });
+  }
+
   error(error: ApiError): void {
     this.snackBar.open(this.errorMessage(error), this.transloco.translate('common.dismiss'), { duration: 8000 });
   }

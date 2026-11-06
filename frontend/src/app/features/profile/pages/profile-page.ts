@@ -8,8 +8,10 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { TranslocoDirective } from '@jsverse/transloco';
 import { Store } from '@ngrx/store';
 import { ProfilePageActions } from '../../../core/auth/store/auth.actions';
+import { tenantFeature } from '../../../core/tenant/store/tenant.feature';
 import { authFeature } from '../../../core/auth/store/auth.feature';
 import { ErrorTextPipe } from '../../../core/i18n/error-text.pipe';
+import { ThemePreferenceCard } from '../../../core/theme/theme-preference-card';
 import { NotificationPreferencesCard } from '../../notifications/ui/notification-preferences';
 
 @Component({
@@ -24,6 +26,7 @@ import { NotificationPreferencesCard } from '../../notifications/ui/notification
     TranslocoDirective,
     ErrorTextPipe,
     NotificationPreferencesCard,
+    ThemePreferenceCard,
   ],
   templateUrl: './profile-page.html',
   styleUrl: './profile-page.scss',
@@ -33,6 +36,7 @@ export class ProfilePage {
   private readonly store = inject(Store);
   protected readonly user = this.store.selectSignal(authFeature.selectUser);
   protected readonly isAdmin = this.store.selectSignal(authFeature.selectIsAdmin);
+  protected readonly tenantRole = this.store.selectSignal(tenantFeature.selectRole);
   protected readonly pending = this.store.selectSignal(authFeature.selectPending);
   protected readonly errors = this.store.selectSignal(authFeature.selectFormErrors);
   protected readonly saved = this.store.selectSignal(authFeature.selectProfileSaved);

@@ -6,6 +6,7 @@ import { toApiError } from '../../../../core/http/api-error';
 import { ActivityApiService } from '../activity-api.service';
 import { ActivityApiActions, ActivityPageActions, ActivityScope } from './activity.actions';
 import { activityFeature } from './activity.feature';
+import { untilTenantChanges } from '../../../../shared/data-access/until-tenant-changes';
 
 function fetchPage(api: ActivityApiService, scope: ActivityScope, projectId: string, taskId: string | null, page: number) {
   return api.list(projectId, taskId, page).pipe(
@@ -21,7 +22,11 @@ export const loadActivity = createEffect(
       ofType(ActivityPageActions.opened),
       groupBy(({ scope }) => scope),
       mergeMap((group$) =>
-        group$.pipe(switchMap(({ scope, projectId, taskId }) => fetchPage(api, scope, projectId, taskId, 1))),
+        group$.pipe(
+          switchMap(({ scope, projectId, taskId }) =>
+            fetchPage(api, scope, projectId, taskId, 1).pipe(untilTenantChanges(actions$)),
+          ),
+        ),
       ),
     ),
   { functional: true },
@@ -35,7 +40,9 @@ export const loadMoreActivity = createEffect(
       withLatestFrom(store.select(activityFeature.selectActivityState)),
       exhaustMap(([{ scope }, state]) => {
         const feed = state[scope];
-        return feed.projectId === null ? EMPTY : fetchPage(api, scope, feed.projectId, feed.taskId, feed.page + 1);
+        return feed.projectId === null
+          ? EMPTY
+          : fetchPage(api, scope, feed.projectId, feed.taskId, feed.page + 1).pipe(untilTenantChanges(actions$));
       }),
     ),
   { functional: true },

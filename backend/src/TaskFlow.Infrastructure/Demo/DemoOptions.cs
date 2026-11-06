@@ -29,8 +29,9 @@ public sealed class DemoOptions
     public bool Enabled { get; set; }
 
     /// <summary>
-    /// Explicit consent to the reset deleting every row (clients, projects, tasks, non-demo users). Without it a
-    /// demo that is switched on by mistake against a real database refuses to start.
+    /// Explicit consent to the reset of the demo tenant (ADR 0014): it deletes and reseeds that tenant's rows and
+    /// never touches another tenant. Without it a
+    /// demo that is switched on by mistake refuses to start.
     /// </summary>
     public bool AllowDataWipe { get; set; }
 
@@ -59,7 +60,7 @@ internal sealed class DemoOptionsValidator(IOptions<IdentityOptions> identity) :
         var failures = new List<string>();
         if (!options.AllowDataWipe)
         {
-            failures.Add("Demo:AllowDataWipe must be true when Demo:Enabled is true: the demo reset deletes ALL data in the database. Only enable it on a database that holds nothing but demo data.");
+            failures.Add("Demo:AllowDataWipe must be true when Demo:Enabled is true: it allows the daily reset of the demo tenant, which deletes and reseeds that tenant's data (other tenants are never touched).");
         }
 
         if (DemoSchedule.Validate(options.ResetCron, options.TimeZone) is { } scheduleProblem)

@@ -4,6 +4,7 @@ import { provideRouter } from '@angular/router';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 import { provideMockStore } from '@ngrx/store/testing';
 import { App } from './app';
+import { tenantFeature } from './core/tenant/store/tenant.feature';
 import { authFeature } from './core/auth/store/auth.feature';
 import { DemoService, DemoStatus } from './core/demo/demo.service';
 import { LanguageService } from './core/i18n/language.service';
@@ -11,6 +12,10 @@ import { expectNoAxeViolations } from './shared/testing/axe';
 import { notificationsFeature } from './features/notifications/data-access/store/notifications.feature';
 
 const demoOn: DemoStatus = { enabled: true, nextResetAt: null, accounts: [] };
+const tenants = [
+  { id: 't1', name: 'Acme', slug: 'acme', isDemo: false, role: 'Owner' as const },
+  { id: 't2', name: 'Globex', slug: 'globex', isDemo: false, role: 'Member' as const },
+];
 const user = { id: 'u1', email: 'a@b.c', displayName: 'Ada', roles: [] };
 
 function render(status: DemoStatus, signedIn: boolean): HTMLElement {
@@ -22,6 +27,9 @@ function render(status: DemoStatus, signedIn: boolean): HTMLElement {
         selectors: [
           { selector: authFeature.selectUser, value: signedIn ? user : null },
           { selector: authFeature.selectIsAdmin, value: false },
+          { selector: tenantFeature.selectCanManage, value: false },
+          { selector: tenantFeature.selectTenants, value: signedIn ? tenants : [] },
+          { selector: tenantFeature.selectCurrent, value: signedIn ? tenants[0] : null },
           { selector: notificationsFeature.selectUnreadCount, value: 0 },
           { selector: notificationsFeature.selectItems, value: [] },
           { selector: notificationsFeature.selectLoading, value: false },

@@ -9,6 +9,7 @@ import { downloadBlob } from '../../../../shared/data-access/download';
 import { TimeTrackingApiService } from '../time-tracking-api.service';
 import { TimeEntriesApiActions, TimeEntriesPageActions, TimeReportApiActions, TimeReportPageActions } from './time-tracking.actions';
 import { timeTrackingFeature } from './time-tracking.feature';
+import { untilTenantChanges } from '../../../../shared/data-access/until-tenant-changes';
 
 export const loadTaskTime = createEffect(
   (actions$ = inject(Actions), api = inject(TimeTrackingApiService)) =>
@@ -16,6 +17,7 @@ export const loadTaskTime = createEffect(
       ofType(TimeEntriesPageActions.opened),
       switchMap(({ projectId, taskId }) =>
         api.list(projectId, taskId).pipe(
+          untilTenantChanges(actions$),
           map((time) => TimeEntriesApiActions.taskTimeLoaded({ taskId, time })),
           catchError((error: unknown) => of(TimeEntriesApiActions.taskTimeLoadFailed({ error: toApiError(error) }))),
         ),
@@ -91,6 +93,7 @@ export const loadSummary = createEffect(
       // A newer filter makes the answer to the older one stale.
       switchMap(({ projectId, filters }) =>
         api.summary(projectId, filters).pipe(
+          untilTenantChanges(actions$),
           map((summary) => TimeReportApiActions.summaryLoaded({ projectId, summary })),
           catchError((error: unknown) => of(TimeReportApiActions.summaryLoadFailed({ error: toApiError(error) }))),
         ),

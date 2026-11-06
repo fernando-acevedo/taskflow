@@ -1,4 +1,5 @@
 using FluentValidation;
+using Microsoft.EntityFrameworkCore;
 using TaskFlow.Application.Abstractions;
 using TaskFlow.Application.Activity;
 using TaskFlow.Application.Common;
@@ -25,6 +26,7 @@ public sealed class AddProjectMemberHandler(
     IAppDbContext db,
     ProjectAccess access,
     IIdentityService identity,
+    ICurrentUser currentUser,
     IValidator<AddProjectMemberCommand> validator,
     ActivityLog activity,
     TimeProvider time)
@@ -44,8 +46,9 @@ public sealed class AddProjectMemberHandler(
         }
 
         var user = await identity.FindByEmailAsync(command.Email.Trim(), cancellationToken);
-        if (user is null)
+        if (user is null || !await IsTenantMemberAsync(user.Id, cancellationToken))
         {
+            // An account of another tenant answers like a missing one, so emails of other tenants are not revealed.
             return UserErrors.EmailNotFound;
         }
 
@@ -62,4 +65,9 @@ public sealed class AddProjectMemberHandler(
         var member = project.Members.Single(member => member.UserId == user.Id);
         return new ProjectMemberDto(user.Id, user.Email, user.DisplayName, user.IsActive, member.Role, member.JoinedAt);
     }
+
+    private async Task<bool> IsTenantMemberAsync(Guid userId, CancellationToken cancellationToken) =>
+        currentUser.TenantId is { } tenantId
+        && await db.TenantMemberships.AnyAsync(
+            membership => membership.TenantId == tenantId && membership.UserId == userId, cancellationToken);
 }

@@ -5,6 +5,17 @@
     "language": "Idioma",
     "skipToContent": "Saltar al contenido principal"
   },
+  "theme": {
+    "label": "Tema",
+    "title": "Apariencia",
+    "loadFailed": "No se pudieron cargar tus espacios de trabajo.",
+    "retry": "Reintentar",
+    "current": "Tema: {{ theme }}",
+    "hint": "Colores claros u oscuros para la app.",
+    "System": "Sistema",
+    "Light": "Claro",
+    "Dark": "Oscuro"
+  },
   "nav": {
     "account": "Menú de la cuenta",
     "profile": "Perfil",
@@ -14,7 +25,8 @@
     "main": "Secciones principales",
     "projects": "Proyectos",
     "clients": "Clientes",
-    "users": "Usuarios"
+    "users": "Usuarios",
+    "tenants": "Tenants"
   },
   "home": {
     "greeting": "Hola, {{ name }}",
@@ -93,6 +105,7 @@
     "role": "Rol",
     "roles": {
       "admin": "Admin",
+      "superAdmin": "Superadministrador",
       "member": "Miembro"
     },
     "displayName": "Nombre visible",
@@ -237,6 +250,17 @@
     },
     "Notifications": {
       "NotFound": "No se encontró la notificación."
+    },
+    "Tenants": {
+      "NotFound": "No se encontró el espacio de trabajo.",
+      "Forbidden": "No perteneces a este espacio de trabajo.",
+      "SlugTaken": "Otro espacio de trabajo ya usa este identificador.",
+      "InvalidSlug": "El identificador solo puede tener minúsculas, números y guiones.",
+      "LastOwner": "Un espacio de trabajo necesita al menos un propietario. Nombra primero a otra persona.",
+      "AlreadyMember": "Esta persona ya pertenece al espacio de trabajo.",
+      "MemberNotFound": "No se encontró al miembro.",
+      "OwnerRequired": "Solo un propietario puede hacer esto con un propietario.",
+      "SuperAdminRequired": "Solo el administrador de la plataforma puede hacer esto."
     }
   },
   "clients": {
@@ -271,35 +295,42 @@
   },
   "users": {
     "title": "Usuarios",
-    "subtitle": "Quién puede iniciar sesión y quién administra TaskFlow.",
+    "subtitle": "Quién pertenece a este espacio de trabajo y qué puede hacer.",
     "search": "Buscar por nombre o email",
     "retry": "Reintentar",
-    "noMatches": "Ningún usuario coincide con la búsqueda.",
-    "admin": "Admin",
+    "noMatches": "Ningún miembro coincide con la búsqueda.",
     "inactive": "Desactivado",
     "you": "Tú",
     "actions": "Acciones para {{ name }}",
-    "grantAdmin": "Hacer admin",
-    "revokeAdmin": "Quitar rol de admin",
     "activate": "Reactivar",
     "deactivate": "Desactivar",
     "deactivateTitle": "¿Desactivar a {{ name }}?",
     "deactivateMessage": "Se cerrará su sesión y no podrá volver a entrar hasta que reactives la cuenta.",
-    "create": "Nuevo usuario",
-    "createTitle": "Nuevo usuario",
+    "create": "Añadir miembro",
+    "createTitle": "Añadir miembro",
     "email": "Email",
     "emailRule": "Ingresa un email válido.",
     "displayName": "Nombre visible",
     "displayNameRule": "Usa entre 2 y 100 caracteres.",
-    "createAsAdmin": "Hacer admin a este usuario",
     "cancel": "Cancelar",
-    "createSubmit": "Crear usuario",
-    "created": "Usuario creado. Le enviamos una invitación por correo.",
-    "saved": "Usuario actualizado",
+    "createSubmit": "Añadir miembro",
+    "created": "Miembro añadido. Le enviamos una invitación por correo.",
+    "saved": "Miembro actualizado",
     "createHint": "Le enviaremos un correo con un enlace para que elija su contraseña.",
     "invitationPending": "Invitación pendiente",
     "resendInvitation": "Reenviar invitación",
-    "invitationSent": "Invitación enviada"
+    "invitationSent": "Invitación enviada",
+    "role": "Rol",
+    "roleHint": "Propietarios y admins gestionan clientes, proyectos y personas.",
+    "removeMember": "Quitar del espacio de trabajo",
+    "removeTitle": "¿Quitar a {{ name }}?",
+    "removeMessage": "Perderá el acceso a este espacio de trabajo. Su cuenta se conserva.",
+    "makeRole": "Hacer {{ role }}",
+    "removed": "Miembro quitado",
+    "displayNameHint": "Opcional para quien ya tiene cuenta.",
+    "supportTitle": "Accesos de soporte",
+    "supportSubtitle": "Veces que el administrador de la plataforma abrió este espacio de trabajo.",
+    "supportEmpty": "Aún no hay accesos de soporte."
   },
   "projects": {
     "title": "Proyectos",
@@ -631,6 +662,39 @@
     "users": "Usuarios",
     "clients": "Clientes",
     "home": "Inicio",
-    "projects": "Proyectos"
+    "projects": "Proyectos",
+    "tenants": "Tenants"
+  },
+  "tenant": {
+    "switcher": "Espacio de trabajo",
+    "switch": "Cambiar de espacio de trabajo",
+    "current": "Espacio de trabajo actual",
+    "roles": {
+      "Owner": "Propietario",
+      "Admin": "Admin",
+      "Member": "Miembro"
+    }
+  },
+  "tenants": {
+    "title": "Tenants",
+    "subtitle": "Todos los espacios de trabajo de la plataforma.",
+    "create": "Nuevo tenant",
+    "createTitle": "Nuevo tenant",
+    "name": "Nombre",
+    "nameRule": "Usa entre 2 y 100 caracteres.",
+    "slug": "Identificador",
+    "slugHint": "Minúsculas, números y guiones.",
+    "slugRule": "Usa minúsculas, números y guiones.",
+    "ownerRule": "Ingresa un correo válido.",
+    "ownerEmail": "Correo del propietario (opcional)",
+    "ownerHint": "Le enviamos al propietario un enlace para elegir su contraseña.",
+    "cancel": "Cancelar",
+    "submit": "Crear tenant",
+    "created": "Tenant creado",
+    "createdInvited": "Tenant creado. Enviamos una invitación al propietario.",
+    "demo": "Demo",
+    "empty": "Todavía no hay tenants.",
+    "retry": "Reintentar",
+    "createdOn": "Creado el {{ when }}"
   }
 }

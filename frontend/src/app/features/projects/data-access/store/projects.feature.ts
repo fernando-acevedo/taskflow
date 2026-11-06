@@ -1,6 +1,7 @@
 import { EntityState, createEntityAdapter } from '@ngrx/entity';
 import { createFeature, createReducer, createSelector, on } from '@ngrx/store';
 import { AuthApiActions, ShellActions } from '../../../../core/auth/store/auth.actions';
+import { TenantActions } from '../../../../core/tenant/store/tenant.actions';
 import { ApiError } from '../../../../core/http/api-error';
 import { ClientOption, Project, ProjectMember, ProjectQuery } from '../projects-api.service';
 import { ProjectPageActions, ProjectsApiActions, ProjectsPageActions } from './projects.actions';
@@ -50,7 +51,12 @@ export const projectsFeature = createFeature({
   reducer: createReducer(
     initialProjectsState,
     // Another user may sign in next in this tab; nothing of the previous session may show.
-    on(ShellActions.logoutClicked, AuthApiActions.sessionExpired, (): ProjectsState => initialProjectsState),
+    on(
+      ShellActions.logoutClicked,
+      AuthApiActions.sessionExpired,
+      TenantActions.tenantSwitched,
+      (): ProjectsState => initialProjectsState,
+    ),
     on(ProjectsPageActions.opened, (state): ProjectsState => ({ ...state, loading: true, loadError: null })),
     on(
       ProjectsPageActions.queryChanged,

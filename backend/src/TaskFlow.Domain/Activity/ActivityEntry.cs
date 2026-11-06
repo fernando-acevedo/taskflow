@@ -1,3 +1,5 @@
+using TaskFlow.Domain.Tenancy;
+
 namespace TaskFlow.Domain.Activity;
 
 /// <summary>What happened. The name is the contract with the frontend, which builds the sentence from it.</summary>
@@ -23,7 +25,7 @@ public enum ActivityType
 /// task stay; <see cref="Changes"/> carries the values the text needs (task title, old and new status, label
 /// name...) because the things they name may be renamed or gone by the time someone reads the entry.
 /// </summary>
-public sealed class ActivityEntry
+public sealed class ActivityEntry : ITenantOwned
 {
     private ActivityEntry(
         Guid id,

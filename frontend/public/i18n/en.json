@@ -5,6 +5,17 @@
     "language": "Language",
     "skipToContent": "Skip to main content"
   },
+  "theme": {
+    "label": "Theme",
+    "title": "Appearance",
+    "loadFailed": "Your workspaces could not be loaded.",
+    "retry": "Retry",
+    "current": "Theme: {{ theme }}",
+    "hint": "Light or dark colors for the app.",
+    "System": "System",
+    "Light": "Light",
+    "Dark": "Dark"
+  },
   "nav": {
     "account": "Account menu",
     "profile": "Profile",
@@ -14,7 +25,8 @@
     "main": "Main sections",
     "projects": "Projects",
     "clients": "Clients",
-    "users": "Users"
+    "users": "Users",
+    "tenants": "Tenants"
   },
   "home": {
     "greeting": "Hi, {{ name }}",
@@ -93,6 +105,7 @@
     "role": "Role",
     "roles": {
       "admin": "Admin",
+      "superAdmin": "Super-admin",
       "member": "Member"
     },
     "displayName": "Display name",
@@ -237,6 +250,17 @@
     },
     "Notifications": {
       "NotFound": "The notification was not found."
+    },
+    "Tenants": {
+      "NotFound": "The workspace was not found.",
+      "Forbidden": "You don't belong to this workspace.",
+      "SlugTaken": "Another workspace already uses this identifier.",
+      "InvalidSlug": "The identifier can only have lowercase letters, numbers and hyphens.",
+      "LastOwner": "A workspace needs at least one owner. Make someone else an owner first.",
+      "AlreadyMember": "This person already belongs to the workspace.",
+      "MemberNotFound": "The member was not found.",
+      "OwnerRequired": "Only an owner can do this with an owner.",
+      "SuperAdminRequired": "Only the platform administrator can do this."
     }
   },
   "clients": {
@@ -271,35 +295,42 @@
   },
   "users": {
     "title": "Users",
-    "subtitle": "Who can sign in, and who administers TaskFlow.",
+    "subtitle": "Who belongs to this workspace, and what they can do.",
     "search": "Search by name or email",
     "retry": "Try again",
-    "noMatches": "No users match your search.",
-    "admin": "Admin",
+    "noMatches": "No members match your search.",
     "inactive": "Deactivated",
     "you": "You",
     "actions": "Actions for {{ name }}",
-    "grantAdmin": "Make admin",
-    "revokeAdmin": "Remove admin role",
     "activate": "Reactivate",
     "deactivate": "Deactivate",
     "deactivateTitle": "Deactivate {{ name }}?",
     "deactivateMessage": "They will be signed out and won't be able to sign in until you reactivate the account.",
-    "create": "New user",
-    "createTitle": "New user",
+    "create": "Add member",
+    "createTitle": "Add member",
     "email": "Email",
     "emailRule": "Enter a valid email address.",
     "displayName": "Display name",
     "displayNameRule": "Use between 2 and 100 characters.",
-    "createAsAdmin": "Make this user an admin",
     "cancel": "Cancel",
-    "createSubmit": "Create user",
-    "created": "User created. We emailed them an invitation.",
-    "saved": "User updated",
+    "createSubmit": "Add member",
+    "created": "Member added. We emailed them an invitation.",
+    "saved": "Member updated",
     "createHint": "We'll email them a link to choose their password.",
     "invitationPending": "Invitation pending",
     "resendInvitation": "Resend invitation",
-    "invitationSent": "Invitation sent"
+    "invitationSent": "Invitation sent",
+    "role": "Role",
+    "roleHint": "Owners and admins manage clients, projects and people.",
+    "removeMember": "Remove from workspace",
+    "removeTitle": "Remove {{ name }}?",
+    "removeMessage": "They will lose access to this workspace. Their account stays.",
+    "makeRole": "Make {{ role }}",
+    "removed": "Member removed",
+    "displayNameHint": "Optional for people who already have an account.",
+    "supportTitle": "Support access",
+    "supportSubtitle": "Times the platform administrator opened this workspace.",
+    "supportEmpty": "No support access so far."
   },
   "projects": {
     "title": "Projects",
@@ -631,6 +662,39 @@
     "users": "Users",
     "clients": "Clients",
     "home": "Home",
-    "projects": "Projects"
+    "projects": "Projects",
+    "tenants": "Tenants"
+  },
+  "tenant": {
+    "switcher": "Workspace",
+    "switch": "Switch workspace",
+    "current": "Current workspace",
+    "roles": {
+      "Owner": "Owner",
+      "Admin": "Admin",
+      "Member": "Member"
+    }
+  },
+  "tenants": {
+    "title": "Tenants",
+    "subtitle": "Every workspace on the platform.",
+    "create": "New tenant",
+    "createTitle": "New tenant",
+    "name": "Name",
+    "nameRule": "Use between 2 and 100 characters.",
+    "slug": "Identifier",
+    "slugHint": "Lowercase letters, numbers and hyphens.",
+    "slugRule": "Use lowercase letters, numbers and hyphens.",
+    "ownerRule": "Enter a valid email address.",
+    "ownerEmail": "Owner email (optional)",
+    "ownerHint": "We email the owner a link to choose their password.",
+    "cancel": "Cancel",
+    "submit": "Create tenant",
+    "created": "Tenant created",
+    "createdInvited": "Tenant created. We emailed the owner an invitation.",
+    "demo": "Demo",
+    "empty": "There are no tenants yet.",
+    "retry": "Try again",
+    "createdOn": "Created {{ when }}"
   }
 }

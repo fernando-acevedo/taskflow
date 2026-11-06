@@ -16,4 +16,8 @@
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="TaskFlow.Infrastructure.UnitTests" />
+  </ItemGroup>
+
 </Project>

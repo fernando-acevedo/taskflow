@@ -1,8 +1,11 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using TaskFlow.Application.Notifications;
+using TaskFlow.Infrastructure.Persistence;
+using TaskFlow.Infrastructure.Tenancy;
 
 namespace TaskFlow.Infrastructure.Notifications;
 
@@ -18,12 +21,13 @@ public sealed class NotificationOptions
 }
 
 /// <summary>
-/// Runs <see cref="NotifyDueSoonHandler"/> once a day at <see cref="NotificationOptions.DueSoonHourUtc"/>. If the
+/// Runs <see cref="NotifyDueSoonHandler"/> for each tenant once a day at <see cref="NotificationOptions.DueSoonHourUtc"/>. If the
 /// app starts after that hour it runs at once; the handler is idempotent, so a restart or a second instance
 /// doesn't duplicate notifications (ADR 0010).
 /// </summary>
 internal sealed partial class DueSoonNotificationService(
     IServiceScopeFactory scopes,
+    TenantScope tenantScope,
     IOptions<NotificationOptions> options,
     TimeProvider time,
     ILogger<DueSoonNotificationService> logger) : BackgroundService
@@ -63,23 +67,53 @@ internal sealed partial class DueSoonNotificationService(
 
     private async Task RunAsync(CancellationToken cancellationToken)
     {
+        List<Guid> tenants;
         try
         {
             await using var scope = scopes.CreateAsyncScope();
-            var result = await scope.ServiceProvider.GetRequiredService<NotifyDueSoonHandler>().HandleAsync(cancellationToken);
-            LogRan(logger, result.IsSuccess ? result.Value : 0);
+            tenants = await scope.ServiceProvider.GetRequiredService<AppDbContext>().Tenants
+                .AsNoTracking()
+                .Select(tenant => tenant.Id)
+                .ToListAsync(cancellationToken);
         }
 #pragma warning disable CA1031 // A failed run must not stop the service; the next day (or restart) tries again.
         catch (Exception exception) when (exception is not OperationCanceledException)
 #pragma warning restore CA1031
         {
             LogFailed(logger, exception);
+            return;
+        }
+
+        // One pass per tenant (ADR 0014); a failure in one is logged and does not stop the others.
+        foreach (var tenantId in tenants)
+        {
+            try
+            {
+                var created = await tenantScope.RunAsync(
+                    tenantId,
+                    async (services, token) =>
+                    {
+                        var result = await services.GetRequiredService<NotifyDueSoonHandler>().HandleAsync(token);
+                        return result.IsSuccess ? result.Value : 0;
+                    },
+                    cancellationToken);
+                LogRan(logger, tenantId, created);
+            }
+#pragma warning disable CA1031
+            catch (Exception exception) when (exception is not OperationCanceledException)
+#pragma warning restore CA1031
+            {
+                LogTenantFailed(logger, tenantId, exception);
+            }
         }
     }
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "Due-soon notifications created: {Count}")]
-    private static partial void LogRan(ILogger logger, int count);
+    [LoggerMessage(Level = LogLevel.Information, Message = "Due-soon notifications created for tenant {TenantId}: {Count}")]
+    private static partial void LogRan(ILogger logger, Guid tenantId, int count);
 
     [LoggerMessage(Level = LogLevel.Error, Message = "The due-soon notification job failed")]
     private static partial void LogFailed(ILogger logger, Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "The due-soon notification job failed for tenant {TenantId}")]
+    private static partial void LogTenantFailed(ILogger logger, Guid tenantId, Exception exception);
 }

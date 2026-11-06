@@ -3,6 +3,7 @@ import { inject } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { EMPTY, catchError, concatMap, exhaustMap, filter, fromEvent, map, merge, of, switchMap, tap, timer } from 'rxjs';
 import { AuthApiActions, ShellActions } from '../../../../core/auth/store/auth.actions';
+import { TenantActions, TenantApiActions } from '../../../../core/tenant/store/tenant.actions';
 import { toApiError } from '../../../../core/http/api-error';
 import { Notifier } from '../../../../core/notifications/notifier';
 import { NotificationsApiService, POLL_INTERVAL_MS } from '../notifications-api.service';
@@ -11,10 +12,11 @@ import {
   NotificationPreferencesActions,
   NotificationsApiActions,
 } from './notifications.actions';
+import { untilTenantChanges } from '../../../../shared/data-access/until-tenant-changes';
 
 
 /**
- * Asks for the unread count every 30 s from sign-in (or session restore) until sign-out or expiry, pausing
+ * Asks for the unread count every 30 s from sign-in (or session restore) and again on a tenant switch, until sign-out or expiry, pausing
  * while the tab is hidden and asking again at once when it becomes visible (ADR 0010). A failed poll is
  * ignored: the next one tries again.
  */
@@ -22,13 +24,14 @@ export const pollUnreadCount = createEffect(
   (actions$ = inject(Actions), api = inject(NotificationsApiService), document = inject(DOCUMENT)) =>
     actions$.pipe(
       ofType(
-        AuthApiActions.sessionRestored,
-        AuthApiActions.loginSucceeded,
+        TenantApiActions.tenantsLoaded,
+        TenantActions.tenantSwitched,
         ShellActions.logoutClicked,
         AuthApiActions.sessionExpired,
       ),
       switchMap((action) =>
-        action.type === AuthApiActions.sessionRestored.type || action.type === AuthApiActions.loginSucceeded.type
+        action.type === TenantApiActions.tenantsLoaded.type ||
+        action.type === TenantActions.tenantSwitched.type
           ? merge(
               timer(0, POLL_INTERVAL_MS),
               fromEvent(document, 'visibilitychange').pipe(filter(() => !document.hidden)),
@@ -54,6 +57,7 @@ export const loadNotifications = createEffect(
       ofType(NotificationBellActions.opened),
       switchMap(() =>
         api.list().pipe(
+          untilTenantChanges(actions$),
           map((page) => NotificationsApiActions.notificationsLoaded({ items: page.items })),
           catchError((error: unknown) => of(NotificationsApiActions.notificationsLoadFailed({ error: toApiError(error) }))),
         ),
@@ -69,6 +73,7 @@ export const refreshCountOnOpen = createEffect(
       ofType(NotificationBellActions.opened),
       switchMap(() =>
         api.unreadCount().pipe(
+          untilTenantChanges(actions$),
           map(({ count }) => NotificationsApiActions.unreadCountLoaded({ count })),
           catchError(() => EMPTY),
         ),
@@ -123,6 +128,7 @@ export const loadPreferences = createEffect(
       ofType(NotificationPreferencesActions.opened),
       switchMap(() =>
         api.preferences().pipe(
+          untilTenantChanges(actions$),
           map((preferences) => NotificationsApiActions.preferencesLoaded({ preferences })),
           catchError((error: unknown) => of(NotificationsApiActions.preferencesLoadFailed({ error: toApiError(error) }))),
         ),

@@ -1,3 +1,5 @@
+import type { ThemePreference } from '../theme/theme';
+
 export const ADMIN_ROLE = 'Admin';
 
 /** Body returned by the Identity API Endpoints' /login and /refresh. */
@@ -18,6 +20,8 @@ export interface User {
   readonly isInvitationPending: boolean;
   /** Identity sends a password reset only to a confirmed email. Invited users are confirmed from the start. */
   readonly isEmailConfirmed: boolean;
+  /** Saved on the server; applied by ThemeService once the user is known. */
+  readonly themePreference?: ThemePreference;
 }
 
 export interface InvitationAcceptance {

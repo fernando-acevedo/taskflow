@@ -5,6 +5,7 @@ using TaskFlow.Application.Users;
 
 namespace TaskFlow.Api.Controllers;
 
+/// <summary>Global user administration for the super-admin (ADR 0013). Members of a tenant are managed through <c>api/tenant/members</c>.</summary>
 [Authorize(Roles = Roles.Admin)]
 [Route("api/admin/users")]
 public sealed class AdminUsersController : ApiControllerBase

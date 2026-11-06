@@ -10,7 +10,8 @@ public sealed record UserDto(
     IReadOnlyList<string> Roles,
     DateTimeOffset CreatedAt,
     bool IsInvitationPending = false,
-    bool IsEmailConfirmed = false);
+    bool IsEmailConfirmed = false,
+    ThemePreference ThemePreference = ThemePreference.System);
 
 public static class Roles
 {
