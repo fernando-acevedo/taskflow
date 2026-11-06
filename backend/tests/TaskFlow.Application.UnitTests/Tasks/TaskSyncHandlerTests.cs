@@ -26,6 +26,8 @@ public sealed class TaskSyncHandlerTests
     private readonly List<TaskItem> _added = [];
     private readonly DbSet<TaskItem> _taskSet;
     private readonly DbSet<ActivityEntry> _activitySet = FakeDbSet.Of<ActivityEntry>();
+    private readonly List<Label> _addedLabels = [];
+    private readonly DbSet<Label> _labelSet = FakeDbSet.Of<Label>();
     private readonly Project _project;
     private readonly TaskItem _existing;
 
@@ -36,6 +38,8 @@ public sealed class TaskSyncHandlerTests
         _existing.SetPlanning(_project, "T-1", null, false, null, Now);
         _taskSet = FakeDbSet.Of(_existing);
         _taskSet.When(set => set.Add(Arg.Any<TaskItem>())).Do(call => _added.Add(call.Arg<TaskItem>()));
+        _labelSet.When(set => set.Add(Arg.Any<Label>())).Do(call => _addedLabels.Add(call.Arg<Label>()));
+        _db.Labels.Returns(_labelSet);
         var projects = FakeDbSet.Of(_project);
         var dependencies = FakeDbSet.Of<TaskDependency>();
         _db.Projects.Returns(projects);
@@ -67,7 +71,8 @@ public sealed class TaskSyncHandlerTests
             extras?.Status,
             extras?.Blocked ?? false,
             extras?.Note,
-            extras?.DependsOn));
+            extras?.DependsOn,
+            extras?.Labels));
 
     private Task<Result<SyncTasksResult>> Sync(params SyncTaskItem[] items) =>
         Handler().HandleAsync(new SyncTasksCommand(_project.Id, items), Ct);
@@ -78,7 +83,8 @@ public sealed class TaskSyncHandlerTests
         TaskItemStatus? Status = null,
         bool Blocked = false,
         string? Note = null,
-        string[]? DependsOn = null);
+        string[]? DependsOn = null,
+        string[]? Labels = null);
 
     [Fact]
     public async Task CreatesNewKeysAndUpdatesExistingOnes()
@@ -250,6 +256,54 @@ public sealed class TaskSyncHandlerTests
 
         result.Value.Applied.ShouldBeFalse();
         result.Value.Items.ShouldAllBe(i => i.Outcome == SyncOutcome.Failed && i.ErrorCode == ProjectErrors.Archived.Code);
+    }
+
+    [Fact]
+    public async Task LabelsReplaceTheTaskLabelsAndMissingOnesAreCreatedByAnOwner()
+    {
+        var result = await Sync(Item("T-1", "Old title", new Extras(Labels: ["agent:backend", "AGENT:BACKEND", "Urgent"])));
+
+        result.Value.Applied.ShouldBeTrue();
+        _addedLabels.Select(label => label.Name).ShouldBe(["agent:backend", "Urgent"]);
+        _existing.Labels.Select(label => label.Name).ShouldBe(["agent:backend", "Urgent"]);
+        _activitySet.Received(2).Add(Arg.Is<ActivityEntry>(entry => entry.Type == ActivityType.LabelCreated));
+    }
+
+    [Fact]
+    public async Task LabelsAreKeptWhenOmittedAndClearedWhenEmpty()
+    {
+        var label = Label.Create(_project, "agent:gantt", "#112233", [], Now).Value;
+        var labelsWithOne = FakeDbSet.Of(label);
+        _db.Labels.Returns(labelsWithOne);
+        await Sync(Item("T-1", "Old title", new Extras(Labels: ["agent:gantt"])));
+        _existing.Labels.ShouldHaveSingleItem().ShouldBe(label);
+
+        await Sync(Item("T-1"));
+        _existing.Labels.Count.ShouldBe(1);
+
+        await Sync(Item("T-1", "Old title", new Extras(Labels: [])));
+        _existing.Labels.ShouldBeEmpty();
+        _addedLabels.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task AnApiKeyCannotCreateALabelSoTheItemFails()
+    {
+        _user.ApiKeyId.Returns(Guid.NewGuid());
+        _user.ApiKeyScope.Returns(ApiKeyScope.Write);
+
+        var result = await Sync(Item("T-1", "Old title", new Extras(Labels: ["agent:new"])));
+
+        result.Value.Applied.ShouldBeFalse();
+        result.Value.Items.ShouldHaveSingleItem().ErrorCode.ShouldBe("Labels.CreateNotAllowed");
+        _addedLabels.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task ABlankOrTooLongLabelNameFailsValidation()
+    {
+        (await Sync(Item("T-1", "Old title", new Extras(Labels: [" "])))).Value.Items.ShouldHaveSingleItem().ErrorCode.ShouldBe("Validation");
+        (await Sync(Item("T-1", "Old title", new Extras(Labels: [new string('x', 41)])))).Value.Items.ShouldHaveSingleItem().ErrorCode.ShouldBe("Validation");
     }
 
     [Fact]

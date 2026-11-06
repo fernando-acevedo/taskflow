@@ -32,7 +32,11 @@ test("maps a Gantt task to a sync item", () => {
   const item = sync.toItem({ id: "T-5", title: "x".repeat(250), agent: "backend-dev", status: "bloqueado", start: "2026-11-01", end: "2026-11-03", deps: ["T-4"], notes: "waiting" });
   assert.equal(item.externalKey, "T-5");
   assert.equal(item.title.length, 200);
-  assert.match(item.description, /^Agente: backend-dev/);
+  assert.deepEqual(item.labels, ["agent:backend-dev"]);
+  assert.equal(item.description, "x".repeat(250));
+  assert.doesNotMatch(item.description, /Agente/);
+  assert.deepEqual(sync.toItem({ id: "T-9", title: "t" }).labels, []);
+  assert.equal(sync.toItem({ id: "T-9", title: "t", agent: "yo" }).description, null);
   assert.equal(item.isBlocked, true);
   assert.equal(item.status, undefined);
   assert.equal(item.statusNote, "waiting");

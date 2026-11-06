@@ -410,6 +410,149 @@ public sealed class ApiKeyTests(SqlServerApiFactory factory)
         entries.Where(entry => entry.TaskId == byPerson.Id).ShouldAllBe(entry => entry.ApiKeyId == null);
     }
 
+    [Fact]
+    public async Task EditingATaskSetsTheStartDateTheBlockAndTheNote()
+    {
+        using var owner = await NewOwnerAsync();
+        var project = await factory.CreateProjectAsync(owner.Client);
+        var task = await owner.Client.CreateTaskAsync(project.Id, new { title = "Plan me" });
+        var uri = $"/api/projects/{project.Id}/tasks/{task.Id}";
+
+        using var edit = await owner.Client.PutAsJsonAsync(
+            uri,
+            new { title = "Plan me", priority = "Low", task.RowVersion, startDate = factory.Today, dueDate = factory.Today.AddDays(2), isBlocked = true, statusNote = "  waiting for the client " },
+            Ct);
+
+        edit.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var edited = await edit.ReadAsync<EditedTask>();
+        edited.StartDate.ShouldBe(factory.Today);
+        edited.IsBlocked.ShouldBeTrue();
+        edited.StatusNote.ShouldBe("waiting for the client");
+
+        // A start date after the due date and a note over 500 characters are rejected.
+        using var inverted = await owner.Client.PutAsJsonAsync(
+            uri, new { title = "Plan me", priority = "Low", edited.RowVersion, startDate = factory.Today.AddDays(5), dueDate = factory.Today.AddDays(2) }, Ct);
+        inverted.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await inverted.ReadAsync<ProblemResponse>()).Code.ShouldBe("Tasks.StartAfterDue");
+        using var longNote = await owner.Client.PutAsJsonAsync(
+            uri, new { title = "Plan me", priority = "Low", edited.RowVersion, statusNote = new string('x', 501) }, Ct);
+        longNote.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await longNote.ReadAsync<ProblemResponse>()).Errors!.ShouldContainKey("statusNote");
+
+        // Leaving the fields out clears them.
+        using var cleared = await owner.Client.PutAsJsonAsync(uri, new { title = "Plan me", priority = "Low", edited.RowVersion }, Ct);
+        var after = await cleared.ReadAsync<EditedTask>();
+        after.StartDate.ShouldBeNull();
+        after.IsBlocked.ShouldBeFalse();
+        after.StatusNote.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task TheActivityListSaysWhichEntriesCameThroughAKey()
+    {
+        using var owner = await NewOwnerAsync();
+        var project = await factory.CreateProjectAsync(owner.Client);
+        using var writer = owner.UseKey((await owner.CreateKeyAsync("Writer", "Write")).Secret);
+
+        using var viaKey = await writer.PutAsJsonAsync($"/api/projects/{project.Id}/tasks/by-key/VIA-1", new { title = "By a key" }, Ct);
+        var keyTask = await viaKey.ReadAsync<PlannedTask>();
+        var byPerson = await owner.Client.CreateTaskAsync(project.Id, new { title = "By a person" });
+
+        var page = await owner.Client.GetJsonAsync<ActivityPage>($"/api/projects/{project.Id}/activity");
+        page.Items.Single(entry => entry.TaskId == keyTask.Id).ViaApiKey.ShouldBeTrue();
+        page.Items.Single(entry => entry.TaskId == byPerson.Id).ViaApiKey.ShouldBeFalse();
+        var raw = await owner.Client.GetStringAsync(new Uri($"/api/projects/{project.Id}/activity", UriKind.Relative), Ct);
+        raw.ShouldNotContain("apiKeyId", Case.Insensitive);
+
+        var forTask = await owner.Client.GetJsonAsync<ActivityPage>($"/api/projects/{project.Id}/tasks/{keyTask.Id}/activity");
+        forTask.Items.ShouldAllBe(entry => entry.ViaApiKey);
+    }
+
+    [Fact]
+    public async Task AnUpsertReplacesLabelsKeepsThemWhenOmittedAndCreatesMissingOnesForAPerson()
+    {
+        using var owner = await NewOwnerAsync();
+        var project = await factory.CreateProjectAsync(owner.Client);
+        var url = $"/api/projects/{project.Id}/tasks/by-key/L-1";
+
+        // A person who owns the project may create the labels.
+        using var first = await owner.Client.PutAsJsonAsync(url, new { title = "Labelled", labels = BackendAndUrgent }, Ct);
+        first.StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await first.ReadAsync<PlannedTask>()).Labels.Select(label => label.Name).Order().ShouldBe(["agent:backend", "Urgent"]);
+
+        // Omitted: kept. An existing name in another case reuses the label instead of creating a second one.
+        using var kept = await owner.Client.PutAsJsonAsync(url, new { title = "Labelled again" }, Ct);
+        (await kept.ReadAsync<PlannedTask>()).Labels.Count.ShouldBe(2);
+        using var replaced = await owner.Client.PutAsJsonAsync(url, new { title = "Labelled again", labels = BackendUpper }, Ct);
+        (await replaced.ReadAsync<PlannedTask>()).Labels.Select(label => label.Name).ShouldBe(["agent:backend"]);
+        using var emptied = await owner.Client.PutAsJsonAsync(url, new { title = "Labelled again", labels = NoLabels }, Ct);
+        (await emptied.ReadAsync<PlannedTask>()).Labels.ShouldBeEmpty();
+        (await owner.Client.GetJsonAsync<List<NamedLabel>>($"/api/projects/{project.Id}/labels")).Count.ShouldBe(2);
+    }
+
+    [Fact]
+    public async Task AKeyCanUseExistingLabelsButCannotCreateOnesInUpsertAndSync()
+    {
+        using var owner = await NewOwnerAsync();
+        var project = await factory.CreateProjectAsync(owner.Client);
+        using var made = await owner.Client.PostAsJsonAsync($"/api/projects/{project.Id}/labels", new { name = "agent:gantt", color = "#112233" }, Ct);
+        made.StatusCode.ShouldBe(HttpStatusCode.OK);
+        using var writer = owner.UseKey((await owner.CreateKeyAsync("Writer", "Write")).Secret);
+
+        using var allowed = await writer.PutAsJsonAsync(
+            $"/api/projects/{project.Id}/tasks/by-key/K-1", new { title = "Existing label", labels = GanttLabel }, Ct);
+        allowed.StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await allowed.ReadAsync<PlannedTask>()).Labels.Select(label => label.Name).ShouldBe(["agent:gantt"]);
+
+        using var denied = await writer.PutAsJsonAsync(
+            $"/api/projects/{project.Id}/tasks/by-key/K-2", new { title = "New label", labels = NewLabel }, Ct);
+        denied.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await denied.ReadAsync<ProblemResponse>()).Code.ShouldBe("Labels.CreateNotAllowed");
+
+        // In a sync the item fails, the others are not applied, and the project is left as it was.
+        var items = new object[]
+        {
+            new { externalKey = "S-1", title = "Fine", labels = GanttLabel },
+            new { externalKey = "S-2", title = "Bad", labels = NewLabel },
+        };
+        using var sync = await writer.PostAsJsonAsync($"/api/projects/{project.Id}/tasks/sync", new { items }, Ct);
+        sync.StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
+        var result = await sync.ReadAsync<SyncResponse>();
+        result.Items.Single(item => item.ExternalKey == "S-2").ErrorCode.ShouldBe("Labels.CreateNotAllowed");
+        result.Items.Single(item => item.ExternalKey == "S-1").Outcome.ShouldBe("NotApplied");
+        (await ListAsync(owner.Client, project.Id)).Select(task => task.ExternalKey).ShouldBe(["K-1"]);
+
+        // With only existing labels, the sync works and sets them.
+        var good = new object[] { new { externalKey = "S-1", title = "Fine", labels = GanttLabel } };
+        using var ok = await writer.PostAsJsonAsync($"/api/projects/{project.Id}/tasks/sync", new { items = good }, Ct);
+        ok.StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await ListAsync(owner.Client, project.Id)).Single(task => task.ExternalKey == "S-1").Labels.Select(label => label.Name).ShouldBe(["agent:gantt"]);
+    }
+
+    [Fact]
+    public async Task ASyncByAPersonCreatesALabelOnceForSeveralTasks()
+    {
+        using var owner = await NewOwnerAsync();
+        var project = await factory.CreateProjectAsync(owner.Client);
+        var items = new object[]
+        {
+            new { externalKey = "P-1", title = "One", labels = FrontendLabel },
+            new { externalKey = "P-2", title = "Two", labels = FrontendLabel },
+        };
+
+        using var sync = await owner.Client.PostAsJsonAsync($"/api/projects/{project.Id}/tasks/sync", new { items }, Ct);
+
+        sync.StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await owner.Client.GetJsonAsync<List<NamedLabel>>($"/api/projects/{project.Id}/labels")).Count.ShouldBe(1);
+        (await ListAsync(owner.Client, project.Id)).ShouldAllBe(task => task.Labels.Count == 1);
+    }
+
+    private static readonly string[] BackendAndUrgent = ["agent:backend", "Urgent"];
+    private static readonly string[] BackendUpper = ["AGENT:BACKEND"];
+    private static readonly string[] GanttLabel = ["agent:gantt"];
+    private static readonly string[] NewLabel = ["agent:new"];
+    private static readonly string[] FrontendLabel = ["agent:frontend"];
+    private static readonly string[] NoLabels = [];
     private static readonly string[] DependsOnA = ["A"];
     private static readonly string[] DependsOnB = ["B"];
 
@@ -460,7 +603,15 @@ public sealed class ApiKeyTests(SqlServerApiFactory factory)
         DateTimeOffset? RevokedAt, DateTimeOffset? LastUsedAt, bool IsActive);
 
     private sealed record PlannedTask(
-        Guid Id, string Title, string Status, string? ExternalKey, DateOnly? StartDate, bool IsBlocked, string? StatusNote, IReadOnlyList<Guid> DependsOn);
+        Guid Id, string Title, string Status, string? ExternalKey, DateOnly? StartDate, bool IsBlocked, string? StatusNote, IReadOnlyList<Guid> DependsOn, IReadOnlyList<NamedLabel> Labels);
+
+    private sealed record NamedLabel(Guid Id, string Name, string Color);
+
+    private sealed record EditedTask(DateOnly? StartDate, bool IsBlocked, string? StatusNote, byte[] RowVersion);
+
+    private sealed record ActivityPage(List<ActivityItem> Items);
+
+    private sealed record ActivityItem(Guid? TaskId, bool ViaApiKey);
 
     private sealed record SyncResponse(bool Applied, IReadOnlyList<SyncItem> Items);
 

@@ -34,13 +34,12 @@ function loadSeed(root) {
 const clip = (text, max) => (text.length > max ? text.slice(0, max - 1) + "…" : text);
 
 // A Gantt task as an item of the sync request. Every field is sent because the API replaces what is stored; the status
-// is omitted for "bloqueado" so the task stays in its column. D8: the sync has no labels, so the agent goes first in the
-// description (the full title too, since the Kanban title is cut at 200 characters).
+// is omitted for "bloqueado" so the task stays in its column. D8: the agent is the label "agent:<agent>"; the description
+// only carries the full title when the Kanban title is cut at 200 characters.
 function toItem(task) {
   const status = ALIAS[task.status] || task.status || "pendiente";
-  const agent = task.agent ? `Agente: ${task.agent}` : "";
   const title = String(task.title || task.id);
-  const description = [agent, title.length > TITLE_MAX ? title : ""].filter(Boolean).join("\n\n");
+  const description = title.length > TITLE_MAX ? title : "";
   const item = {
     externalKey: task.id,
     title: clip(title, TITLE_MAX),
@@ -48,6 +47,7 @@ function toItem(task) {
     isBlocked: status === "bloqueado",
     statusNote: clip(String(task.notes ?? task.note ?? ""), NOTE_MAX),
     dependsOn: Array.isArray(task.deps) ? task.deps : [],
+    labels: task.agent ? [`agent:${task.agent}`] : [],
   };
   if (!item.description) item.description = null;
   if (!item.statusNote) item.statusNote = null;

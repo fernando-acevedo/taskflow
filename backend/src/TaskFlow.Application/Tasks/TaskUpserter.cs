@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using TaskFlow.Application.Abstractions;
 using TaskFlow.Application.Activity;
 using TaskFlow.Application.Common;
+using TaskFlow.Application.Projects;
 using TaskFlow.Domain.Activity;
 using TaskFlow.Domain.Common;
 using TaskFlow.Domain.Projects;
@@ -16,6 +17,8 @@ namespace TaskFlow.Application.Tasks;
 /// <paramref name="DependsOn"/> (null keeps the dependencies, an empty list clears them).
 /// </summary>
 /// <param name="DependsOn">External keys of the tasks this one depends on; they may be created by the same sync.</param>
+/// <param name="Labels">Names of project labels: null keeps the task's labels, a list replaces them. Missing labels are created
+/// when the caller may manage labels, otherwise the item fails with <c>Labels.CreateNotAllowed</c>.</param>
 public sealed record TaskUpsertFields(
     string Title,
     string? Description,
@@ -27,7 +30,8 @@ public sealed record TaskUpsertFields(
     TaskItemStatus? Status = null,
     bool IsBlocked = false,
     string? StatusNote = null,
-    IReadOnlyList<string>? DependsOn = null);
+    IReadOnlyList<string>? DependsOn = null,
+    IReadOnlyList<string>? Labels = null);
 
 public sealed class TaskUpsertFieldsValidator : AbstractValidator<TaskUpsertFields>
 {
@@ -43,6 +47,10 @@ public sealed class TaskUpsertFieldsValidator : AbstractValidator<TaskUpsertFiel
             .Must(keys => keys!.Count <= TaskItem.MaxDependencies)
             .When(fields => fields.DependsOn is not null);
         RuleForEach(fields => fields.DependsOn).NotEmpty().MaximumLength(TaskItem.ExternalKeyMaxLength);
+        RuleFor(fields => fields.Labels)
+            .Must(names => names!.Count <= TaskQueries.MaxLabelsPerTask)
+            .When(fields => fields.Labels is not null);
+        RuleForEach(fields => fields.Labels).NotEmpty().MaximumLength(Label.NameMaxLength);
     }
 }
 
@@ -53,6 +61,9 @@ public static class TaskSyncErrors
 
     public static readonly Error DuplicateExternalKey =
         Error.Invalid("Tasks.DuplicateExternalKey", "The same external key appears more than once in the request.");
+
+    public static readonly Error LabelCreateNotAllowed =
+        Error.Forbidden("Labels.CreateNotAllowed", "The project doesn't have this label, and only a project owner signed in as a person can create labels.");
 
     public static readonly Error SyncEmpty =
         Error.Invalid("Tasks.SyncEmpty", "Send at least one task.");
@@ -81,12 +92,74 @@ public sealed class TaskUpserter(IAppDbContext db, ICurrentUser currentUser, Act
         ArgumentNullException.ThrowIfNull(fields);
 
         var key = externalKey.Trim();
-        var task = await db.Tasks.Include(task => task.Dependencies)
+        var task = await db.Tasks.Include(task => task.Dependencies).Include(task => task.Labels)
             .FirstOrDefaultAsync(task => task.ProjectId == project.Id && task.ExternalKey == key, cancellationToken);
-        return task is null
+        var applied = task is null
             ? await CreateAsync(project, key, fields, cancellationToken)
             : await UpdateAsync(project, task, key, fields, cancellationToken);
+        if (!applied.IsSuccess || fields.Labels is null)
+        {
+            return applied;
+        }
+
+        var labelled = await ApplyLabelNamesAsync(project, applied.Value.Task, fields.Labels, applied.Value.Created, cancellationToken);
+        return labelled.IsSuccess ? applied : labelled.Error;
     }
+
+    /// <summary>
+    /// Replaces the task's labels with the project's labels of those names (case-insensitive). A label that doesn't exist is
+    /// created with the rules of creating a label by hand: it needs <see cref="ProjectAccessLevel.Manage"/>, which an API key
+    /// never has (ADR 0016).
+    /// </summary>
+    private async Task<Result> ApplyLabelNamesAsync(Project project, TaskItem task, IReadOnlyList<string> names, bool isNew, CancellationToken cancellationToken)
+    {
+        var wanted = names.Select(name => name.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        // A sync saves after each task, so a label created for an earlier task is already in the database here.
+        var existing = await db.Labels.Where(label => label.ProjectId == project.Id).ToListAsync(cancellationToken);
+
+        var labels = new List<Label>();
+        foreach (var name in wanted)
+        {
+            var label = existing.Find(other => string.Equals(other.Name, name, StringComparison.OrdinalIgnoreCase));
+            if (label is null)
+            {
+                if (!ProjectAccess.Allows(project, ProjectAccessLevel.Manage, currentUser))
+                {
+                    return TaskSyncErrors.LabelCreateNotAllowed;
+                }
+
+                var created = Label.Create(project, name, NewLabelColor, existing, time.GetUtcNow());
+                if (!created.IsSuccess)
+                {
+                    return created.Error;
+                }
+
+                label = created.Value;
+                activity.Record(
+                    project.Id,
+                    ActivityType.LabelCreated,
+                    new { labelId = label.Id, labelName = label.Name, color = label.Color });
+                db.Labels.Add(label);
+                existing.Add(label);
+            }
+
+            labels.Add(label);
+        }
+
+        var before = task.Labels.Select(label => label.Name).Order().ToList();
+        var result = task.SetLabels(project, labels);
+        if (result.IsSuccess && !isNew && !before.SequenceEqual(labels.Select(label => label.Name).Order()))
+        {
+            activity.Record(project.Id, ActivityType.TaskUpdated, new { taskTitle = task.Title, fields = LabelsField }, task.Id);
+        }
+
+        return result;
+    }
+
+    /// <summary>The color of a label created by an upsert; it can be changed afterwards.</summary>
+    private const string NewLabelColor = "#6B7280";
+
+    private static readonly string[] LabelsField = ["labels"];
 
     /// <summary>
     /// Sets the dependencies given as external keys. <paramref name="known"/> holds the tasks already at hand (case-insensitive

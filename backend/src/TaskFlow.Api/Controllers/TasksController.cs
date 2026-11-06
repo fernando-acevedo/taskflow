@@ -129,7 +129,7 @@ public sealed class TasksController : ApiControllerBase
         CancellationToken cancellationToken) =>
         OkOrProblem(await handler.HandleAsync(
             new UpdateTaskCommand(
-                projectId, taskId, request.Title, request.Description, request.Priority, request.AssigneeId, request.DueDate, request.EstimatedMinutes, request.RowVersion, request.LabelIds),
+                projectId, taskId, request.Title, request.Description, request.Priority, request.AssigneeId, request.DueDate, request.EstimatedMinutes, request.RowVersion, request.LabelIds, request.StartDate, request.IsBlocked, request.StatusNote),
             cancellationToken));
 
     /// <summary>Moves the task to a column and position, as a Kanban drag and drop does.</summary>
@@ -176,10 +176,14 @@ public sealed record UpdateTaskRequest(
     DateOnly? DueDate,
     int? EstimatedMinutes,
     byte[] RowVersion,
-    IReadOnlyList<Guid>? LabelIds = null);
+    IReadOnlyList<Guid>? LabelIds = null,
+    DateOnly? StartDate = null,
+    bool IsBlocked = false,
+    string? StatusNote = null);
 
 /// <param name="Status">Omit to keep the status (To Do for a new task).</param>
 /// <param name="DependsOn">External keys of the tasks this one depends on. Omit to keep them, send <c>[]</c> to clear them.</param>
+/// <param name="Labels">Names of project labels. Omit to keep the task's labels, send a list to replace them. A name the project doesn't have is created, if the caller may manage labels (a person who owns the project; never an API key).</param>
 public sealed record UpsertTaskRequest(
     string Title,
     string? Description,
@@ -191,10 +195,11 @@ public sealed record UpsertTaskRequest(
     TaskItemStatus? Status = null,
     bool IsBlocked = false,
     string? StatusNote = null,
-    IReadOnlyList<string>? DependsOn = null)
+    IReadOnlyList<string>? DependsOn = null,
+    IReadOnlyList<string>? Labels = null)
 {
     internal TaskUpsertFields ToFields() =>
-        new(Title, Description, Priority, AssigneeId, StartDate, DueDate, EstimatedMinutes, Status, IsBlocked, StatusNote, DependsOn);
+        new(Title, Description, Priority, AssigneeId, StartDate, DueDate, EstimatedMinutes, Status, IsBlocked, StatusNote, DependsOn, Labels);
 }
 
 /// <summary>One task of a sync: the fields of <see cref="UpsertTaskRequest"/> plus the key that identifies it.</summary>
@@ -210,10 +215,11 @@ public sealed record SyncTaskItemRequest(
     TaskItemStatus? Status = null,
     bool IsBlocked = false,
     string? StatusNote = null,
-    IReadOnlyList<string>? DependsOn = null)
+    IReadOnlyList<string>? DependsOn = null,
+    IReadOnlyList<string>? Labels = null)
 {
     internal TaskUpsertFields ToFields() =>
-        new(Title, Description, Priority, AssigneeId, StartDate, DueDate, EstimatedMinutes, Status, IsBlocked, StatusNote, DependsOn);
+        new(Title, Description, Priority, AssigneeId, StartDate, DueDate, EstimatedMinutes, Status, IsBlocked, StatusNote, DependsOn, Labels);
 }
 
 /// <param name="Items">Between 1 and 200 tasks, each with a different <c>externalKey</c>.</param>

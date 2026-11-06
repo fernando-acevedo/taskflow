@@ -75,9 +75,12 @@ TASKFLOW_PROJECT=<id del proyecto>               # el proyecto donde viven las t
   que existir.
 - Mapeo: `T-xx` → `externalKey`; estado → columna (`pendiente` ToDo, `en_progreso` InProgress, `hecho` Done);
   `bloqueado` → `isBlocked` (la tarjeta conserva su columna); `notes` → `statusNote`; `start`/`end` →
-  `startDate`/`dueDate`; `deps` → `dependsOn`. El agente (D8) iría como etiqueta, pero el sync no maneja etiquetas:
-  por ahora va en la primera línea de la descripción (`Agente: backend-dev`), junto con el título completo cuando
-  pasa de 200 caracteres.
+  `startDate`/`dueDate`; `deps` → `dependsOn`. El agente (D8) va como etiqueta
+  `agent:<agente>` (`labels`); la descripción solo lleva el título completo cuando pasa de 200 caracteres. `labels`
+  reemplaza las etiquetas de la tarea y crea las que falten solo si quien llama es un propietario del proyecto con
+  sesión de persona: una API key nunca crea etiquetas (ADR 0016), así que antes de la primera sincronización con la key
+  hay que crear las etiquetas `agent:*` en el proyecto (o correr el import una vez con una sesión de propietario). Si
+  falta una, el ítem falla con `Labels.CreateNotAllowed` y el lote no se aplica.
 - La API reemplaza todos los campos de la tarea, así que el hook completa la actualización con la tarea del SEED de
   `docs/panel-gantt.html`; una tarea que no está en el SEED (ni trae `title`) no se manda.
 - Si faltan variables o la API falla, nada cambia: el hook sigue escribiendo `docs/gantt-updates.js` y el mensaje del

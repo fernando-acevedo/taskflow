@@ -45,6 +45,7 @@
   <data name="Labels.InvalidColor" xml:space="preserve"><value>The color must be a hex value like #1A2B3C.</value></data>
   <data name="Labels.NameTaken" xml:space="preserve"><value>The project already has a label with this name.</value></data>
   <data name="Labels.NotInProject" xml:space="preserve"><value>One or more labels don't belong to the project.</value></data>
+  <data name="Labels.CreateNotAllowed" xml:space="preserve"><value>The project doesn't have this label, and only a project owner signed in as a person can create labels.</value></data>
   <data name="TaskComments.NotFound" xml:space="preserve"><value>The comment was not found.</value></data>
   <data name="Notifications.NotFound" xml:space="preserve"><value>The notification was not found.</value></data>
   <data name="TaskComments.BodyRequired" xml:space="preserve"><value>The comment can't be empty.</value></data>
