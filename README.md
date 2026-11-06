@@ -8,7 +8,7 @@ mentions, time tracking and a workload dashboard, in English and Spanish. It is 
 an ASP.NET Core 10 API in Clean Architecture on SQL Server, an Angular 22 frontend with NgRx and Angular Material,
 and a free-tier Azure deployment defined in Bicep.
 
-> **Status:** phases 0 to 5 are done in code and phase 6 (polish) is in progress; the first Azure deploy is pending.
+> **Status:** phases 0 to 6 are done in code; the first Azure deploy is pending. Next: multitenancy, per-user theme and API keys (planned).
 > **Live demo:** `https://<your-static-web-app>.azurestaticapps.net` (coming once deployed; this is a placeholder,
 > not a working URL). Demo data resets nightly, and the demo credentials are shown on the login page.
 
