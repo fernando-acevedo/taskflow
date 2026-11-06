@@ -1,0 +1,106 @@
+<ng-container *transloco="let t; prefix: 'time'">
+  @let current = filters();
+
+  <div class="filters">
+    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="range">
+      <mat-label>{{ t('from') }}</mat-label>
+      <input matInput type="date" [value]="current.from ?? ''" [max]="current.to" (change)="setDate('from', $event)" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="range">
+      <mat-label>{{ t('to') }}</mat-label>
+      <input matInput type="date" [value]="current.to ?? ''" [min]="current.from" (change)="setDate('to', $event)" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>{{ t('person') }}</mat-label>
+      <mat-select [value]="current.userId" (selectionChange)="setFilter({ userId: $event.value })">
+        <mat-option [value]="null">{{ t('anyone') }}</mat-option>
+        @for (member of members(); track member.userId) {
+          <mat-option [value]="member.userId">{{ member.displayName }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <div class="actions">
+      @if (filtered()) {
+        <button mat-button type="button" (click)="clearFilters()">{{ t('clearFilters') }}</button>
+      }
+      <button mat-stroked-button type="button" [disabled]="exporting() || !exportRangeValid()" (click)="exportCsv()">
+        <mat-icon aria-hidden="true">download</mat-icon>
+        {{ t('exportCsv') }}
+      </button>
+    </div>
+  </div>
+
+  @if (!exportRangeValid()) {
+    <p class="none" role="alert">{{ t('invalidRange') }}</p>
+  }
+
+  @if (!invalidRange()) {
+    @if (loading()) {
+      <mat-progress-bar mode="indeterminate" [attr.aria-label]="t('loading')" />
+    }
+
+    @if (error(); as loadError) {
+      <app-empty-state icon="cloud_off" [message]="notifier.errorMessage(loadError)">
+        <button mat-button type="button" (click)="reload()">{{ t('retry') }}</button>
+      </app-empty-state>
+    } @else if (report(); as data) {
+      <mat-card appearance="outlined">
+        <mat-card-header>
+          <mat-card-title>{{ t('reportTotal') }}</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <p class="total">{{ format(data.totalMinutes) }}</p>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card appearance="outlined">
+        <mat-card-header>
+          <mat-card-title>{{ t('byPerson') }}</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          @if (userRows().length) {
+            <app-bar-list [rows]="userRows()" />
+          } @else {
+            <p class="none">{{ t('noHours') }}</p>
+          }
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card appearance="outlined">
+        <mat-card-header>
+          <mat-card-title>{{ t('byTask') }}</mat-card-title>
+          <mat-card-subtitle>{{ t('estimateVsActual') }}</mat-card-subtitle>
+        </mat-card-header>
+        @if (data.byTask.length === 0) {
+          <mat-card-content>
+            <p class="none">{{ t('noHours') }}</p>
+          </mat-card-content>
+        } @else {
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">{{ t('task') }}</th>
+                <th scope="col" class="num">{{ t('estimated') }}</th>
+                <th scope="col" class="num">{{ t('hoursLogged') }}</th>
+                <th scope="col" class="bar">{{ t('progress') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of data.byTask; track row.taskId) {
+                <tr>
+                  <th scope="row">{{ row.title }}</th>
+                  <td class="num">{{ row.estimatedMinutes === null ? t('none') : format(row.estimatedMinutes) }}</td>
+                  <td class="num">{{ format(row.actualMinutes) }}</td>
+                  <td class="bar"><app-hours-bar [actual]="row.actualMinutes" [estimated]="row.estimatedMinutes" /></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </mat-card>
+    }
+  }
+</ng-container>

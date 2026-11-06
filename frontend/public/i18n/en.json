@@ -188,6 +188,14 @@
       "MentionNotMember": "You can only mention members of this project.",
       "NotAuthor": "Only the author can edit a comment.",
       "NotAuthorOrManager": "Only the author or a project owner can delete a comment."
+    },
+    "TimeEntries": {
+      "NotFound": "The time entry was not found.",
+      "NotOwner": "Only the person who logged this time or a project owner can change it.",
+      "FutureDate": "The date can't be in the future.",
+      "InvalidRange": "Choose a start and an end date, the start not after the end, within a range of up to 366 days.",
+      "InvalidMinutes": "The duration must be between 1 minute and 24 hours.",
+      "NoteTooLong": "The note can't be longer than 500 characters."
     }
   },
   "clients": {
@@ -301,7 +309,8 @@
       "members": "Members",
       "settings": "Settings",
       "overview": "Overview",
-      "activity": "Activity"
+      "activity": "Activity",
+      "hours": "Hours"
     }
   },
   "members": {
@@ -384,7 +393,10 @@
     "deleteMessage": "“{{ title }}” will be deleted permanently.",
     "labels": "Labels",
     "noLabels": "This project has no labels yet. Owners can create them in Settings.",
-    "anyLabel": "Any label"
+    "anyLabel": "Any label",
+    "estimate": "Estimate",
+    "estimateHint": "Hours and minutes (2:30, 2h 30m) or decimal hours (2.5)",
+    "estimateRule": "Enter a duration such as 2:30, 2h 30m or 2.5."
   },
   "dashboard": {
     "intro": "Here is what needs your attention across your projects.",
@@ -411,7 +423,9 @@
     "byAssignee": "Workload by assignee",
     "byPriority": "Open tasks by priority",
     "openOnly": "Tasks not done yet",
-    "nothingOpen": "Every task is done."
+    "nothingOpen": "Every task is done.",
+    "myHours": "My hours this week",
+    "myHoursSubtitle": "Time you logged, Monday to Sunday"
   },
   "passwordStrength": {
     "label": "Strength",
@@ -512,7 +526,56 @@
       "dueDateCleared": "Removed the due date",
       "description": "Description edited",
       "labelsAdded": "Labels added: {{ labels }}",
-      "labelsRemoved": "Labels removed: {{ labels }}"
+      "labelsRemoved": "Labels removed: {{ labels }}",
+      "estimate": "Estimate: {{ from }} → {{ to }}",
+      "estimateSet": "Set the estimate to {{ to }}",
+      "estimateCleared": "Removed the estimate"
     }
+  },
+  "time": {
+    "title": "Hours",
+    "loadFailed": "The hours could not be loaded.",
+    "loading": "Loading hours…",
+    "empty": "No time logged yet.",
+    "readOnly": "You can't log time on this task.",
+    "yourEntries": "The list shows your entries; the total is for the whole task.",
+    "edit": "Edit entry",
+    "delete": "Delete entry",
+    "deleteTitle": "Delete this entry?",
+    "deleteMessage": "The {{ time }} logged by {{ user }} will be removed.",
+    "date": "Date",
+    "dateRule": "Choose a date that is not in the future.",
+    "duration": "Duration",
+    "durationHint": "2:30, 2h 30m or 2.5",
+    "durationRule": "Enter a duration between 1 minute and 24 hours.",
+    "note": "Note",
+    "noteRule": "The note can't be longer than {{ max }} characters.",
+    "log": "Log time",
+    "save": "Save",
+    "cancel": "Cancel",
+    "logged": "Time logged.",
+    "saved": "Entry saved.",
+    "deleted": "Entry deleted.",
+    "of": "{{ actual }} of {{ estimate }}",
+    "noEstimate": "logged, no estimate",
+    "overBy": "over by {{ time }}",
+    "from": "From",
+    "to": "To",
+    "person": "Person",
+    "anyone": "Everyone",
+    "clearFilters": "Clear filters",
+    "exportCsv": "Export CSV",
+    "invalidRange": "Choose a start and an end date, the start not after the end, within a range of up to 366 days.",
+    "retry": "Retry",
+    "reportTotal": "Total logged",
+    "byPerson": "By person",
+    "byTask": "By task",
+    "estimateVsActual": "Estimate against time logged",
+    "task": "Task",
+    "estimated": "Estimate",
+    "hoursLogged": "Logged",
+    "progress": "Progress",
+    "none": "None",
+    "noHours": "No time logged in this period."
   }
 }

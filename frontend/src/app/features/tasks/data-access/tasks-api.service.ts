@@ -21,6 +21,8 @@ export interface Task {
   /** `yyyy-MM-dd`. */
   readonly dueDate: string | null;
   readonly labels: readonly Label[];
+  /** Null when the task has no estimate. */
+  readonly estimatedMinutes: number | null;
   readonly isOverdue: boolean;
   readonly position: number;
   readonly createdById: string;
@@ -38,6 +40,8 @@ export interface TaskInput {
   readonly dueDate: string | null;
   /** The complete list of the task's labels. */
   readonly labelIds: readonly string[];
+  /** Null for no estimate. */
+  readonly estimatedMinutes: number | null;
 }
 
 @Injectable({ providedIn: 'root' })

@@ -9,11 +9,17 @@ namespace TaskFlow.Api.Controllers;
 [Route("api")]
 public sealed class DashboardController : ApiControllerBase
 {
-    /// <summary>The signed-in user's open tasks and a summary per client of the projects they can see.</summary>
+    /// <summary>
+    /// The signed-in user's open tasks and a summary per client of the projects they can see. <c>today</c> (yyyy-MM-dd) is the
+    /// client's local date; within one day of UTC today it picks the week of the logged hours.
+    /// </summary>
     [HttpGet("dashboard")]
     [ProducesResponseType<MyDashboardDto>(StatusCodes.Status200OK)]
-    public async Task<ActionResult<MyDashboardDto>> Mine([FromServices] GetMyDashboardHandler handler, CancellationToken cancellationToken) =>
-        OkOrProblem(await handler.HandleAsync(cancellationToken));
+    public async Task<ActionResult<MyDashboardDto>> Mine(
+        [FromServices] GetMyDashboardHandler handler,
+        CancellationToken cancellationToken,
+        [FromQuery] DateOnly? today = null) =>
+        OkOrProblem(await handler.HandleAsync(today, cancellationToken));
 
     /// <summary>A project's tasks by status, open tasks by priority and by assignee, overdue and due this week.</summary>
     [HttpGet("projects/{projectId:guid}/dashboard")]

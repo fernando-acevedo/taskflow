@@ -11,10 +11,13 @@ import { MatSelectModule } from '@angular/material/select';
 import { TranslocoDirective } from '@jsverse/transloco';
 import { applyApiFieldErrors } from '../../../shared/data-access/api-field-errors';
 import { SaveFn } from '../../../shared/data-access/submission';
+import { parseDuration, toClockText } from '../../../shared/ui/duration';
+import { localToday } from '../../../shared/ui/local-today';
 import { Label } from '../../labels/data-access/labels-api.service';
 import { TaskHistory } from '../../activity/ui/task-history';
 import { TaskComments } from '../../comments/ui/task-comments';
 import { LabelChip } from '../../labels/ui/label-chip';
+import { TaskTime } from '../../time-tracking/ui/task-time';
 import { ProjectMember } from '../../projects/data-access/projects-api.service';
 import { TASK_PRIORITIES, Task, TaskInput, TaskPriority } from '../data-access/tasks-api.service';
 
@@ -30,11 +33,8 @@ export interface TaskFormData {
 /** The dialog saves by itself and closes without a result; it closes with this when the user asks to delete. */
 export type TaskFormResult = 'deleteRequested';
 
-/** Today in the browser's time zone as `yyyy-MM-dd`, the format of date inputs and of the API. */
-export function localToday(now = new Date()): string {
-  const offset = now.getTimezoneOffset() * 60_000;
-  return new Date(now.getTime() - offset).toISOString().slice(0, 10);
-}
+/** Far above any real estimate; keeps a typo from reaching the API as a huge number. */
+const MAX_ESTIMATE_MINUTES = 9999 * 60;
 
 /**
  * Creates a task, or shows and edits the one passed in. Read-only for admins who aren't members. Stays open,
@@ -55,6 +55,7 @@ export function localToday(now = new Date()): string {
     LabelChip,
     TaskComments,
     TaskHistory,
+    TaskTime,
   ],
   templateUrl: './task-form-dialog.html',
   styles: `
@@ -94,6 +95,8 @@ export class TaskFormDialog {
     assigneeId: [this.data.task?.assigneeId ?? ''],
     dueDate: [this.data.task?.dueDate ?? ''],
     labelIds: [this.data.task?.labels.map((label) => label.id) ?? []],
+    /** Hours and minutes ("2:30", "2h 30m") or decimal hours ("2.5"); empty for no estimate. */
+    estimatedMinutes: [toClockText(this.data.task?.estimatedMinutes ?? null)],
   });
 
   constructor() {
@@ -106,6 +109,11 @@ export class TaskFormDialog {
     const { dueDate } = this.form.getRawValue();
     if (this.minDate && dueDate && dueDate < this.minDate) {
       this.form.controls.dueDate.setErrors({ past: true });
+    }
+    const estimateText = this.form.controls.estimatedMinutes.value.trim();
+    const estimate = estimateText === '' ? null : parseDuration(estimateText);
+    if (estimateText !== '' && (estimate === null || estimate > MAX_ESTIMATE_MINUTES)) {
+      this.form.controls.estimatedMinutes.setErrors({ duration: true });
     }
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -121,6 +129,7 @@ export class TaskFormDialog {
         assigneeId: assigneeId || null,
         dueDate: dueDate || null,
         labelIds,
+        estimatedMinutes: estimate,
       })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((error) => {

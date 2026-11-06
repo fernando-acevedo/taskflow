@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
+import { localToday } from '../../../shared/ui/local-today';
 import { TaskPriority, TaskStatus } from '../../tasks/data-access/tasks-api.service';
 
 export interface MyTask {
@@ -28,6 +29,10 @@ export interface MyDashboard {
   readonly openTasks: number;
   readonly overdueTasks: number;
   readonly dueThisWeek: number;
+  /** Minutes the user logged this week (Monday to Sunday, UTC). */
+  readonly weekMinutes: number;
+  /** Minutes logged on each day of this week, Monday first. */
+  readonly weekMinutesByDay: readonly number[];
   /** The first 50 open tasks assigned to the user, overdue first, then by due date. */
   readonly tasks: readonly MyTask[];
   readonly clients: readonly ClientSummary[];
@@ -60,7 +65,7 @@ export class DashboardApiService {
   private readonly baseUrl = `${environment.apiUrl}/api`;
 
   mine(): Observable<MyDashboard> {
-    return this.http.get<MyDashboard>(`${this.baseUrl}/dashboard`);
+    return this.http.get<MyDashboard>(`${this.baseUrl}/dashboard`, { params: { today: localToday() } });
   }
 
   project(projectId: string): Observable<ProjectDashboard> {

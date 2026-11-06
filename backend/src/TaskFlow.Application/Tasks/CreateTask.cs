@@ -17,6 +17,7 @@ public sealed record CreateTaskCommand(
     TaskPriority Priority = TaskPriority.Medium,
     Guid? AssigneeId = null,
     DateOnly? DueDate = null,
+    int? EstimatedMinutes = null,
     IReadOnlyList<Guid>? LabelIds = null) : ITaskFields;
 
 public sealed class CreateTaskValidator : AbstractValidator<CreateTaskCommand>
@@ -66,7 +67,8 @@ public sealed class CreateTaskHandler(
             command.DueDate,
             currentUser.Id,
             position,
-            time.GetUtcNow());
+            time.GetUtcNow(),
+            command.EstimatedMinutes);
         if (!created.IsSuccess)
         {
             return created.Error;

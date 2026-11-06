@@ -47,6 +47,7 @@ export class ProjectPage {
     { path: 'board', label: 'project.tabs.board', icon: 'view_kanban' },
     { path: 'list', label: 'project.tabs.list', icon: 'list' },
     { path: 'overview', label: 'project.tabs.overview', icon: 'insights' },
+    { path: 'hours', label: 'project.tabs.hours', icon: 'schedule' },
     { path: 'activity', label: 'project.tabs.activity', icon: 'history' },
     { path: 'members', label: 'project.tabs.members', icon: 'group' },
     { path: 'settings', label: 'project.tabs.settings', icon: 'settings' },
