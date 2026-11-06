@@ -9,7 +9,7 @@ public sealed class ResendInvitationHandlerTests
     private readonly IInvitationSender _invitations = Substitute.For<IInvitationSender>();
     private readonly ResendInvitationHandler _handler;
 
-    public ResendInvitationHandlerTests() => _handler = new ResendInvitationHandler(_identity, _invitations);
+    public ResendInvitationHandlerTests() => _handler = new ResendInvitationHandler(_identity, _invitations, Substitute.For<TaskFlow.Application.Demo.IDemoMode>());
 
     [Fact]
     public async Task ReturnsNotFoundForUnknownUser()
@@ -48,5 +48,18 @@ public sealed class ResendInvitationHandlerTests
         var user = new UserDto(Guid.NewGuid(), "someone@tests.local", "someone", true, [], DateTimeOffset.UtcNow, isInvitationPending);
         _identity.FindByIdAsync(user.Id, Arg.Any<CancellationToken>()).Returns(user);
         return user;
+    }
+
+    [Fact]
+    public async Task IsDisabledInTheDemo()
+    {
+        var demo = Substitute.For<TaskFlow.Application.Demo.IDemoMode>();
+        demo.IsEnabled.Returns(true);
+        var handler = new ResendInvitationHandler(_identity, _invitations, demo);
+
+        var result = await handler.HandleAsync(new ResendInvitationCommand(Guid.NewGuid()), TestContext.Current.CancellationToken);
+
+        result.Error.ShouldBe(TaskFlow.Application.Demo.DemoErrors.ActionDisabled);
+        await _invitations.DidNotReceiveWithAnyArgs().SendAsync(default!, default!, TestContext.Current.CancellationToken);
     }
 }

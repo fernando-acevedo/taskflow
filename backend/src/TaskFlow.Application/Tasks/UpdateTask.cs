@@ -4,9 +4,11 @@ using Microsoft.EntityFrameworkCore;
 using TaskFlow.Application.Abstractions;
 using TaskFlow.Application.Activity;
 using TaskFlow.Application.Common;
+using TaskFlow.Application.Notifications;
 using TaskFlow.Application.Projects;
 using TaskFlow.Domain.Activity;
 using TaskFlow.Domain.Common;
+using TaskFlow.Domain.Notifications;
 using TaskFlow.Domain.Tasks;
 
 namespace TaskFlow.Application.Tasks;
@@ -20,6 +22,7 @@ public sealed record UpdateTaskCommand(
     TaskPriority Priority,
     Guid? AssigneeId,
     DateOnly? DueDate,
+    int? EstimatedMinutes,
     byte[] RowVersion,
     IReadOnlyList<Guid>? LabelIds = null) : ITaskFields;
 
@@ -39,6 +42,7 @@ public sealed class UpdateTaskHandler(
     IValidator<UpdateTaskCommand> validator,
     GetTaskHandler getTask,
     ActivityLog activity,
+    Notifier notifier,
     TimeProvider time)
 {
     public async Task<Result<TaskDto>> HandleAsync(UpdateTaskCommand command, CancellationToken cancellationToken)
@@ -67,7 +71,7 @@ public sealed class UpdateTaskHandler(
             return CommonErrors.Stale;
         }
 
-        var before = (task.Title, task.Description, task.Priority, task.AssigneeId, task.DueDate);
+        var before = (task.Title, task.Description, task.Priority, task.AssigneeId, task.DueDate, task.EstimatedMinutes);
         var labelsBefore = task.Labels.Select(label => label.Name).ToList();
 
         var updated = task.Update(
@@ -77,7 +81,8 @@ public sealed class UpdateTaskHandler(
             command.Priority,
             command.AssigneeId,
             command.DueDate,
-            time.GetUtcNow());
+            time.GetUtcNow(),
+            command.EstimatedMinutes);
         if (!updated.IsSuccess)
         {
             return updated.Error;
@@ -90,7 +95,14 @@ public sealed class UpdateTaskHandler(
         }
 
         RecordChanges(command.ProjectId, task, before, labelsBefore);
+        if (before.AssigneeId != task.AssigneeId && task.AssigneeId is { } assigneeId)
+        {
+            await notifier.NotifyAsync(
+                NotificationType.TaskAssigned, assigneeId, command.ProjectId, allowed.Value.Name, task.Id, task.Title, null, cancellationToken);
+        }
+
         await db.SaveChangesAsync(cancellationToken);
+        await notifier.SendEmailsAsync(cancellationToken);
         return await getTask.HandleAsync(new GetTaskQuery(command.ProjectId, task.Id), cancellationToken);
     }
 
@@ -98,7 +110,7 @@ public sealed class UpdateTaskHandler(
     private void RecordChanges(
         Guid projectId,
         TaskItem task,
-        (string Title, string? Description, TaskPriority Priority, Guid? AssigneeId, DateOnly? DueDate) before,
+        (string Title, string? Description, TaskPriority Priority, Guid? AssigneeId, DateOnly? DueDate, int? EstimatedMinutes) before,
         List<string> labelsBefore)
     {
         var labelsAfter = task.Labels.Select(label => label.Name).ToList();
@@ -109,7 +121,8 @@ public sealed class UpdateTaskHandler(
         var priorityChanged = before.Priority != task.Priority;
         var dueDateChanged = before.DueDate != task.DueDate;
         var descriptionChanged = before.Description != task.Description;
-        if (titleChanged || priorityChanged || dueDateChanged || descriptionChanged || added.Count > 0 || removed.Count > 0)
+        var estimateChanged = before.EstimatedMinutes != task.EstimatedMinutes;
+        if (titleChanged || priorityChanged || dueDateChanged || descriptionChanged || estimateChanged || added.Count > 0 || removed.Count > 0)
         {
             activity.Record(
                 projectId,
@@ -120,6 +133,7 @@ public sealed class UpdateTaskHandler(
                     title = titleChanged ? new ValueChange<string>(before.Title, task.Title) : null,
                     priority = priorityChanged ? new ValueChange<TaskPriority>(before.Priority, task.Priority) : null,
                     dueDate = dueDateChanged ? new ValueChange<DateOnly?>(before.DueDate, task.DueDate) : null,
+                    estimatedMinutes = estimateChanged ? new ValueChange<int?>(before.EstimatedMinutes, task.EstimatedMinutes) : null,
                     descriptionChanged = descriptionChanged ? true : (bool?)null,
                     labelsAdded = added.Count > 0 ? added : null,
                     labelsRemoved = removed.Count > 0 ? removed : null,

@@ -19,6 +19,7 @@ public sealed record TaskDto(
     TaskPriority Priority,
     Guid? AssigneeId,
     DateOnly? DueDate,
+    int? EstimatedMinutes,
     bool IsOverdue,
     int Position,
     Guid CreatedById,
@@ -41,6 +42,8 @@ public interface ITaskFields
 
     DateOnly? DueDate { get; }
 
+    int? EstimatedMinutes { get; }
+
     /// <summary>Labels to put on the task; null leaves them as they are (on create, no labels).</summary>
     IReadOnlyList<Guid>? LabelIds { get; }
 }
@@ -53,11 +56,14 @@ internal static class TaskQueries
         validator.RuleFor(fields => fields.Title).NotEmpty().MaximumLength(TaskItem.TitleMaxLength);
         validator.RuleFor(fields => fields.Description).MaximumLength(TaskItem.DescriptionMaxLength);
         validator.RuleFor(fields => fields.Priority).IsInEnum();
+        validator.RuleFor(fields => fields.EstimatedMinutes).InclusiveBetween(0, MaxEstimatedMinutes);
         validator.RuleFor(fields => fields.LabelIds).Must(ids => ids!.Count <= MaxLabelsPerTask)
             .When(fields => fields.LabelIds is not null);
     }
 
     public const int MaxLabelsPerTask = 20;
+
+    public const int MaxEstimatedMinutes = 9999 * 60;
 
     /// <summary>Sets the task's labels from the ids, which must all be labels of the project. Null changes nothing.</summary>
     public static async Task<Result> ApplyLabelsAsync(
@@ -99,6 +105,7 @@ internal static class TaskQueries
             task.Priority,
             task.AssigneeId,
             task.DueDate,
+            task.EstimatedMinutes,
             task.DueDate < today && task.Status != TaskItemStatus.Done,
             task.Position,
             task.CreatedById,

@@ -1,0 +1,58 @@
+name: Deploy API
+
+on:
+  push:
+    branches: [main]
+    paths: ['backend/**', '.github/workflows/deploy-api.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # OIDC token for azure/login
+
+concurrency:
+  group: deploy-api
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # The Entra federated credential only trusts this environment (subject ...:environment:production).
+    environment: production
+    env:
+      API_URL: ${{ vars.API_URL }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: backend/global.json
+
+      - name: Publish
+        run: dotnet publish backend/src/TaskFlow.Api --configuration Release --output ./publish
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy to App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.AZURE_WEBAPP_NAME }}
+          package: ./publish
+
+      # Cold start plus migrations on the first request can take minutes on F1 and a paused database.
+      - name: Wait for /health
+        run: |
+          if [ -z "$API_URL" ]; then echo "vars.API_URL is empty"; exit 1; fi
+          for i in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -m 60 -w '%{http_code}' "${API_URL%/}/health" || true)
+            echo "Attempt $i: HTTP $code"
+            if [ "$code" = "200" ]; then exit 0; fi
+            sleep 20
+          done
+          echo "API did not become healthy"
+          exit 1

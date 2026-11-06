@@ -11,6 +11,7 @@ export function aTask(overrides: Partial<Task> & Pick<Task, 'id'>): Task {
     assigneeId: null,
     dueDate: null,
     labels: [],
+    estimatedMinutes: null,
     isOverdue: false,
     position: 0,
     createdById: 'u1',

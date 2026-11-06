@@ -3,9 +3,11 @@ using Microsoft.EntityFrameworkCore;
 using TaskFlow.Application.Abstractions;
 using TaskFlow.Application.Activity;
 using TaskFlow.Application.Common;
+using TaskFlow.Application.Notifications;
 using TaskFlow.Application.Projects;
 using TaskFlow.Domain.Activity;
 using TaskFlow.Domain.Common;
+using TaskFlow.Domain.Notifications;
 using TaskFlow.Domain.Tasks;
 
 namespace TaskFlow.Application.Tasks;
@@ -17,6 +19,7 @@ public sealed record CreateTaskCommand(
     TaskPriority Priority = TaskPriority.Medium,
     Guid? AssigneeId = null,
     DateOnly? DueDate = null,
+    int? EstimatedMinutes = null,
     IReadOnlyList<Guid>? LabelIds = null) : ITaskFields;
 
 public sealed class CreateTaskValidator : AbstractValidator<CreateTaskCommand>
@@ -36,6 +39,7 @@ public sealed class CreateTaskHandler(
     IValidator<CreateTaskCommand> validator,
     GetTaskHandler getTask,
     ActivityLog activity,
+    Notifier notifier,
     TimeProvider time)
 {
     public async Task<Result<TaskDto>> HandleAsync(CreateTaskCommand command, CancellationToken cancellationToken)
@@ -66,7 +70,8 @@ public sealed class CreateTaskHandler(
             command.DueDate,
             currentUser.Id,
             position,
-            time.GetUtcNow());
+            time.GetUtcNow(),
+            command.EstimatedMinutes);
         if (!created.IsSuccess)
         {
             return created.Error;
@@ -84,8 +89,15 @@ public sealed class CreateTaskHandler(
             ActivityType.TaskCreated,
             new { taskTitle = task.Title, status = task.Status, priority = task.Priority, assigneeId = task.AssigneeId },
             task.Id);
+        if (task.AssigneeId is { } assigneeId)
+        {
+            await notifier.NotifyAsync(
+                NotificationType.TaskAssigned, assigneeId, command.ProjectId, allowed.Value.Name, task.Id, task.Title, null, cancellationToken);
+        }
+
         db.Tasks.Add(task);
         await db.SaveChangesAsync(cancellationToken);
+        await notifier.SendEmailsAsync(cancellationToken);
 
         return await getTask.HandleAsync(new GetTaskQuery(command.ProjectId, created.Value.Id), cancellationToken);
     }

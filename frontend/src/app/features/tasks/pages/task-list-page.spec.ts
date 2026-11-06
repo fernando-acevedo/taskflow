@@ -5,6 +5,7 @@ import { TranslocoTestingModule } from '@jsverse/transloco';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { of } from 'rxjs';
 import { LanguageService } from '../../../core/i18n/language.service';
+import { expectNoAxeViolations } from '../../../shared/testing/axe';
 import { labelsFeature } from '../../labels/data-access/store/labels.feature';
 import { projectsFeature } from '../../projects/data-access/store/projects.feature';
 import { NO_FILTERS, TaskFilters } from '../data-access/store/task-filters';
@@ -16,7 +17,7 @@ describe('TaskListPage label filter', () => {
   const navigate = vi.fn(() => Promise.resolve(true));
   const route = { parent: { paramMap: of(convertToParamMap({ projectId: 'p1' })) } };
 
-  function render(filters: TaskFilters, labelsState: { projectId: string | null; loading: boolean }) {
+  function render(filters: TaskFilters, labelsState: { projectId: string | null; loading: boolean }): HTMLElement {
     navigate.mockClear();
     TestBed.configureTestingModule({
       imports: [
@@ -49,7 +50,12 @@ describe('TaskListPage label filter', () => {
     const fixture = TestBed.createComponent(TaskListPage);
     fixture.detectChanges();
     TestBed.tick();
+    return fixture.nativeElement as HTMLElement;
   }
+
+  it('has no accessibility violations', async () => {
+    await expectNoAxeViolations(render(NO_FILTERS, { projectId: 'p1', loading: false }));
+  });
 
   it('clears a label that no longer belongs to the project', () => {
     render({ ...NO_FILTERS, label: 'gone' }, { projectId: 'p1', loading: false });

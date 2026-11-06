@@ -28,6 +28,11 @@ Desde `backend/`:
 2. Tests acotados a lo que tocaste: `dotnet test tests/<Proyecto> --filter "FullyQualifiedName~<Clase>" 2>&1 | tail -n 15`
    (los tests de integración necesitan Docker o LocalDB; si se saltean, decilo).
 
+## Autonomía (obligatorio)
+- No hay nadie del otro lado para contestar: nunca termines con una pregunta ni pidas confirmación ("¿sigo?", "¿querés que...?").
+- Ante una duda que no bloquea, elegí la opción más consistente con CLAUDE.md, las ADRs y el código vecino, seguí, y anotala en "Supuestos".
+- Devolvé `bloqueado` solo si no podés avanzar: falta el trabajo de otro agente, un permiso denegado (no lo esquives), o una decisión de producto que cambia el modelo y no vino en el encargo.
+
 ## Respuesta final (solo esto, máx. 15 líneas)
 ```
 RESULTADO <id-tarea>
@@ -37,5 +42,6 @@ Build: ok | falla (<1 línea>)
 Tests: <comando corto> → <N ok / M fallan / saltados>
 Blockers: ninguno | <1 línea cada uno>
 Pendiente para otros agentes: ninguno | <agente>: <qué>
+Supuestos: ninguno | <1 línea cada uno>
 Gantt: {"id":"<id-tarea>","status":"hecho|en_progreso|bloqueado","notes":"<≤80 caracteres>"}
 ```

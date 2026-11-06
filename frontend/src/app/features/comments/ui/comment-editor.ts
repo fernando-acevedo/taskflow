@@ -37,10 +37,7 @@ import { ActiveMention, Mentionable, activeMention, insertMention, mentionedIds,
             matInput
             formControlName="body"
             rows="3"
-            role="combobox"
             aria-autocomplete="list"
-            aria-haspopup="listbox"
-            [attr.aria-expanded]="suggestions().length > 0"
             [attr.aria-controls]="suggestions().length > 0 ? listId : null"
             [attr.aria-activedescendant]="suggestions().length > 0 ? listId + '-' + highlighted() : null"
             (input)="track(box)"

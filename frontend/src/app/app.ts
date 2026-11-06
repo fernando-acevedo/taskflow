@@ -9,8 +9,17 @@ import { TranslocoDirective } from '@jsverse/transloco';
 import { Store } from '@ngrx/store';
 import { ShellActions } from './core/auth/store/auth.actions';
 import { authFeature } from './core/auth/store/auth.feature';
+import { DemoService } from './core/demo/demo.service';
 import { LanguageService } from './core/i18n/language.service';
 import { SUPPORTED_LANGUAGES } from './core/i18n/languages';
+import { NotificationBell } from './features/notifications/ui/notification-bell';
+
+const languageNames = new Map<string, string>(
+  SUPPORTED_LANGUAGES.map((language) => {
+    const name = new Intl.DisplayNames([language], { type: 'language' }).of(language) ?? language;
+    return [language, name.charAt(0).toLocaleUpperCase(language) + name.slice(1)];
+  }),
+);
 
 @Component({
   selector: 'app-root',
@@ -20,6 +29,7 @@ import { SUPPORTED_LANGUAGES } from './core/i18n/languages';
     MatIconModule,
     MatMenuModule,
     MatToolbarModule,
+    NotificationBell,
     RouterLink,
     RouterLinkActive,
     RouterOutlet,
@@ -32,9 +42,21 @@ import { SUPPORTED_LANGUAGES } from './core/i18n/languages';
 export class App {
   private readonly store = inject(Store);
   protected readonly language = inject(LanguageService);
+  protected readonly demo = inject(DemoService).status;
   protected readonly languages = SUPPORTED_LANGUAGES;
   protected readonly user = this.store.selectSignal(authFeature.selectUser);
   protected readonly isAdmin = this.store.selectSignal(authFeature.selectIsAdmin);
+
+  /** A skip link must move focus too: the router would treat the bare #main anchor as a navigation. */
+  protected skipToContent(event: Event, main: HTMLElement): void {
+    event.preventDefault();
+    main.focus();
+  }
+
+  /** The language's own name ("Español"), so a screen reader doesn't spell out "ES". */
+  protected languageName(language: string): string {
+    return languageNames.get(language) ?? language;
+  }
 
   protected logout(): void {
     this.store.dispatch(ShellActions.logoutClicked());

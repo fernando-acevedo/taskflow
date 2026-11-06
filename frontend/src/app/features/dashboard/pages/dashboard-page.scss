@@ -103,3 +103,13 @@ td.overdue {
     vertical-align: -3px;
   }
 }
+
+.week-hours {
+  margin-bottom: 16px;
+}
+
+.week-total {
+  margin: 0 0 12px;
+  font: var(--mat-sys-headline-small);
+  font-variant-numeric: tabular-nums;
+}

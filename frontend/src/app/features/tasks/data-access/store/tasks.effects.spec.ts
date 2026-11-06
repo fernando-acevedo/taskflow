@@ -19,7 +19,7 @@ function run(effect: Observable<Action>): Action[] {
   return emitted;
 }
 
-const input = { title: 'T', description: null, priority: 'Medium', assigneeId: null, dueDate: null, labelIds: [] } as const;
+const input = { title: 'T', description: null, priority: 'Medium', assigneeId: null, dueDate: null, labelIds: [], estimatedMinutes: null } as const;
 
 describe('tasks effects', () => {
   it('moves with the version from before the optimistic drop and reports the stored task', () => {

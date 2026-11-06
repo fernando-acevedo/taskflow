@@ -1,5 +1,6 @@
 using FluentValidation;
 using TaskFlow.Application.Common;
+using TaskFlow.Application.Demo;
 using TaskFlow.Domain.Common;
 
 namespace TaskFlow.Application.Users;
@@ -34,10 +35,16 @@ public sealed record CreatedUserDto(UserDto User, bool InvitationSent);
 public sealed class CreateUserHandler(
     IIdentityService identity,
     IInvitationSender invitations,
-    IValidator<CreateUserCommand> validator)
+    IValidator<CreateUserCommand> validator,
+    IDemoMode demo)
 {
     public async Task<Result<CreatedUserDto>> HandleAsync(CreateUserCommand command, CancellationToken cancellationToken)
     {
+        if (demo.IsEnabled)
+        {
+            return DemoErrors.ActionDisabled;
+        }
+
         var validation = await validator.ValidateAsync(command, cancellationToken);
         if (!validation.IsValid)
         {

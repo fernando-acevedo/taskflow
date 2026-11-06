@@ -24,18 +24,22 @@ public sealed record ClientSummary(Guid ClientId, string ClientName, int ActiveP
 /// and overdue tasks the user can see (their projects; every project for admins).
 /// </summary>
 /// <param name="Tasks">The first <see cref="GetMyDashboardHandler.TaskLimit"/> open tasks, overdue first, then by due date.</param>
+/// <param name="WeekMinutes">Minutes the user logged this week (Monday to Sunday of the client's local day when given, else UTC).</param>
+/// <param name="WeekMinutesByDay">Those minutes per day, Monday first (7 values).</param>
 public sealed record MyDashboardDto(
     int OpenTasks,
     int OverdueTasks,
     int DueThisWeek,
     IReadOnlyList<MyTaskDto> Tasks,
-    IReadOnlyList<ClientSummary> Clients);
+    IReadOnlyList<ClientSummary> Clients,
+    int WeekMinutes,
+    IReadOnlyList<int> WeekMinutesByDay);
 
 public sealed class GetMyDashboardHandler(IAppDbContext db, ICurrentUser currentUser, TimeProvider time)
 {
     public const int TaskLimit = 50;
 
-    public async Task<Result<MyDashboardDto>> HandleAsync(CancellationToken cancellationToken)
+    public async Task<Result<MyDashboardDto>> HandleAsync(DateOnly? clientToday, CancellationToken cancellationToken)
     {
         var userId = currentUser.Id;
         var today = time.Today();
@@ -126,6 +130,19 @@ public sealed class GetMyDashboardHandler(IAppDbContext db, ICurrentUser current
             .ThenBy(client => client.ClientName, StringComparer.CurrentCultureIgnoreCase)
             .ToList();
 
-        return new MyDashboardDto(openCount, overdueCount, dueThisWeek, tasks, clients);
+        // This week, Monday to Sunday: the minutes the user logged, per day.
+        var weekDay = clientToday is { } local && Math.Abs(local.DayNumber - today.DayNumber) <= 1 ? local : today;
+        var weekStart = weekDay.AddDays(-(((int)weekDay.DayOfWeek + 6) % 7));
+        var weekEndDay = weekStart.AddDays(6);
+        var weekLogged = await db.TimeEntries
+            .Where(entry => entry.UserId == userId && entry.Date >= weekStart && entry.Date <= weekEndDay)
+            .GroupBy(entry => entry.Date)
+            .Select(group => new { Date = group.Key, Minutes = group.Sum(entry => entry.Minutes) })
+            .ToListAsync(cancellationToken);
+        var weekByDay = Enumerable.Range(0, 7)
+            .Select(offset => weekLogged.Where(row => row.Date == weekStart.AddDays(offset)).Sum(row => row.Minutes))
+            .ToList();
+
+        return new MyDashboardDto(openCount, overdueCount, dueThisWeek, tasks, clients, weekByDay.Sum(), weekByDay);
     }
 }

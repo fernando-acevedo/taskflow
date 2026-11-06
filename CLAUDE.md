@@ -112,7 +112,7 @@ that don't need a database. `AuthApi` contains helpers for registering and loggi
 - `src/app/features/<feature>/` is split into `data-access/` (API service + NgRx `store/` with
   `*.actions.ts`, `*.effects.ts` (functional effects), `*.feature.ts` (`createFeature`)), `ui/` and `pages/`.
   Each feature has a `<feature>.routes.ts` loaded with `loadChildren`, which provides its state and effects on
-  the route (`provideState` / `provideEffects`); auth is the exception, registered at the root in `app.config.ts`.
+  the route (`provideState` / `provideEffects`); auth and notifications (the shell's bell, ADR 0010) are the exceptions, registered at the root in `app.config.ts`.
   Lists use `@ngrx/entity`. Feature reducers reset on `ShellActions.logoutClicked` / `AuthApiActions.sessionExpired`.
   Write effects use `concatMap` (none is dropped). Form dialogs stay open until the API answers: the page passes
   a `SaveFn` that tags the submitted action with a `submissionId` (`shared/data-access/submission.ts`), effects
@@ -143,11 +143,13 @@ that don't need a database. `AuthApi` contains helpers for registering and loggi
 - `.editorconfig`: LF line endings (CRLF for `.cmd`/`.bat`), 2-space indent, 4 for C#, file-scoped namespaces.
 - CI (`.github/workflows/`) builds the backend in Release and runs the tests; for the frontend it runs
   lint, tests and build.
-- `infra/` is intentionally empty until phase 5 (Azure deployment).
+- `infra/` holds the Bicep template, deploy scripts and the deployer role for Azure (ADR 0011); `deploy-*.yml` workflows deploy on push to main through the `production` environment. The public demo reset lives in `Infrastructure/Demo` (ADR 0005) and needs `Demo:Enabled` + `Demo:AllowDataWipe`.
 
 ## Workflow multiagente y ahorro de tokens
 
-El flujo completo está en `docs/workflow.md`. El estado de las tareas vive en el Panel Gantt (artifact), no en
+Para avanzar fases usá `/dev-flow F7 F8` (corre esas fases de punta a punta sin pedir confirmación) o `/dev-flow`
+solo (sugiere qué fases se pueden hacer y cuáles en paralelo); está en `.claude/skills/dev-flow/`. El flujo
+completo está en `docs/workflow.md`. El estado de las tareas vive en el Panel Gantt (artifact), no en
 el chat ni en este repo. Los subagentes no lo actualizan: cada uno devuelve una línea `Gantt: {...}` para pegarla.
 
 | Tipo de tarea | Agente | Modelo |

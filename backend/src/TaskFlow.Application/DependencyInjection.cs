@@ -2,6 +2,7 @@ using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using TaskFlow.Application.Activity;
+using TaskFlow.Application.Notifications;
 using TaskFlow.Application.Projects;
 
 namespace TaskFlow.Application;
@@ -22,6 +23,7 @@ public static class DependencyInjection
         services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly, includeInternalTypes: true);
         services.AddScoped<ProjectAccess>();
         services.AddScoped<ActivityLog>();
+        services.AddScoped<Notifier>();
         services.TryAddSingleton(TimeProvider.System);
         return services;
     }

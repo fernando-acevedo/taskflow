@@ -6,6 +6,8 @@ export interface BarRow {
   readonly key: string;
   readonly label: string;
   readonly value: number;
+  /** What to show for the value when a plain number isn't right, such as "2 h 30 min". */
+  readonly text?: string;
   /** Extra text after the value, such as "1 overdue". Shown with a warning icon when `alert` is set. */
   readonly note?: string;
   readonly alert?: boolean;
@@ -23,11 +25,11 @@ export interface BarRow {
       @for (row of rows(); track row.key) {
         <li>
           <span class="label">{{ row.label }}</span>
-          <span class="track" [matTooltip]="row.label + ': ' + row.value">
+          <span class="track" [matTooltip]="row.label + ': ' + (row.text ?? row.value)">
             <span class="fill" [style.width.%]="(row.value * 100) / scale()"></span>
           </span>
           <span class="value">
-            {{ row.value }}
+            {{ row.text ?? row.value }}
             @if (row.note) {
               <span class="note" [class.alert]="row.alert">
                 @if (row.alert) {

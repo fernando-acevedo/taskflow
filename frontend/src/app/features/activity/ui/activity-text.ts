@@ -1,3 +1,4 @@
+import { formatMinutes } from '../../../shared/ui/duration';
 import { ActivityEntry } from '../data-access/activity-api.service';
 
 export type Translate = (key: string, params?: Record<string, unknown>) => string;
@@ -78,6 +79,18 @@ export function describeActivity(entry: ActivityEntry, t: Translate): ActivityTe
           details.push(t('activity.changes.dueDateSet', { to }));
         } else {
           details.push(t('activity.changes.dueDate', { from, to }));
+        }
+      }
+      const estimate = pair(c['estimatedMinutes']);
+      if (estimate) {
+        const from = typeof estimate.from === 'number' ? formatMinutes(estimate.from) : null;
+        const to = typeof estimate.to === 'number' ? formatMinutes(estimate.to) : null;
+        if (to === null) {
+          details.push(t('activity.changes.estimateCleared'));
+        } else if (from === null) {
+          details.push(t('activity.changes.estimateSet', { to }));
+        } else {
+          details.push(t('activity.changes.estimate', { from, to }));
         }
       }
       if (c['descriptionChanged'] === true) {

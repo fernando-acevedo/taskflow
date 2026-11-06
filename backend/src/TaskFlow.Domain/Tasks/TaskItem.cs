@@ -56,6 +56,9 @@ public sealed class TaskItem
 
     public DateOnly? DueDate { get; private set; }
 
+    /// <summary>Estimated effort in minutes; null when nobody estimated it.</summary>
+    public int? EstimatedMinutes { get; private set; }
+
     /// <summary>Order within the status column, starting at 0.</summary>
     public int Position { get; private set; }
 
@@ -83,7 +86,8 @@ public sealed class TaskItem
         DateOnly? dueDate,
         Guid createdById,
         int position,
-        DateTimeOffset now)
+        DateTimeOffset now,
+        int? estimatedMinutes = null)
     {
         ArgumentNullException.ThrowIfNull(project);
         var check = project.CanChangeTask(assigneeId);
@@ -99,6 +103,7 @@ public sealed class TaskItem
             AssigneeId = assigneeId,
             DueDate = dueDate,
             Position = position,
+            EstimatedMinutes = estimatedMinutes,
         };
     }
 
@@ -109,7 +114,8 @@ public sealed class TaskItem
         TaskPriority priority,
         Guid? assigneeId,
         DateOnly? dueDate,
-        DateTimeOffset now)
+        DateTimeOffset now,
+        int? estimatedMinutes = null)
     {
         var check = CheckProject(project, assigneeId);
         if (!check.IsSuccess)
@@ -122,6 +128,7 @@ public sealed class TaskItem
         Priority = priority;
         AssigneeId = assigneeId;
         DueDate = dueDate;
+        EstimatedMinutes = estimatedMinutes;
         UpdatedAt = now;
         return Result.Success();
     }

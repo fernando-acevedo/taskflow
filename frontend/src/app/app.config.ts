@@ -5,7 +5,7 @@ import {
   provideAppInitializer,
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
-import { provideRouter, withComponentInputBinding } from '@angular/router';
+import { TitleStrategy, provideRouter, withComponentInputBinding } from '@angular/router';
 import { provideTransloco } from '@jsverse/transloco';
 import { provideEffects } from '@ngrx/effects';
 import { provideRouterStore, routerReducer } from '@ngrx/router-store';
@@ -17,6 +17,7 @@ import { hideSecrets, hideStateSecrets } from './core/auth/devtools-sanitizer';
 import { restoreSession } from './core/auth/session';
 import * as authEffects from './core/auth/store/auth.effects';
 import { authFeature } from './core/auth/store/auth.feature';
+import { TranslatedTitleStrategy } from './core/title/translated-title.strategy';
 import { acceptLanguageInterceptor } from './core/i18n/accept-language.interceptor';
 import {
   DEFAULT_LANGUAGE,
@@ -25,14 +26,23 @@ import {
   resolveInitialLanguage,
 } from './core/i18n/languages';
 import { TranslocoHttpLoader } from './core/i18n/transloco-loader';
+import * as notificationsEffects from './features/notifications/data-access/store/notifications.effects';
+import { notificationsFeature } from './features/notifications/data-access/store/notifications.feature';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes, withComponentInputBinding()),
+    { provide: TitleStrategy, useExisting: TranslatedTitleStrategy },
     provideHttpClient(withFetch(), withInterceptors([acceptLanguageInterceptor, authInterceptor])),
-    provideStore({ router: routerReducer, [authFeature.name]: authFeature.reducer }),
-    provideEffects(authEffects),
+    provideStore({
+      router: routerReducer,
+      [authFeature.name]: authFeature.reducer,
+      // Registered at the root, like auth, instead of on a route: the bell lives in the always-present shell
+      // toolbar, so its state must exist on every page for as long as the app does (ADR 0010).
+      [notificationsFeature.name]: notificationsFeature.reducer,
+    }),
+    provideEffects(authEffects, notificationsEffects),
     provideRouterStore(),
     // Development only: in production anyone with the extension could read every action and the state.
     ...(isDevMode()

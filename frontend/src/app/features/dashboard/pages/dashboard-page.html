@@ -22,6 +22,17 @@
       <app-stat-tile [label]="t('dashboard.dueThisWeek')" [value]="data.dueThisWeek" [hint]="t('dashboard.next7Days')" />
     </section>
 
+    <mat-card appearance="outlined" class="week-hours">
+      <mat-card-header>
+        <mat-card-title>{{ t('dashboard.myHours') }}</mat-card-title>
+        <mat-card-subtitle>{{ t('dashboard.myHoursSubtitle') }}</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <p class="week-total">{{ format(data.weekMinutes) }}</p>
+        <app-column-chart [columns]="weekColumns()" />
+      </mat-card-content>
+    </mat-card>
+
     <div class="columns">
       <mat-card appearance="outlined">
         <mat-card-header>

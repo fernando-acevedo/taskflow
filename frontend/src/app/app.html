@@ -1,5 +1,6 @@
 <ng-container *transloco="let t">
-  <mat-toolbar class="toolbar">
+  <a class="skip-link" href="#main" (click)="skipToContent($event, main)">{{ t('app.skipToContent') }}</a>
+  <mat-toolbar class="toolbar" role="banner">
     <a class="brand" routerLink="/">{{ t('app.title') }}</a>
     <span class="tagline">{{ t('app.tagline') }}</span>
 
@@ -23,11 +24,16 @@
       (change)="language.use($event.value)"
     >
       @for (lang of languages; track lang) {
-        <mat-button-toggle [value]="lang">{{ lang.toUpperCase() }}</mat-button-toggle>
+        <mat-button-toggle [value]="lang" [attr.lang]="lang" [aria-label]="languageName(lang)">{{ lang.toUpperCase() }}</mat-button-toggle>
       }
     </mat-button-toggle-group>
 
+    @if (user() && demo().enabled) {
+      <span class="badge demo-badge" [title]="t('demo.indicatorHint')">{{ t('demo.indicator') }}</span>
+    }
+
     @if (user(); as current) {
+      <app-notification-bell />
       <button mat-button type="button" class="account" [matMenuTriggerFor]="accountMenu" [attr.aria-label]="t('nav.account')">
         <mat-icon aria-hidden="true">account_circle</mat-icon>
         <span class="account-name">{{ current.displayName }}</span>
@@ -68,7 +74,7 @@
     }
   </mat-toolbar>
 
-  <main>
+  <main id="main" tabindex="-1" #main>
     <router-outlet />
   </main>
 </ng-container>

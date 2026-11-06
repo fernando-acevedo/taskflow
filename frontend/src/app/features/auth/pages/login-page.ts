@@ -10,10 +10,13 @@ import { TranslocoDirective } from '@jsverse/transloco';
 import { Store } from '@ngrx/store';
 import { LoginPageActions } from '../../../core/auth/store/auth.actions';
 import { authFeature } from '../../../core/auth/store/auth.feature';
+import { DemoAccount } from '../../../core/demo/demo.service';
+import { DemoPanel } from './demo-panel';
 
 @Component({
   selector: 'app-login-page',
   imports: [
+    DemoPanel,
     ReactiveFormsModule,
     RouterLink,
     MatButtonModule,
@@ -42,6 +45,12 @@ export class LoginPage {
 
   constructor() {
     this.store.dispatch(LoginPageActions.opened());
+  }
+
+  /** Fills the form from a demo account and signs in. */
+  protected useDemoAccount(account: DemoAccount): void {
+    this.form.setValue({ email: account.email, password: account.password });
+    this.submit();
   }
 
   protected submit(): void {

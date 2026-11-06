@@ -58,6 +58,15 @@ describe('describeActivity', () => {
     ]);
   });
 
+  it('describes an estimate that was set, changed or removed, either side possibly null', () => {
+    const estimate = (value: unknown) => describeType('TaskUpdated', { estimatedMinutes: value }).details;
+
+    expect(estimate({ from: null, to: 150 })).toEqual(['activity.changes.estimateSet[to=2 h 30 min]']);
+    expect(estimate({ to: 60 })).toEqual(['activity.changes.estimateSet[to=1 h]']);
+    expect(estimate({ from: 60, to: 90 })).toEqual(['activity.changes.estimate[from=1 h,to=1 h 30 min]']);
+    expect(estimate({ from: 60, to: null })).toEqual(['activity.changes.estimateCleared']);
+  });
+
   it('lists only what an update changed', () => {
     const view = describeType('TaskUpdated', {
       title: { from: 'A', to: 'B' },

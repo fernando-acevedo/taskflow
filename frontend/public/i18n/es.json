@@ -2,7 +2,8 @@
   "app": {
     "title": "TaskFlow",
     "tagline": "Gestión de proyectos para agencias digitales",
-    "language": "Idioma"
+    "language": "Idioma",
+    "skipToContent": "Saltar al contenido principal"
   },
   "nav": {
     "account": "Menú de la cuenta",
@@ -18,6 +19,13 @@
   "home": {
     "greeting": "Hola, {{ name }}",
     "openProjects": "Ir a proyectos"
+  },
+  "demo": {
+    "title": "Demo pública",
+    "useAccount": "Usar esta cuenta",
+    "resetsAt": "Los datos de la demo se restablecen el {{when}}; todo lo que cambies se borrará.",
+    "indicator": "Demo",
+    "indicatorHint": "Demo pública: los datos se restablecen periódicamente"
   },
   "auth": {
     "email": "Email",
@@ -131,12 +139,42 @@
       "database": "Base de datos"
     }
   },
+  "notifications": {
+    "bell": "Notificaciones",
+    "bellUnread": "Notificaciones, {{ count }} sin leer",
+    "title": "Notificaciones",
+    "markAllRead": "Marcar todas como leídas",
+    "empty": "No tienes nada pendiente.",
+    "loading": "Cargando...",
+    "unread": "sin leer",
+    "messages": {
+      "TaskAssigned": "{{ actor }} te asignó \"{{ task }}\"",
+      "Mentioned": "{{ actor }} te mencionó en \"{{ task }}\"",
+      "CommentOnYourTask": "{{ actor }} comentó en \"{{ task }}\"",
+      "TaskDueSoon": "\"{{ task }}\" vence {{ dueDate }}"
+    },
+    "preferences": {
+      "title": "Notificaciones por email",
+      "hint": "Las notificaciones dentro de la app siempre están activas. Elige cuáles llegan también a tu correo.",
+      "emailOnAssigned": "Cuando me asignan una tarea",
+      "emailOnMentioned": "Cuando me mencionan en un comentario",
+      "emailOnCommentOnMyTask": "Cuando alguien comenta una tarea asignada a mí",
+      "emailDailyDigest": "Un resumen diario",
+      "save": "Guardar",
+      "saved": "Preferencias guardadas",
+      "retry": "Reintentar"
+    }
+  },
   "common": {
     "cancel": "Cancelar",
     "dismiss": "Cerrar",
     "retry": "Reintentar"
   },
   "apiErrors": {
+    "Demo": {
+      "AccountProtected": "Esta cuenta se comparte en la demo pública y no se puede desactivar ni quitarle el rol de admin.",
+      "ActionDisabled": "Esta acción está deshabilitada en la demo pública."
+    },
     "validation": "Algunos campos no son válidos. Revísalos e inténtalo de nuevo.",
     "forbidden": "No tienes permiso para hacer esto.",
     "network": "No se puede conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.",
@@ -188,6 +226,17 @@
       "MentionNotMember": "Solo puedes mencionar a miembros de este proyecto.",
       "NotAuthor": "Solo el autor puede editar un comentario.",
       "NotAuthorOrManager": "Solo el autor o un propietario del proyecto puede eliminar un comentario."
+    },
+    "TimeEntries": {
+      "NotFound": "No se encontró la carga de horas.",
+      "NotOwner": "Solo quien cargó estas horas o un responsable del proyecto puede cambiarlas.",
+      "FutureDate": "La fecha no puede ser futura.",
+      "InvalidRange": "Elegí una fecha de inicio y de fin, la de inicio no posterior a la de fin, con un rango de hasta 366 días.",
+      "InvalidMinutes": "La duración debe estar entre 1 minuto y 24 horas.",
+      "NoteTooLong": "La nota no puede superar los 500 caracteres."
+    },
+    "Notifications": {
+      "NotFound": "No se encontró la notificación."
     }
   },
   "clients": {
@@ -301,7 +350,8 @@
       "members": "Miembros",
       "settings": "Configuración",
       "overview": "Resumen",
-      "activity": "Actividad"
+      "activity": "Actividad",
+      "hours": "Horas"
     }
   },
   "members": {
@@ -384,7 +434,10 @@
     "deleteMessage": "«{{ title }}» se eliminará para siempre.",
     "labels": "Etiquetas",
     "noLabels": "Este proyecto todavía no tiene etiquetas. Los responsables pueden crearlas en Ajustes.",
-    "anyLabel": "Cualquiera"
+    "anyLabel": "Cualquiera",
+    "estimate": "Estimado",
+    "estimateHint": "Horas y minutos (2:30, 2h 30m) u horas decimales (2.5)",
+    "estimateRule": "Ingresá una duración como 2:30, 2h 30m o 2.5."
   },
   "dashboard": {
     "intro": "Esto es lo que necesita tu atención en tus proyectos.",
@@ -411,7 +464,9 @@
     "byAssignee": "Carga por responsable",
     "byPriority": "Tareas abiertas por prioridad",
     "openOnly": "Tareas todavía no terminadas",
-    "nothingOpen": "Todas las tareas están hechas."
+    "nothingOpen": "Todas las tareas están hechas.",
+    "myHours": "Mis horas esta semana",
+    "myHoursSubtitle": "Tiempo que cargaste, de lunes a domingo"
   },
   "passwordStrength": {
     "label": "Fortaleza",
@@ -512,7 +567,70 @@
       "dueDateCleared": "Quitó la fecha límite",
       "description": "Descripción editada",
       "labelsAdded": "Etiquetas agregadas: {{ labels }}",
-      "labelsRemoved": "Etiquetas quitadas: {{ labels }}"
+      "labelsRemoved": "Etiquetas quitadas: {{ labels }}",
+      "estimate": "Estimado: {{ from }} → {{ to }}",
+      "estimateSet": "Fijó el estimado en {{ to }}",
+      "estimateCleared": "Quitó el estimado"
     }
+  },
+  "time": {
+    "title": "Horas",
+    "loadFailed": "No se pudieron cargar las horas.",
+    "loading": "Cargando horas…",
+    "empty": "Todavía no hay horas cargadas.",
+    "readOnly": "No podés cargar horas en esta tarea.",
+    "yourEntries": "La lista muestra tus registros; el total es el de toda la tarea.",
+    "edit": "Editar carga",
+    "delete": "Eliminar carga",
+    "deleteTitle": "¿Eliminar esta carga?",
+    "deleteMessage": "Se quitarán las {{ time }} cargadas por {{ user }}.",
+    "date": "Fecha",
+    "dateRule": "Elegí una fecha que no sea futura.",
+    "duration": "Duración",
+    "durationHint": "2:30, 2h 30m o 2.5",
+    "durationRule": "Ingresá una duración entre 1 minuto y 24 horas.",
+    "note": "Nota",
+    "noteRule": "La nota no puede superar los {{ max }} caracteres.",
+    "log": "Cargar horas",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "logged": "Horas cargadas.",
+    "saved": "Carga guardada.",
+    "deleted": "Carga eliminada.",
+    "of": "{{ actual }} de {{ estimate }}",
+    "noEstimate": "cargadas, sin estimado",
+    "overBy": "excedido por {{ time }}",
+    "from": "Desde",
+    "to": "Hasta",
+    "person": "Persona",
+    "anyone": "Todos",
+    "clearFilters": "Quitar filtros",
+    "exportCsv": "Exportar CSV",
+    "invalidRange": "Elegí una fecha de inicio y de fin, la de inicio no posterior a la de fin, con un rango de hasta 366 días.",
+    "retry": "Reintentar",
+    "reportTotal": "Total cargado",
+    "byPerson": "Por persona",
+    "byTask": "Por tarea",
+    "estimateVsActual": "Estimado contra horas cargadas",
+    "task": "Tarea",
+    "estimated": "Estimado",
+    "hoursLogged": "Cargado",
+    "progress": "Progreso",
+    "none": "Ninguno",
+    "noHours": "No hay horas cargadas en este período."
+  },
+  "titles": {
+    "login": "Iniciar sesión",
+    "register": "Crear cuenta",
+    "forgotPassword": "Contraseña olvidada",
+    "confirmEmail": "Confirmar correo",
+    "resetPassword": "Restablecer contraseña",
+    "acceptInvitation": "Aceptar invitación",
+    "status": "Estado del sistema",
+    "profile": "Perfil",
+    "users": "Usuarios",
+    "clients": "Clientes",
+    "home": "Inicio",
+    "projects": "Proyectos"
   }
 }

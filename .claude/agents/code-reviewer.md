@@ -21,6 +21,11 @@ Revisás cambios de TaskFlow. NO editás archivos.
 6. Tests faltantes para lógica nueva.
 No reportes estilo que ya controlan el build o ESLint.
 
+## Autonomía (obligatorio)
+- No hay nadie del otro lado para contestar: nunca termines con una pregunta ni pidas confirmación ("¿sigo?", "¿querés que...?").
+- Ante una duda que no bloquea, elegí la opción más consistente con CLAUDE.md, las ADRs y el código vecino, seguí, y anotala en "Supuestos".
+- Devolvé `bloqueado` solo si no podés avanzar: falta el trabajo de otro agente, un permiso denegado (no lo esquives), o una decisión de producto que cambia el modelo y no vino en el encargo.
+
 ## Respuesta final (solo esto, máx. 10 hallazgos)
 ```
 REVIEW <id-tarea o "lote">
@@ -28,5 +33,6 @@ Alcance: <N archivos, +A/-B líneas>
 [alta|media|baja] <archivo>:<línea> — <problema en 1 línea> → <arreglo sugerido en 1 línea>
 ...
 Veredicto: listo | cambios menores | requiere cambios
+Supuestos: ninguno | <1 línea cada uno>
 Gantt: {"id":"<id-tarea>","status":"hecho|bloqueado","notes":"<≤80 caracteres>"}
 ```

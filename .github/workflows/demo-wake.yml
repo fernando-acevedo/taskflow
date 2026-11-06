@@ -1,0 +1,27 @@
+name: Wake demo
+
+# The API resets the demo data when it runs after 03:00 UTC (ADR 0005). F1 has no Always On,
+# so this call wakes it a few minutes after the reset time.
+on:
+  schedule:
+    - cron: '7 3 * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  wake:
+    runs-on: ubuntu-latest
+    env:
+      API_URL: ${{ vars.API_URL }}
+    steps:
+      - name: Call /health
+        run: |
+          if [ -z "$API_URL" ]; then echo "vars.API_URL is empty"; exit 1; fi
+          for i in $(seq 1 15); do
+            code=$(curl -s -o /dev/null -m 60 -w '%{http_code}' "${API_URL%/}/health" || true)
+            echo "Attempt $i: HTTP $code"
+            if [ "$code" = "200" ]; then exit 0; fi
+            sleep 30
+          done
+          exit 1

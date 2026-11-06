@@ -50,7 +50,7 @@ public sealed class TasksController : ApiControllerBase
         CancellationToken cancellationToken) =>
         CreatedOrProblem(
             await handler.HandleAsync(
-                new CreateTaskCommand(projectId, request.Title, request.Description, request.Priority, request.AssigneeId, request.DueDate, request.LabelIds),
+                new CreateTaskCommand(projectId, request.Title, request.Description, request.Priority, request.AssigneeId, request.DueDate, request.EstimatedMinutes, request.LabelIds),
                 cancellationToken),
             nameof(Get),
             task => new { projectId, taskId = task.Id });
@@ -69,7 +69,7 @@ public sealed class TasksController : ApiControllerBase
         CancellationToken cancellationToken) =>
         OkOrProblem(await handler.HandleAsync(
             new UpdateTaskCommand(
-                projectId, taskId, request.Title, request.Description, request.Priority, request.AssigneeId, request.DueDate, request.RowVersion, request.LabelIds),
+                projectId, taskId, request.Title, request.Description, request.Priority, request.AssigneeId, request.DueDate, request.EstimatedMinutes, request.RowVersion, request.LabelIds),
             cancellationToken));
 
     /// <summary>Moves the task to a column and position, as a Kanban drag and drop does.</summary>
@@ -105,6 +105,7 @@ public sealed record CreateTaskRequest(
     TaskPriority Priority = TaskPriority.Medium,
     Guid? AssigneeId = null,
     DateOnly? DueDate = null,
+    int? EstimatedMinutes = null,
     IReadOnlyList<Guid>? LabelIds = null);
 
 public sealed record UpdateTaskRequest(
@@ -113,6 +114,7 @@ public sealed record UpdateTaskRequest(
     TaskPriority Priority,
     Guid? AssigneeId,
     DateOnly? DueDate,
+    int? EstimatedMinutes,
     byte[] RowVersion,
     IReadOnlyList<Guid>? LabelIds = null);
 

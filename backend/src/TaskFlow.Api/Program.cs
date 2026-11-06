@@ -96,7 +96,7 @@ app.UseMiddleware<SessionValidationMiddleware>();
 app.UseAuthorization();
 
 app.MapControllers();
-// Self-registration can be turned off (admins still invite people); the rest of the Identity endpoints stay.
+// Self-registration can be turned off (the public demo turns it off: Auth__AllowSelfRegistration=false) (admins still invite people); the rest of the Identity endpoints stay.
 var allowSelfRegistration = app.Configuration.GetValue("Auth:AllowSelfRegistration", true);
 app.MapGroup("/api/auth")
     .WithTags("Auth")
@@ -105,6 +105,7 @@ app.MapGroup("/api/auth")
         allowSelfRegistration || !context.HttpContext.Request.Path.StartsWithSegments("/api/auth/register", StringComparison.OrdinalIgnoreCase)
             ? await next(context)
             : Results.NotFound())
+    .AddEndpointFilter<DemoRestrictionsFilter>()
     .AddEndpointFilter<ForgetSessionsOnPasswordReset>()
     .MapIdentityApi<ApplicationUser>();
 app.MapHealthChecks("/health", new HealthCheckOptions { ResponseWriter = HealthResponseWriter.WriteAsync });

@@ -7,6 +7,8 @@
   <data name="ApiWelcome" xml:space="preserve"><value>Bienvenido a la API de TaskFlow.</value></data>
   <data name="UnexpectedError" xml:space="preserve"><value>Ocurrió un error inesperado.</value></data>
   <data name="Users.NotFound" xml:space="preserve"><value>No se encontró el usuario.</value></data>
+  <data name="Demo.AccountProtected" xml:space="preserve"><value>Esta cuenta se comparte en la demo pública y no se puede desactivar ni quitarle el rol de administrador.</value></data>
+  <data name="Demo.ActionDisabled" xml:space="preserve"><value>Esta acción está deshabilitada en la demo pública.</value></data>
   <data name="Users.CannotChangeOwnStatus" xml:space="preserve"><value>No puedes desactivar ni reactivar tu propia cuenta.</value></data>
   <data name="Users.CannotChangeOwnRole" xml:space="preserve"><value>No puedes cambiar tu propio rol.</value></data>
   <data name="Users.EmailNotFound" xml:space="preserve"><value>No hay ningún usuario registrado con ese email.</value></data>
@@ -35,9 +37,16 @@
   <data name="Labels.NameTaken" xml:space="preserve"><value>El proyecto ya tiene una etiqueta con este nombre.</value></data>
   <data name="Labels.NotInProject" xml:space="preserve"><value>Una o más etiquetas no pertenecen al proyecto.</value></data>
   <data name="TaskComments.NotFound" xml:space="preserve"><value>No se encontró el comentario.</value></data>
+  <data name="Notifications.NotFound" xml:space="preserve"><value>No se encontró la notificación.</value></data>
   <data name="TaskComments.BodyRequired" xml:space="preserve"><value>El comentario no puede estar vacío.</value></data>
   <data name="TaskComments.BodyTooLong" xml:space="preserve"><value>El comentario es demasiado largo.</value></data>
   <data name="TaskComments.MentionNotMember" xml:space="preserve"><value>Solo se puede mencionar a miembros del proyecto.</value></data>
   <data name="TaskComments.NotAuthor" xml:space="preserve"><value>Solo el autor puede editar un comentario.</value></data>
   <data name="TaskComments.NotAuthorOrManager" xml:space="preserve"><value>Solo el autor o un propietario del proyecto puede eliminar un comentario.</value></data>
+  <data name="TimeEntries.NotFound" xml:space="preserve"><value>No se encontró el registro de horas.</value></data>
+  <data name="TimeEntries.NotOwner" xml:space="preserve"><value>Solo quien registró las horas o un propietario del proyecto puede modificarlas.</value></data>
+  <data name="TimeEntries.FutureDate" xml:space="preserve"><value>No se pueden registrar horas en una fecha futura.</value></data>
+  <data name="TimeEntries.InvalidRange" xml:space="preserve"><value>Elegí una fecha de inicio y de fin, la de inicio no posterior a la de fin, con un rango de hasta 366 días</value></data>
+  <data name="TimeEntries.InvalidMinutes" xml:space="preserve"><value>Los minutos deben estar entre 1 y 1440.</value></data>
+  <data name="TimeEntries.NoteTooLong" xml:space="preserve"><value>La nota es demasiado larga.</value></data>
 </root>

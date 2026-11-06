@@ -1,11 +1,15 @@
 import { TestBed } from '@angular/core/testing';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { TranslocoTestingModule } from '@jsverse/transloco';
+import { BehaviorSubject, of } from 'rxjs';
+import { Notifier } from '../../../core/notifications/notifier';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { projectsFeature } from '../../projects/data-access/store/projects.feature';
 import { groupByStatus } from '../data-access/store/board';
 import { TasksPageActions } from '../data-access/store/tasks.actions';
 import { tasksFeature } from '../data-access/store/tasks.feature';
 import { aTask } from '../data-access/store/testing';
+import { expectNoAxeViolations } from '../../../shared/testing/axe';
 import { TaskEditor } from '../ui/task-editor';
 import { BoardPage } from './board-page';
 
@@ -17,8 +21,22 @@ const tasks = [
 
 describe('BoardPage', () => {
   let store: MockStore;
+  let editor: { open: ReturnType<typeof vi.fn> };
+  let router: { navigate: ReturnType<typeof vi.fn> };
+  let queryParams$: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
+  let notifier: { error: ReturnType<typeof vi.fn>; errorMessage: ReturnType<typeof vi.fn> };
 
-  function render(canEdit = true): HTMLElement {
+  beforeEach(() => {
+    editor = { open: vi.fn() };
+    router = { navigate: vi.fn(() => Promise.resolve(true)) };
+    notifier = { error: vi.fn(), errorMessage: vi.fn() };
+  });
+
+  function render(canEdit = true, linkedTask: string | null = null, options: { loading?: boolean; projectId?: string } = {}): HTMLElement {
+    const route = {
+      queryParamMap: (queryParams$ = new BehaviorSubject(convertToParamMap(linkedTask ? { task: linkedTask } : {}))),
+      parent: { paramMap: of(convertToParamMap({ projectId: 'p1' })) },
+    };
     TestBed.configureTestingModule({
       imports: [
         BoardPage,
@@ -28,15 +46,18 @@ describe('BoardPage', () => {
         provideMockStore({
           selectors: [
             { selector: tasksFeature.selectColumns, value: groupByStatus(tasks) },
-            { selector: tasksFeature.selectLoading, value: false },
+            { selector: tasksFeature.selectLoading, value: options.loading ?? false },
             { selector: tasksFeature.selectLoadError, value: null },
             { selector: tasksFeature.selectMoving, value: false },
-            { selector: tasksFeature.selectProjectId, value: 'p1' },
+            { selector: tasksFeature.selectProjectId, value: options.projectId ?? 'p1' },
             { selector: projectsFeature.selectCanEditTasks, value: canEdit },
             { selector: projectsFeature.selectMemberNames, value: new Map<string, string>() },
           ],
         }),
-        { provide: TaskEditor, useValue: { open: vi.fn() } },
+        { provide: TaskEditor, useValue: editor },
+        { provide: ActivatedRoute, useValue: route },
+        { provide: Router, useValue: router },
+        { provide: Notifier, useValue: notifier },
       ],
     });
     store = TestBed.inject<MockStore>(MockStore);
@@ -53,6 +74,14 @@ describe('BoardPage', () => {
     TestBed.tick();
     return [...document.querySelectorAll<HTMLButtonElement>('.mat-mdc-menu-panel button[mat-menu-item]')];
   }
+
+  it('has no accessibility violations, with the move menu open too', async () => {
+    const element = render();
+    await expectNoAxeViolations(element);
+
+    openMoveMenu(element, 'Write brief');
+    await expectNoAxeViolations(document.body);
+  });
 
   it('moves a task to another column from the keyboard-reachable menu', () => {
     const element = render();
@@ -78,5 +107,59 @@ describe('BoardPage', () => {
     const element = render(false);
 
     expect(element.querySelectorAll('button.move')).toHaveLength(0);
+  });
+
+  describe('?task= link', () => {
+    it('opens the linked task and removes the parameter', () => {
+      render(true, 'b');
+      TestBed.tick();
+
+      expect(editor.open).toHaveBeenCalledWith(expect.objectContaining({ id: 'b' }));
+      expect(router.navigate).toHaveBeenCalledWith(
+        [],
+        expect.objectContaining({ queryParams: { task: null }, queryParamsHandling: 'merge' }),
+      );
+    });
+
+    it('says so when the task no longer exists', () => {
+      render(true, 'gone');
+      TestBed.tick();
+
+      expect(editor.open).not.toHaveBeenCalled();
+      expect(notifier.error).toHaveBeenCalledWith({ code: 'Tasks.NotFound', fields: {} });
+    });
+
+    it('waits for the tasks of this project to load', () => {
+      render(true, 'b', { loading: true });
+      TestBed.tick();
+
+      expect(editor.open).not.toHaveBeenCalled();
+      expect(router.navigate).not.toHaveBeenCalled();
+    });
+
+    it('waits while the store still holds another project', () => {
+      render(true, 'b', { projectId: 'other' });
+      TestBed.tick();
+
+      expect(editor.open).not.toHaveBeenCalled();
+    });
+
+    it('opens the same task again when the link is used a second time', () => {
+      render(true, 'b');
+      TestBed.tick();
+      queryParams$.next(convertToParamMap({}));
+      TestBed.tick();
+      queryParams$.next(convertToParamMap({ task: 'b' }));
+      TestBed.tick();
+
+      expect(editor.open).toHaveBeenCalledTimes(2);
+    });
+
+    it('opens nothing without the parameter', () => {
+      render();
+      TestBed.tick();
+
+      expect(editor.open).not.toHaveBeenCalled();
+    });
   });
 });
