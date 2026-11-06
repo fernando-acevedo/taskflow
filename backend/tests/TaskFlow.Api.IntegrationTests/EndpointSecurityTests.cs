@@ -23,6 +23,13 @@ public sealed class EndpointSecurityTests(NoDatabaseApiFactory factory) : IClass
         "api/auth/resendConfirmationEmail",
         "api/auth/forgotPassword",
         "api/auth/resetPassword",
+
+        // The API reference is public in every environment and holds no data (ADR 0016).
+        "openapi/{documentName}.json",
+        "scalar/{documentName?}",
+        "scalar/scalar.js",
+        "scalar/scalar.aspnetcore.js",
+        "scalar/favicon.svg",
     ];
 
     [Fact]

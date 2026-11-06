@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TaskFlow.Domain.Activity;
+using TaskFlow.Domain.ApiKeys;
 using TaskFlow.Domain.Clients;
 using TaskFlow.Domain.Notifications;
 using TaskFlow.Domain.Projects;
@@ -39,6 +40,8 @@ public interface IAppDbContext
     DbSet<TaskCommentMention> TaskCommentMentions { get; }
 
     DbSet<ActivityEntry> ActivityEntries { get; }
+
+    DbSet<ApiKey> ApiKeys { get; }
 
     DbSet<Notification> Notifications { get; }
 

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TaskFlow.Application.Abstractions;
+using TaskFlow.Domain.ApiKeys;
 using TaskFlow.Domain.Common;
 using TaskFlow.Domain.Projects;
 
@@ -39,13 +40,37 @@ public sealed class ProjectAccess(IAppDbContext db, ICurrentUser currentUser)
             return ProjectErrors.NotFound;
         }
 
+        if (!ScopeAllows(level, currentUser))
+        {
+            return ApiKeyErrors.ScopeInsufficient;
+        }
+
         return Allows(project, level, currentUser) ? project : ProjectErrors.Forbidden;
+    }
+
+    /// <summary>A person is limited by their role only; an API key also by its scope, and never gets Manage (ADR 0016).</summary>
+    public static bool ScopeAllows(ProjectAccessLevel level, ICurrentUser user)
+    {
+        ArgumentNullException.ThrowIfNull(user);
+
+        return user.ApiKeyScope switch
+        {
+            null => true,
+            ApiKeyScope.Read => level == ProjectAccessLevel.View,
+            ApiKeyScope.Write => level != ProjectAccessLevel.Manage,
+            _ => false,
+        };
     }
 
     public static bool Allows(Project project, ProjectAccessLevel level, ICurrentUser user)
     {
         ArgumentNullException.ThrowIfNull(project);
         ArgumentNullException.ThrowIfNull(user);
+
+        if (!ScopeAllows(level, user))
+        {
+            return false;
+        }
 
         return level switch
         {

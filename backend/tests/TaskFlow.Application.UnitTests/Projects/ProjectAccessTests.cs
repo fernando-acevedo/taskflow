@@ -1,6 +1,7 @@
 using NSubstitute;
 using TaskFlow.Application.Abstractions;
 using TaskFlow.Application.Projects;
+using TaskFlow.Domain.ApiKeys;
 using TaskFlow.Domain.Clients;
 using TaskFlow.Domain.Projects;
 
@@ -31,6 +32,21 @@ public sealed class ProjectAccessTests
         var user = Substitute.For<ICurrentUser>();
         user.Id.Returns(who switch { "owner" => OwnerId, "member" => MemberId, _ => OutsiderId });
         user.IsTenantAdmin.Returns(isAdmin);
+
+        ProjectAccess.Allows(_project, ProjectAccessLevel.View, user).ShouldBe(view);
+        ProjectAccess.Allows(_project, ProjectAccessLevel.Work, user).ShouldBe(work);
+        ProjectAccess.Allows(_project, ProjectAccessLevel.Manage, user).ShouldBe(manage);
+    }
+
+    [Theory]
+    [InlineData(ApiKeyScope.Read, true, false, false)]
+    [InlineData(ApiKeyScope.Write, true, true, false)]
+    public void AnApiKeyIsLimitedByItsScopeAndNeverManages(ApiKeyScope scope, bool view, bool work, bool manage)
+    {
+        var user = Substitute.For<ICurrentUser>();
+        user.Id.Returns(OwnerId); // the owner of the project, who could manage as a person
+        user.ApiKeyId.Returns(Guid.NewGuid());
+        user.ApiKeyScope.Returns(scope);
 
         ProjectAccess.Allows(_project, ProjectAccessLevel.View, user).ShouldBe(view);
         ProjectAccess.Allows(_project, ProjectAccessLevel.Work, user).ShouldBe(work);

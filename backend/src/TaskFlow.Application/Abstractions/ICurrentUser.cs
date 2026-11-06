@@ -1,3 +1,4 @@
+using TaskFlow.Domain.ApiKeys;
 using TaskFlow.Domain.Tenancy;
 
 namespace TaskFlow.Application.Abstractions;
@@ -18,4 +19,10 @@ public interface ICurrentUser
 
     /// <summary>Owner or Admin of the current tenant (what the global Admin was before ADR 0013).</summary>
     bool IsTenantAdmin => TenantRole is Domain.Tenancy.TenantRole.Owner or Domain.Tenancy.TenantRole.Admin;
+
+    /// <summary>The API key that authenticated this request; <c>null</c> when a person signed in (ADR 0016).</summary>
+    Guid? ApiKeyId => null;
+
+    /// <summary>The scope of <see cref="ApiKeyId"/>; <c>null</c> for a person.</summary>
+    ApiKeyScope? ApiKeyScope => null;
 }

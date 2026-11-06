@@ -15,7 +15,8 @@ internal sealed class TenantAdminHandler(ICurrentUser currentUser) : Authorizati
 {
     protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, TenantAdminRequirement requirement)
     {
-        if (currentUser.IsTenantAdmin)
+        // An API key never administers a tenant, whatever role its owner has.
+        if (currentUser.ApiKeyId is null && currentUser.IsTenantAdmin)
         {
             context.Succeed(requirement);
         }

@@ -4,6 +4,7 @@ using Microsoft.Extensions.Localization;
 using TaskFlow.Application.Users;
 using TaskFlow.Domain.Common;
 using TaskFlow.Domain.Tenancy;
+using TaskFlow.Infrastructure.ApiKeys;
 using TaskFlow.Infrastructure.Persistence;
 using TaskFlow.Infrastructure.Tenancy;
 
@@ -30,7 +31,17 @@ internal sealed class TenantResolutionMiddleware(RequestDelegate next)
             && Guid.TryParse(context.User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
         {
             var header = context.Request.Headers[HeaderName].ToString();
-            if (string.IsNullOrWhiteSpace(header))
+            if (context.User.FindFirstValue(ApiKeyDefaults.TenantClaim) is { } keyTenant)
+            {
+                // An API key is bound to its tenant; X-Tenant is ignored (ADR 0016).
+                var keyError = await ResolveAsync(context, access, tenant, userId, Guid.Parse(keyTenant));
+                if (keyError is not null)
+                {
+                    await WriteAsync(context, problemDetails, localizer, keyError);
+                    return;
+                }
+            }
+            else if (string.IsNullOrWhiteSpace(header))
             {
                 if (await access.DefaultAsync(userId, context.RequestAborted) is var (defaultId, role))
                 {
@@ -70,7 +81,7 @@ internal sealed class TenantResolutionMiddleware(RequestDelegate next)
         return error;
     }
 
-    private static async Task WriteAsync(HttpContext context, IProblemDetailsService problemDetails, IStringLocalizer<SharedResource> localizer, Error error)
+    internal static async Task WriteAsync(HttpContext context, IProblemDetailsService problemDetails, IStringLocalizer<SharedResource> localizer, Error error)
     {
         var status = error.Type == ErrorType.NotFound ? StatusCodes.Status404NotFound : StatusCodes.Status403Forbidden;
         context.Response.StatusCode = status;
