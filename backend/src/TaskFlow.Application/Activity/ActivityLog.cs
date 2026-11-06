@@ -25,7 +25,7 @@ public sealed class ActivityLog(IAppDbContext db, ICurrentUser currentUser, Time
     {
         var now = time.GetUtcNow();
         db.ActivityEntries.Add(ActivityEntry.Create(
-            NextId(now), projectId, taskId, currentUser.Id, type, JsonSerializer.Serialize(changes, Json), now));
+            NextId(now), projectId, taskId, currentUser.Id, type, JsonSerializer.Serialize(changes, Json), now, currentUser.ApiKeyId));
     }
 
     // EF Core inserts the entries of one SaveChanges ordered by primary key, and the identity column `Sequence`

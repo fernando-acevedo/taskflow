@@ -58,4 +58,10 @@
   <data name="TimeEntries.InvalidRange" xml:space="preserve"><value>Pick a start and an end date, with the start no later than the end, in a range of up to 366 days.</value></data>
   <data name="TimeEntries.InvalidMinutes" xml:space="preserve"><value>Minutes must be between 1 and 1440.</value></data>
   <data name="TimeEntries.NoteTooLong" xml:space="preserve"><value>The note is too long.</value></data>
+  <data name="ApiKeys.NotFound" xml:space="preserve"><value>The API key was not found.</value></data>
+  <data name="ApiKeys.ExpiryInPast" xml:space="preserve"><value>The expiry date must be in the future.</value></data>
+  <data name="ApiKeys.ExpiryTooFar" xml:space="preserve"><value>An API key can last at most one year.</value></data>
+  <data name="ApiKeys.TooMany" xml:space="preserve"><value>You have too many active API keys. Revoke one first.</value></data>
+  <data name="ApiKeys.ScopeInsufficient" xml:space="preserve"><value>This API key's scope doesn't allow this action.</value></data>
+  <data name="ApiKeys.NotAllowedWithKey" xml:space="preserve"><value>API keys can't be used for this. Sign in as a person.</value></data>
 </root>

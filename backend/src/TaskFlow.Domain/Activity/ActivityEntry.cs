@@ -34,7 +34,8 @@ public sealed class ActivityEntry : ITenantOwned
         Guid actorId,
         ActivityType type,
         string changes,
-        DateTimeOffset occurredAt)
+        DateTimeOffset occurredAt,
+        Guid? apiKeyId)
     {
         Id = id;
         ProjectId = projectId;
@@ -43,6 +44,7 @@ public sealed class ActivityEntry : ITenantOwned
         Type = type;
         Changes = changes;
         OccurredAt = occurredAt;
+        ApiKeyId = apiKeyId;
     }
 
     public Guid Id { get; private set; }
@@ -59,6 +61,9 @@ public sealed class ActivityEntry : ITenantOwned
 
     public Guid ActorId { get; private set; }
 
+    /// <summary>The API key the actor used, when the change did not come from a person's session (ADR 0016).</summary>
+    public Guid? ApiKeyId { get; private set; }
+
     public ActivityType Type { get; private set; }
 
     /// <summary>A JSON object whose keys depend on <see cref="Type"/>.</summary>
@@ -74,6 +79,7 @@ public sealed class ActivityEntry : ITenantOwned
         Guid actorId,
         ActivityType type,
         string changesJson,
-        DateTimeOffset now) =>
-        new(id, projectId, taskItemId, actorId, type, changesJson, now);
+        DateTimeOffset now,
+        Guid? apiKeyId = null) =>
+        new(id, projectId, taskItemId, actorId, type, changesJson, now, apiKeyId);
 }

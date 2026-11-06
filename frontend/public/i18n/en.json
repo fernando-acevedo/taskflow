@@ -261,6 +261,14 @@
       "MemberNotFound": "The member was not found.",
       "OwnerRequired": "Only an owner can do this with an owner.",
       "SuperAdminRequired": "Only the platform administrator can do this."
+    },
+    "ApiKeys": {
+      "NotFound": "The API key was not found.",
+      "ExpiryInPast": "The expiry date must be in the future.",
+      "ExpiryTooFar": "An API key can last at most one year.",
+      "TooMany": "You have too many active API keys. Revoke one first.",
+      "ScopeInsufficient": "This API key's scope doesn't allow this action.",
+      "NotAllowedWithKey": "API keys can't be used for this. Sign in as a person."
     }
   },
   "clients": {

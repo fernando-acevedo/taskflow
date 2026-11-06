@@ -261,6 +261,14 @@
       "MemberNotFound": "No se encontró al miembro.",
       "OwnerRequired": "Solo un propietario puede hacer esto con un propietario.",
       "SuperAdminRequired": "Solo el administrador de la plataforma puede hacer esto."
+    },
+    "ApiKeys": {
+      "NotFound": "No se encontró la clave de API.",
+      "ExpiryInPast": "La fecha de vencimiento debe ser futura.",
+      "ExpiryTooFar": "Una clave de API puede durar como máximo un año.",
+      "TooMany": "Tenés demasiadas claves de API activas. Revocá una primero.",
+      "ScopeInsufficient": "El alcance de esta clave de API no permite esta acción.",
+      "NotAllowedWithKey": "Las claves de API no sirven para esto. Iniciá sesión como persona."
     }
   },
   "clients": {
