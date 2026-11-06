@@ -61,6 +61,34 @@ describe('TenantSwitcher', () => {
     expect(store.dispatch).toHaveBeenCalledWith(TenantActions.tenantSwitched({ tenantId: 'g' }));
   });
 
+  it('offers a retry when the tenants failed to load', () => {
+    TestBed.configureTestingModule({
+      imports: [
+        TranslocoTestingModule.forRoot({
+          langs: { en: {} },
+          translocoConfig: { availableLangs: ['en'], defaultLang: 'en' },
+        }),
+      ],
+      providers: [
+        provideMockStore({
+          selectors: [
+            { selector: tenantFeature.selectTenants, value: [] },
+            { selector: tenantFeature.selectCurrent, value: null },
+            { selector: tenantFeature.selectStatus, value: 'error' },
+          ],
+        }),
+      ],
+    });
+    const fixture = TestBed.createComponent(TenantSwitcher);
+    fixture.detectChanges();
+    const store = TestBed.inject<MockStore>(MockStore);
+    vi.spyOn(store, 'dispatch');
+
+    (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('button')!.click();
+
+    expect(store.dispatch).toHaveBeenCalledWith(TenantActions.retryClicked());
+  });
+
   it('has no accessibility violations', async () => {
     await expectNoAxeViolations(render([acme, globex]));
     TestBed.resetTestingModule();

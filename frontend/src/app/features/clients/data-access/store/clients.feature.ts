@@ -29,9 +29,23 @@ export const clientsFeature = createFeature({
   reducer: createReducer(
     initialClientsState,
     // Another user may sign in next in this tab; nothing of the previous session may show.
-    on(ShellActions.logoutClicked, AuthApiActions.sessionExpired, (): ClientsState => initialClientsState),
+    on(
+      ShellActions.logoutClicked,
+      AuthApiActions.sessionExpired,
+      TenantActions.tenantSwitched,
+      (): ClientsState => initialClientsState,
+    ),
     on(ClientsPageActions.opened, (state): ClientsState => ({ ...state, loading: true, loadError: null })),
-    on(ShellActions.logoutClicked, AuthApiActions.sessionExpired, TenantActions.tenantSwitched, (): ClientsState => initialClientsState),
+    on(
+      ClientsPageActions.queryChanged,
+      (state, { query }): ClientsState => ({
+        ...state,
+        // A new search or filter starts again from the first page.
+        query: { ...state.query, page: 1, ...query },
+        loading: true,
+        loadError: null,
+      }),
+    ),
     on(
       ClientsPageActions.createSubmitted,
       ClientsPageActions.updateSubmitted,

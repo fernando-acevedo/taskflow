@@ -77,7 +77,7 @@
       <mat-card appearance="outlined">
         <mat-card-header>
           <mat-card-title>{{ t('dashboard.clients') }}</mat-card-title>
-          <mat-card-subtitle>{{ isAdmin() ? t('dashboard.clientsAll') : t('dashboard.clientsMine') }}</mat-card-subtitle>
+          <mat-card-subtitle>{{ canManage() ? t('dashboard.clientsAll') : t('dashboard.clientsMine') }}</mat-card-subtitle>
         </mat-card-header>
         @if (data.clients.length === 0) {
           <app-empty-state icon="business" [message]="t('dashboard.noClients')" />

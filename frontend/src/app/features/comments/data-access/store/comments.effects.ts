@@ -7,6 +7,7 @@ import { Notifier } from '../../../../core/notifications/notifier';
 import { CommentsApiService } from '../comments-api.service';
 import { CommentsApiActions, CommentsPageActions } from './comments.actions';
 import { commentsFeature } from './comments.feature';
+import { untilTenantChanges } from '../../../../shared/data-access/until-tenant-changes';
 
 export const loadComments = createEffect(
   (actions$ = inject(Actions), api = inject(CommentsApiService)) =>
@@ -14,6 +15,7 @@ export const loadComments = createEffect(
       ofType(CommentsPageActions.opened),
       switchMap(({ projectId, taskId }) =>
         api.list(projectId, taskId).pipe(
+          untilTenantChanges(actions$),
           map((comments) => CommentsApiActions.commentsLoaded({ taskId, comments })),
           catchError((error: unknown) => of(CommentsApiActions.commentsLoadFailed({ error: toApiError(error) }))),
         ),

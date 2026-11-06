@@ -5,7 +5,7 @@ import { Action } from '@ngrx/store';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { TestBed } from '@angular/core/testing';
 import { Subject, of, throwError } from 'rxjs';
-import { AuthApiActions } from '../../auth/store/auth.actions';
+import { AuthApiActions, ShellActions } from '../../auth/store/auth.actions';
 import { authFeature } from '../../auth/store/auth.feature';
 import { DemoService } from '../../demo/demo.service';
 import { TenantApiService } from '../tenant-api.service';
@@ -75,10 +75,49 @@ describe('tenant effects', () => {
     ]);
   });
 
-  it('opens with no tenants when the call fails', () => {
+  it('reports a failed call as an error, not as an empty list', () => {
     expect(run(null, () => throwError(() => new Error('down')))).toEqual([
-      TenantApiActions.tenantsLoaded({ tenants: [], preferredId: null }),
+      TenantApiActions.tenantsLoadFailed({ error: { code: 'unexpected', fields: {} } }),
     ]);
+  });
+
+  it('drops the answer that arrives after sign-out', () => {
+    const response$ = new Subject<Tenant[]>();
+    const actions$ = new Subject<Action>();
+    const emitted: Action[] = [];
+    const demo = { status: signal({ tenantId: null }) } as unknown as DemoService;
+    TestBed.runInInjectionContext(() =>
+      loadTenants(
+        actions$ as unknown as Actions,
+        { mine: () => response$ } as unknown as TenantApiService,
+        storage,
+        demo,
+      ).subscribe((a) => emitted.push(a)),
+    );
+
+    actions$.next(AuthApiActions.sessionRestored({ user }));
+    actions$.next(ShellActions.logoutClicked());
+    response$.next([acme]);
+
+    expect(emitted).toEqual([]);
+  });
+
+  it('asks again on retry', () => {
+    const actions$ = new Subject<Action>();
+    const emitted: Action[] = [];
+    const demo = { status: signal({ tenantId: null }) } as unknown as DemoService;
+    TestBed.runInInjectionContext(() =>
+      loadTenants(
+        actions$ as unknown as Actions,
+        { mine: () => of([acme]) } as unknown as TenantApiService,
+        storage,
+        demo,
+      ).subscribe((a) => emitted.push(a)),
+    );
+
+    actions$.next(TenantActions.retryClicked());
+
+    expect(emitted).toEqual([TenantApiActions.tenantsLoaded({ tenants: [acme], preferredId: null })]);
   });
 
   it('remembers a switch for the signed-in user, and goes home', () => {

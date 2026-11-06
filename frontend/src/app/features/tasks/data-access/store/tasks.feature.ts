@@ -39,7 +39,12 @@ export const tasksFeature = createFeature({
   reducer: createReducer(
     initialTasksState,
     // Another user may sign in next in this tab; nothing of the previous session may show.
-    on(ShellActions.logoutClicked, AuthApiActions.sessionExpired, TenantActions.tenantSwitched, (): TasksState => initialTasksState),
+    on(
+      ShellActions.logoutClicked,
+      AuthApiActions.sessionExpired,
+      TenantActions.tenantSwitched,
+      (): TasksState => initialTasksState,
+    ),
     on(TasksPageActions.opened, (state, { projectId }): TasksState =>
       // Another project's tasks must not flash while this one loads.
       state.projectId === projectId

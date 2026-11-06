@@ -51,9 +51,22 @@ export const projectsFeature = createFeature({
   reducer: createReducer(
     initialProjectsState,
     // Another user may sign in next in this tab; nothing of the previous session may show.
-    on(ShellActions.logoutClicked, AuthApiActions.sessionExpired, (): ProjectsState => initialProjectsState),
+    on(
+      ShellActions.logoutClicked,
+      AuthApiActions.sessionExpired,
+      TenantActions.tenantSwitched,
+      (): ProjectsState => initialProjectsState,
+    ),
     on(ProjectsPageActions.opened, (state): ProjectsState => ({ ...state, loading: true, loadError: null })),
-    on(ShellActions.logoutClicked, AuthApiActions.sessionExpired, TenantActions.tenantSwitched, (): ProjectsState => initialProjectsState),
+    on(
+      ProjectsPageActions.queryChanged,
+      (state, { query }): ProjectsState => ({
+        ...state,
+        query: { ...state.query, page: 1, ...query },
+        loading: true,
+        loadError: null,
+      }),
+    ),
     on(
       ProjectsApiActions.projectsLoaded,
       (state, { page }): ProjectsState =>

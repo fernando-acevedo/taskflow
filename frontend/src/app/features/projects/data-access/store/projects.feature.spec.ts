@@ -1,5 +1,6 @@
 import { Project } from '../projects-api.service';
-import { ProjectPageActions, ProjectsApiActions } from './projects.actions';
+import { TenantActions } from '../../../../core/tenant/store/tenant.actions';
+import { ProjectPageActions, ProjectsApiActions, ProjectsPageActions } from './projects.actions';
 import { initialProjectsState, projectsFeature } from './projects.feature';
 
 const project: Project = {
@@ -24,6 +25,21 @@ describe('projectsFeature', () => {
 
     expect(reducer(loaded, ProjectPageActions.opened({ projectId: 'p1' })).current).toBe(project);
     expect(reducer(loaded, ProjectPageActions.opened({ projectId: 'p2' })).current).toBeNull();
+  });
+
+  it('starts again from the first page on a new filter, and loads', () => {
+    const onPageThree = { ...initialProjectsState, query: { ...initialProjectsState.query, page: 3 } };
+
+    const state = reducer(onPageThree, ProjectsPageActions.queryChanged({ query: { search: 'web' } }));
+
+    expect(state.query).toEqual({ ...initialProjectsState.query, search: 'web', page: 1 });
+    expect(state.loading).toBe(true);
+  });
+
+  it('forgets everything on a tenant switch', () => {
+    const loaded = reducer(initialProjectsState, ProjectsApiActions.projectLoaded({ project, members: [] }));
+
+    expect(reducer(loaded, TenantActions.tenantSwitched({ tenantId: 't' }))).toEqual(initialProjectsState);
   });
 
   it('lets members edit tasks, but not admins outside the project or anyone in an archived project', () => {

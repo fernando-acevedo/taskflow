@@ -47,7 +47,12 @@ export const timeTrackingFeature = createFeature({
   name: 'timeTracking',
   reducer: createReducer(
     initialTimeTrackingState,
-    on(ShellActions.logoutClicked, AuthApiActions.sessionExpired, TenantActions.tenantSwitched, (): TimeTrackingState => initialTimeTrackingState),
+    on(
+      ShellActions.logoutClicked,
+      AuthApiActions.sessionExpired,
+      TenantActions.tenantSwitched,
+      (): TimeTrackingState => initialTimeTrackingState,
+    ),
     on(TimeEntriesPageActions.opened, (state, { projectId, taskId }): TimeTrackingState =>
       state.taskId === taskId
         ? { ...state, loading: true, loadError: null }

@@ -12,6 +12,7 @@ import {
   NotificationPreferencesActions,
   NotificationsApiActions,
 } from './notifications.actions';
+import { untilTenantChanges } from '../../../../shared/data-access/until-tenant-changes';
 
 
 /**
@@ -56,6 +57,7 @@ export const loadNotifications = createEffect(
       ofType(NotificationBellActions.opened),
       switchMap(() =>
         api.list().pipe(
+          untilTenantChanges(actions$),
           map((page) => NotificationsApiActions.notificationsLoaded({ items: page.items })),
           catchError((error: unknown) => of(NotificationsApiActions.notificationsLoadFailed({ error: toApiError(error) }))),
         ),
@@ -71,6 +73,7 @@ export const refreshCountOnOpen = createEffect(
       ofType(NotificationBellActions.opened),
       switchMap(() =>
         api.unreadCount().pipe(
+          untilTenantChanges(actions$),
           map(({ count }) => NotificationsApiActions.unreadCountLoaded({ count })),
           catchError(() => EMPTY),
         ),
@@ -125,6 +128,7 @@ export const loadPreferences = createEffect(
       ofType(NotificationPreferencesActions.opened),
       switchMap(() =>
         api.preferences().pipe(
+          untilTenantChanges(actions$),
           map((preferences) => NotificationsApiActions.preferencesLoaded({ preferences })),
           catchError((error: unknown) => of(NotificationsApiActions.preferencesLoadFailed({ error: toApiError(error) }))),
         ),

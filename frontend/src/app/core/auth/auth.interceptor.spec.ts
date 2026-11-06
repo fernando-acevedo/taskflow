@@ -93,6 +93,21 @@ describe('authInterceptor', () => {
     });
   });
 
+  it('retries with the tenant that is current after the refresh, not the one of the first attempt', () => {
+    store.setState({ tenant: { tenants: [], currentId: 'tenant-1', status: 'ready' } });
+    http.get(`${api}/projects`).subscribe();
+    httpMock.expectOne(`${api}/projects`).flush(null, unauthorized);
+
+    store.setState({ tenant: { tenants: [], currentId: 'tenant-2', status: 'ready' } });
+    httpMock
+      .expectOne(`${api}/auth/refresh`)
+      .flush({ tokenType: 'Bearer', accessToken: 'new-access', expiresIn: 3600, refreshToken: 'refresh-2' });
+
+    const retry = httpMock.expectOne(`${api}/projects`);
+    expect(retry.request.headers.get('X-Tenant')).toBe('tenant-2');
+    retry.flush([]);
+  });
+
   it('refreshes once for concurrent 401s and retries every request with the new token', () => {
     const responses: unknown[] = [];
     http.get(`${api}/users/me`).subscribe((body) => responses.push(body));

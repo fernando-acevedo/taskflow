@@ -27,7 +27,12 @@ export const commentsFeature = createFeature({
   name: 'comments',
   reducer: createReducer(
     initialCommentsState,
-    on(ShellActions.logoutClicked, AuthApiActions.sessionExpired, TenantActions.tenantSwitched, (): CommentsState => initialCommentsState),
+    on(
+      ShellActions.logoutClicked,
+      AuthApiActions.sessionExpired,
+      TenantActions.tenantSwitched,
+      (): CommentsState => initialCommentsState,
+    ),
     on(CommentsPageActions.opened, (state, { projectId, taskId }): CommentsState =>
       state.taskId === taskId
         ? { ...state, loading: true, loadError: null }

@@ -61,7 +61,15 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
           }
           return throwError(() => refreshError);
         }),
-        switchMap((accessToken) => next(withToken(tenanted, accessToken))),
+        // The tenant may have changed while the refresh ran; the retry carries the current one.
+        switchMap((accessToken) =>
+          next(
+            withToken(
+              withTenant(request, store.selectSignal(tenantFeature.selectCurrentId)()),
+              accessToken,
+            ),
+          ),
+        ),
       );
     }),
   );

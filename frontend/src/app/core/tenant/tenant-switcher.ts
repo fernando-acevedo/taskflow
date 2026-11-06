@@ -9,7 +9,7 @@ import { tenantFeature } from './store/tenant.feature';
 
 /**
  * The shell's workspace picker. With several tenants it is a menu (the current one is checked, each shows the
- * user's role in it); with one it is just the name; with none it renders nothing.
+ * user's role in it); with one it is just the name; with none it renders nothing, or a retry button when the list failed to load.
  */
 @Component({
   selector: 'app-tenant-switcher',
@@ -51,6 +51,11 @@ import { tenantFeature } from './store/tenant.feature';
             <span class="name">{{ tenant.name }}</span>
           </span>
         }
+      } @else if (status() === 'error') {
+        <button mat-button type="button" class="switcher" (click)="retry()">
+          <mat-icon aria-hidden="true">refresh</mat-icon>
+          <span class="name">{{ t('tenant.retry') }}</span>
+        </button>
       }
     </ng-container>
   `,
@@ -86,6 +91,12 @@ export class TenantSwitcher {
   private readonly store = inject(Store);
   protected readonly tenants = this.store.selectSignal(tenantFeature.selectTenants);
   protected readonly current = this.store.selectSignal(tenantFeature.selectCurrent);
+
+  protected readonly status = this.store.selectSignal(tenantFeature.selectStatus);
+
+  protected retry(): void {
+    this.store.dispatch(TenantActions.retryClicked());
+  }
 
   protected select(tenantId: string): void {
     if (tenantId !== this.current()?.id) {

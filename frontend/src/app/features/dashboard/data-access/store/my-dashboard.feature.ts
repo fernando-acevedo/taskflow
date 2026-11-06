@@ -18,7 +18,12 @@ export const myDashboardFeature = createFeature({
   name: 'myDashboard',
   reducer: createReducer(
     initialMyDashboardState,
-    on(ShellActions.logoutClicked, AuthApiActions.sessionExpired, TenantActions.tenantSwitched, (): MyDashboardState => initialMyDashboardState),
+    on(
+      ShellActions.logoutClicked,
+      AuthApiActions.sessionExpired,
+      TenantActions.tenantSwitched,
+      (): MyDashboardState => initialMyDashboardState,
+    ),
     on(DashboardPageActions.opened, (state): MyDashboardState => ({
       ...state,
       loading: true,

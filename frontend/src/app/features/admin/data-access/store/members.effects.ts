@@ -5,6 +5,7 @@ import { toApiError } from '../../../../core/http/api-error';
 import { Notifier } from '../../../../core/notifications/notifier';
 import { TenantMembersApiService } from '../tenant-members-api.service';
 import { MembersApiActions, MembersPageActions } from './members.actions';
+import { untilTenantChanges } from '../../../../shared/data-access/until-tenant-changes';
 
 export const loadMembers = createEffect(
   (actions$ = inject(Actions), api = inject(TenantMembersApiService)) =>
@@ -19,6 +20,7 @@ export const loadMembers = createEffect(
       ),
       switchMap(() =>
         api.list().pipe(
+          untilTenantChanges(actions$),
           map((members) => MembersApiActions.membersLoaded({ members })),
           catchError((error: unknown) =>
             of(MembersApiActions.membersLoadFailed({ error: toApiError(error) })),
@@ -36,6 +38,7 @@ export const loadSupportAccess = createEffect(
       ofType(MembersPageActions.supportAccessRequested),
       switchMap(() =>
         api.supportAccess().pipe(
+          untilTenantChanges(actions$),
           map((items) => MembersApiActions.supportAccessLoaded({ items })),
           catchError(() => of(MembersApiActions.supportAccessLoaded({ items: [] }))),
         ),

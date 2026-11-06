@@ -23,7 +23,12 @@ export const projectDashboardFeature = createFeature({
   name: 'projectDashboard',
   reducer: createReducer(
     initialProjectDashboardState,
-    on(ShellActions.logoutClicked, AuthApiActions.sessionExpired, TenantActions.tenantSwitched, (): ProjectDashboardState => initialProjectDashboardState),
+    on(
+      ShellActions.logoutClicked,
+      AuthApiActions.sessionExpired,
+      TenantActions.tenantSwitched,
+      (): ProjectDashboardState => initialProjectDashboardState,
+    ),
     on(ProjectOverviewActions.opened, (state, { projectId }): ProjectDashboardState => ({
       projectId,
       // Another project's figures must not show while this one loads.

@@ -8,6 +8,8 @@
   "theme": {
     "label": "Theme",
     "title": "Appearance",
+    "loadFailed": "Your workspaces could not be loaded.",
+    "retry": "Retry",
     "current": "Theme: {{ theme }}",
     "hint": "Light or dark colors for the app.",
     "System": "System",
@@ -103,6 +105,7 @@
     "role": "Role",
     "roles": {
       "admin": "Admin",
+      "superAdmin": "Super-admin",
       "member": "Member"
     },
     "displayName": "Display name",
@@ -682,6 +685,7 @@
     "slug": "Identifier",
     "slugHint": "Lowercase letters, numbers and hyphens.",
     "slugRule": "Use lowercase letters, numbers and hyphens.",
+    "ownerRule": "Enter a valid email address.",
     "ownerEmail": "Owner email (optional)",
     "ownerHint": "We email the owner a link to choose their password.",
     "cancel": "Cancel",

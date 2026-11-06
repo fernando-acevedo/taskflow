@@ -8,6 +8,8 @@
   "theme": {
     "label": "Tema",
     "title": "Apariencia",
+    "loadFailed": "No se pudieron cargar tus espacios de trabajo.",
+    "retry": "Reintentar",
     "current": "Tema: {{ theme }}",
     "hint": "Colores claros u oscuros para la app.",
     "System": "Sistema",
@@ -103,6 +105,7 @@
     "role": "Rol",
     "roles": {
       "admin": "Admin",
+      "superAdmin": "Superadministrador",
       "member": "Miembro"
     },
     "displayName": "Nombre visible",
@@ -682,6 +685,7 @@
     "slug": "Identificador",
     "slugHint": "Minúsculas, números y guiones.",
     "slugRule": "Usa minúsculas, números y guiones.",
+    "ownerRule": "Ingresa un correo válido.",
     "ownerEmail": "Correo del propietario (opcional)",
     "ownerHint": "Le enviamos al propietario un enlace para elegir su contraseña.",
     "cancel": "Cancelar",

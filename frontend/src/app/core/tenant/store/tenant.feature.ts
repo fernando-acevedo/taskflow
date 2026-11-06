@@ -5,7 +5,7 @@ import { Tenant } from '../tenant.models';
 import { TenantActions, TenantApiActions } from './tenant.actions';
 
 /** `loading` from sign-in until the user's tenants are known; guards wait for it so the first calls carry a tenant. */
-export type TenantStatus = 'idle' | 'loading' | 'ready';
+export type TenantStatus = 'idle' | 'loading' | 'ready' | 'error';
 
 export interface TenantState {
   tenants: Tenant[];
@@ -33,6 +33,13 @@ export const tenantFeature = createFeature({
       currentId: pickTenant(tenants, preferredId),
       status: 'ready',
     })),
+    on(TenantApiActions.tenantsLoadFailed, (): TenantState => ({
+      ...initialTenantState,
+      status: 'error',
+    })),
+    on(TenantActions.retryClicked, (state): TenantState =>
+      state.status === 'error' ? { ...state, status: 'loading' } : state,
+    ),
     on(TenantActions.tenantSwitched, (state, { tenantId }): TenantState => {
       return state.tenants.some((tenant) => tenant.id === tenantId)
         ? { ...state, currentId: tenantId }

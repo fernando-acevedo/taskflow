@@ -36,7 +36,12 @@ export const activityFeature = createFeature({
   name: 'activity',
   reducer: createReducer(
     initialActivityState,
-    on(ShellActions.logoutClicked, AuthApiActions.sessionExpired, TenantActions.tenantSwitched, (): ActivityState => initialActivityState),
+    on(
+      ShellActions.logoutClicked,
+      AuthApiActions.sessionExpired,
+      TenantActions.tenantSwitched,
+      (): ActivityState => initialActivityState,
+    ),
     on(ActivityPageActions.opened, (state, { scope, projectId, taskId }): ActivityState => {
       const feed = state[scope];
       // Reopening the same feed keeps what is shown while it refreshes.

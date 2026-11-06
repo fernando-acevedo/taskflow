@@ -36,7 +36,12 @@ export const notificationsFeature = createFeature({
   reducer: createReducer(
     initialNotificationsState,
     // Another user may sign in next in this tab; nothing of the previous session may show.
-    on(ShellActions.logoutClicked, AuthApiActions.sessionExpired, TenantActions.tenantSwitched, (): NotificationsState => initialNotificationsState),
+    on(
+      ShellActions.logoutClicked,
+      AuthApiActions.sessionExpired,
+      TenantActions.tenantSwitched,
+      (): NotificationsState => initialNotificationsState,
+    ),
     on(NotificationsApiActions.unreadCountLoaded, (state, { count }): NotificationsState => ({
       ...state,
       unreadCount: count,

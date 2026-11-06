@@ -73,7 +73,7 @@ import { EmptyState } from '../../../shared/ui/empty-state';
             @if (form.controls.ownerEmail.getError('api'); as message) {
               <mat-error>{{ message }}</mat-error>
             } @else if (form.controls.ownerEmail.invalid) {
-              <mat-error>{{ t('ownerEmail') }}</mat-error>
+              <mat-error>{{ t('ownerRule') }}</mat-error>
             }
           </mat-form-field>
           <div class="actions">

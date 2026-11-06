@@ -27,6 +27,18 @@ describe('tenant feature', () => {
     );
   });
 
+  it('ends in the error status when the tenants fail to load, and tries again on retry', () => {
+    const loading = reducer(initialTenantState, AuthApiActions.sessionRestored({ user }));
+
+    const failed = reducer(
+      loading,
+      TenantApiActions.tenantsLoadFailed({ error: { code: 'unexpected', fields: {} } }),
+    );
+    expect(failed).toEqual({ tenants: [], currentId: null, status: 'error' });
+    expect(reducer(failed, TenantActions.retryClicked()).status).toBe('loading');
+    expect(reducer(loading, TenantActions.retryClicked()).status).toBe('loading');
+  });
+
   it('picks the remembered tenant while the user still belongs to it', () => {
     const state = reducer(
       initialTenantState,

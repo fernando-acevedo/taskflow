@@ -7,6 +7,7 @@ import { Notifier } from '../../../../core/notifications/notifier';
 import { LabelsApiService } from '../labels-api.service';
 import { LabelsApiActions, LabelsPageActions } from './labels.actions';
 import { labelsFeature } from './labels.feature';
+import { untilTenantChanges } from '../../../../shared/data-access/until-tenant-changes';
 
 export const loadLabels = createEffect(
   (actions$ = inject(Actions), api = inject(LabelsApiService)) =>
@@ -14,6 +15,7 @@ export const loadLabels = createEffect(
       ofType(LabelsPageActions.opened),
       switchMap(({ projectId }) =>
         api.list(projectId).pipe(
+          untilTenantChanges(actions$),
           map((labels) => LabelsApiActions.labelsLoaded({ projectId, labels })),
           catchError((error: unknown) => of(LabelsApiActions.labelsLoadFailed({ error: toApiError(error) }))),
         ),

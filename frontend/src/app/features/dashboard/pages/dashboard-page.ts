@@ -56,7 +56,7 @@ export class DashboardPage {
   protected readonly language = inject(LanguageService);
 
   protected readonly user = this.store.selectSignal(authFeature.selectUser);
-  protected readonly isAdmin = this.store.selectSignal(tenantFeature.selectCanManage);
+  protected readonly canManage = this.store.selectSignal(tenantFeature.selectCanManage);
   private readonly tenantId = this.store.selectSignal(tenantFeature.selectCurrentId);
   protected readonly dashboard = this.store.selectSignal(myDashboardFeature.selectDashboard);
   protected readonly loading = this.store.selectSignal(myDashboardFeature.selectLoading);

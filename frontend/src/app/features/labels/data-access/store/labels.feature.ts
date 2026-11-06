@@ -26,7 +26,12 @@ export const labelsFeature = createFeature({
   name: 'labels',
   reducer: createReducer(
     initialLabelsState,
-    on(ShellActions.logoutClicked, AuthApiActions.sessionExpired, TenantActions.tenantSwitched, (): LabelsState => initialLabelsState),
+    on(
+      ShellActions.logoutClicked,
+      AuthApiActions.sessionExpired,
+      TenantActions.tenantSwitched,
+      (): LabelsState => initialLabelsState,
+    ),
     on(LabelsPageActions.opened, (state, { projectId }): LabelsState =>
       state.projectId === projectId
         ? { ...state, loading: true, loadError: null }

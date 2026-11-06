@@ -10,6 +10,7 @@ import { Notifier } from '../../../../core/notifications/notifier';
 import { Project, ProjectsApiService } from '../projects-api.service';
 import { ProjectPageActions, ProjectsApiActions, ProjectsPageActions } from './projects.actions';
 import { projectsFeature } from './projects.feature';
+import { untilTenantChanges } from '../../../../shared/data-access/until-tenant-changes';
 
 export const loadProjects = createEffect(
   (actions$ = inject(Actions), store = inject(Store), api = inject(ProjectsApiService)) =>
@@ -18,6 +19,7 @@ export const loadProjects = createEffect(
       withLatestFrom(store.select(projectsFeature.selectQuery)),
       switchMap(([, query]) =>
         api.list(query).pipe(
+          untilTenantChanges(actions$),
           map((page) => ProjectsApiActions.projectsLoaded({ page })),
           catchError((error: unknown) => of(ProjectsApiActions.projectsLoadFailed({ error: toApiError(error) }))),
         ),
@@ -33,6 +35,7 @@ export const loadClientOptions = createEffect(
       ofType(ProjectsPageActions.opened, ProjectPageActions.opened),
       switchMap(() =>
         api.clientOptions().pipe(
+          untilTenantChanges(actions$),
           map((clients) => ProjectsApiActions.clientOptionsLoaded({ clients })),
           catchError(() => of(ProjectsApiActions.clientOptionsLoaded({ clients: [] }))),
         ),
@@ -75,6 +78,7 @@ export const loadProject = createEffect(
       filter((projectId): projectId is string => !!projectId),
       switchMap((projectId) =>
         forkJoin({ project: api.get(projectId), members: api.members(projectId) }).pipe(
+          untilTenantChanges(actions$),
           map(({ project, members }) => ProjectsApiActions.projectLoaded({ project, members })),
           catchError((error: unknown) => of(ProjectsApiActions.projectLoadFailed({ error: toApiError(error) }))),
         ),
