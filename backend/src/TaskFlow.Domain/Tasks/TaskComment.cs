@@ -1,3 +1,4 @@
+using TaskFlow.Domain.Tenancy;
 using TaskFlow.Domain.Common;
 using TaskFlow.Domain.Projects;
 
@@ -8,7 +9,7 @@ namespace TaskFlow.Domain.Tasks;
 /// read-only. Mentions are user ids that must be members of the project; they are stored as rows
 /// (<see cref="TaskCommentMention"/>) so that notifications can query them.
 /// </summary>
-public sealed class TaskComment
+public sealed class TaskComment : ITenantOwned
 {
     public const int BodyMaxLength = 4000;
 
@@ -129,7 +130,7 @@ public sealed class TaskComment
 }
 
 /// <summary>A user mentioned in a comment (one row per comment and user).</summary>
-public sealed class TaskCommentMention
+public sealed class TaskCommentMention : ITenantOwned
 {
     internal TaskCommentMention(Guid taskCommentId, Guid userId)
     {

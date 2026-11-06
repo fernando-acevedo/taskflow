@@ -1,3 +1,4 @@
+using TaskFlow.Domain.Tenancy;
 using TaskFlow.Domain.Clients;
 using TaskFlow.Domain.Common;
 
@@ -7,7 +8,7 @@ namespace TaskFlow.Domain.Projects;
 /// Aggregate root for a client project and its members. Membership changes go through its methods, which
 /// keep the rules: at least one owner, and no changes while archived.
 /// </summary>
-public sealed class Project
+public sealed class Project : ITenantOwned
 {
     public const int NameMinLength = 3;
     public const int NameMaxLength = 100;

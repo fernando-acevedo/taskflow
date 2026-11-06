@@ -1,3 +1,4 @@
+using TaskFlow.Domain.Tenancy;
 using TaskFlow.Domain.Common;
 
 namespace TaskFlow.Domain.Notifications;
@@ -15,7 +16,7 @@ public enum NotificationType
 /// An in-app notification for one user. <see cref="Data"/> carries the values the text needs (task title, project
 /// name, actor name at that moment) because the things they name may be renamed or gone by the time it is read.
 /// </summary>
-public sealed class Notification
+public sealed class Notification : ITenantOwned
 {
     private Notification(
         Guid id,

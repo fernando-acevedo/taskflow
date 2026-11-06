@@ -1,3 +1,4 @@
+using TaskFlow.Domain.Tenancy;
 using TaskFlow.Domain.Common;
 using TaskFlow.Domain.Projects;
 
@@ -23,7 +24,7 @@ public enum TaskPriority
 /// A task on a project's board. Named TaskItem to avoid clashing with <see cref="Task"/>. Changes take the
 /// owning <see cref="Project"/> so its rules apply: no changes while archived, and the assignee is a member.
 /// </summary>
-public sealed class TaskItem
+public sealed class TaskItem : ITenantOwned
 {
     public const int TitleMaxLength = 200;
     public const int DescriptionMaxLength = 4000;

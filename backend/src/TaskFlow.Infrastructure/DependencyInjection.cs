@@ -26,9 +26,14 @@ public static class DependencyInjection
         var connectionString = configuration.GetConnectionString(ConnectionStringName)
             ?? throw new InvalidOperationException($"Connection string '{ConnectionStringName}' is not configured.");
 
+        // T-60 connects the request to this holder (X-Tenant header); background work uses it through TenantScope.
+        services.AddScoped<TenantContext>();
+        services.AddScoped<ITenantContext>(provider => provider.GetRequiredService<TenantContext>());
         services.AddDbContext<AppDbContext>((provider, options) => options
             .UseSqlServer(connectionString, sql => sql.EnableRetryOnFailure())
-            .AddInterceptors(new CreationTimeInterceptor(provider.GetRequiredService<TimeProvider>())));
+            .AddInterceptors(
+                new CreationTimeInterceptor(provider.GetRequiredService<TimeProvider>()),
+                new TenantSaveInterceptor(provider.GetRequiredService<ITenantContext>())));
         services.AddSingleton<IUniqueViolationDetector, Persistence.SqlServerUniqueViolationDetector>();
         services.AddScoped<IAppDbContext>(provider => provider.GetRequiredService<AppDbContext>());
 
