@@ -23,4 +23,14 @@ public sealed class UsersController : ApiControllerBase
         [FromServices] UpdateProfileHandler handler,
         CancellationToken cancellationToken) =>
         NoContentOrProblem(await handler.HandleAsync(command, cancellationToken));
+
+    /// <summary>Saves the signed-in user's preferences (the color theme).</summary>
+    [HttpPut("me/preferences")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult> UpdatePreferences(
+        UpdatePreferencesCommand command,
+        [FromServices] UpdatePreferencesHandler handler,
+        CancellationToken cancellationToken) =>
+        NoContentOrProblem(await handler.HandleAsync(command, cancellationToken));
 }

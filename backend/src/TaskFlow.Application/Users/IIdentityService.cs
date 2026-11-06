@@ -33,6 +33,8 @@ public interface IIdentityService
 
     Task UpdateDisplayNameAsync(Guid userId, string displayName, CancellationToken cancellationToken);
 
+    Task UpdateThemePreferenceAsync(Guid userId, ThemePreference theme, CancellationToken cancellationToken);
+
     /// <summary>Deactivating also locks the account and ends its sessions (refresh tokens stop working).</summary>
     Task SetActiveAsync(Guid userId, bool isActive, CancellationToken cancellationToken);
 

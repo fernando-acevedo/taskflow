@@ -120,6 +120,13 @@ internal sealed class IdentityService(UserManager<ApplicationUser> userManager, 
         EnsureSucceeded(await userManager.UpdateAsync(user));
     }
 
+    public async Task UpdateThemePreferenceAsync(Guid userId, ThemePreference theme, CancellationToken cancellationToken)
+    {
+        var user = await GetUserAsync(userId);
+        user.ThemePreference = theme;
+        EnsureSucceeded(await userManager.UpdateAsync(user));
+    }
+
     public async Task SetActiveAsync(Guid userId, bool isActive, CancellationToken cancellationToken)
     {
         var user = await GetUserAsync(userId);
@@ -169,7 +176,8 @@ internal sealed class IdentityService(UserManager<ApplicationUser> userManager, 
             user.CreatedAt,
             user.PasswordHash == null,
             user.EmailConfirmed,
-            db.UserRoles.Any(userRole => userRole.UserId == user.Id && userRole.RoleId == adminRoleId)));
+            db.UserRoles.Any(userRole => userRole.UserId == user.Id && userRole.RoleId == adminRoleId),
+            user.ThemePreference));
 
     private async Task<ApplicationUser> GetUserAsync(Guid userId) =>
         await userManager.FindByIdAsync(userId.ToString())
@@ -192,7 +200,8 @@ internal sealed class IdentityService(UserManager<ApplicationUser> userManager, 
         DateTimeOffset CreatedAt,
         bool HasNoPassword,
         bool EmailConfirmed,
-        bool IsAdmin)
+        bool IsAdmin,
+        ThemePreference ThemePreference)
     {
         public UserDto ToDto() => new(
             Id,
@@ -202,6 +211,7 @@ internal sealed class IdentityService(UserManager<ApplicationUser> userManager, 
             IsAdmin ? [Roles.Admin] : [],
             CreatedAt,
             IsInvitationPending: HasNoPassword,
-            IsEmailConfirmed: EmailConfirmed);
+            IsEmailConfirmed: EmailConfirmed,
+            ThemePreference: ThemePreference);
     }
 }

@@ -13,5 +13,6 @@
 | [9](0009-activity-log.md) | The activity log is recorded explicitly in the handlers, not by an EF interceptor | Accepted | Handlers write activity entries themselves, in the same transaction as the change. |
 | [10](0010-notifications-delivery.md) | Notifications reach the browser by polling, not SignalR | Accepted | Store notifications in the database and poll the unread count every 30 seconds. |
 | [11](0011-azure-hosting-with-bicep.md) | Host the demo on Azure free tiers, defined in Bicep | Accepted | App Service F1, Static Web Apps Free and serverless Azure SQL, created from Bicep and deployed by GitHub Actions. |
+| [15](0015-per-user-theme.md) | The color theme is a per-user preference stored on the server | Accepted | System, Light or Dark on the user; the frontend caches it in the browser for the login page. |
 
 Add a new ADR when making a decision of comparable weight, and add it to this table.
