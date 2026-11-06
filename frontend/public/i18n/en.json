@@ -227,7 +227,11 @@
       "DependencyOnSelf": "A task can't depend on itself.",
       "DependencyNotInProject": "A task can only depend on tasks of the same project.",
       "DependencyCycle": "These dependencies would make tasks wait for each other in a loop.",
-      "TooManyDependencies": "A task can depend on at most 50 tasks."
+      "TooManyDependencies": "A task can depend on at most 50 tasks.",
+      "DependencyKeyNotFound": "A task this one depends on was not found in the project or in the same request.",
+      "DuplicateExternalKey": "The same external key appears more than once in the request.",
+      "SyncEmpty": "Send at least one task.",
+      "SyncTooLarge": "A sync can carry at most 200 tasks."
     },
     "Concurrency": {
       "Stale": "Someone else changed this in the meantime. We reloaded it; try again."

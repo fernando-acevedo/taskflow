@@ -92,6 +92,20 @@ public sealed class TaskPlanningTests
     }
 
     [Fact]
+    public void SetScheduleChangesBothDatesTogether()
+    {
+        var task = NewTask(new DateOnly(2026, 12, 20));
+        task.SetSchedule(_project, new DateOnly(2026, 12, 10), new DateOnly(2026, 12, 20), Now).IsSuccess.ShouldBeTrue();
+
+        // Moving both earlier would trip over the old dates if they were set one by one.
+        task.SetSchedule(_project, new DateOnly(2026, 11, 1), new DateOnly(2026, 11, 5), Now).IsSuccess.ShouldBeTrue();
+        task.SetSchedule(_project, new DateOnly(2026, 11, 6), new DateOnly(2026, 11, 5), Now).Error.ShouldBe(TaskErrors.StartAfterDue);
+
+        task.StartDate.ShouldBe(new DateOnly(2026, 11, 1));
+        task.DueDate.ShouldBe(new DateOnly(2026, 11, 5));
+    }
+
+    [Fact]
     public void ArchivedProjectIsReadOnly()
     {
         var task = NewTask();

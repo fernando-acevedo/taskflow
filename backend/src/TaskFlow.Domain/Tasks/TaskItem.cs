@@ -223,6 +223,26 @@ public sealed partial class TaskItem : ITenantOwned
         return Result.Success();
     }
 
+    /// <summary>Sets the start and due dates together, so that moving a whole plan never trips over the old dates.</summary>
+    public Result SetSchedule(Project project, DateOnly? startDate, DateOnly? dueDate, DateTimeOffset now)
+    {
+        var check = CheckProject(project, AssigneeId);
+        if (!check.IsSuccess)
+        {
+            return check;
+        }
+
+        if (startDate > dueDate)
+        {
+            return TaskErrors.StartAfterDue;
+        }
+
+        StartDate = startDate;
+        DueDate = dueDate;
+        UpdatedAt = now;
+        return Result.Success();
+    }
+
     /// <summary>
     /// Sets the planning fields. A blank <paramref name="externalKey"/> or <paramref name="statusNote"/> means none. The key
     /// may be given once; sending a different one afterwards is an error, the same one is fine.

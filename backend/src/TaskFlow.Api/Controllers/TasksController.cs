@@ -55,6 +55,66 @@ public sealed class TasksController : ApiControllerBase
             nameof(Get),
             task => new { projectId, taskId = task.Id });
 
+    /// <summary>
+    /// Creates or replaces the task with this external key (200 when it existed, 201 when created). Repeating the call is
+    /// safe. Every field replaces the stored value, except <c>status</c> (omitted keeps it; a new task starts in To Do) and
+    /// <c>dependsOn</c> (omitted keeps the dependencies, an empty list clears them). A status change lands the task at the bottom
+    /// of that column. There is no <c>rowVersion</c>: the last write wins. Needs a key or user with write access.
+    /// </summary>
+    [HttpPut("by-key/{externalKey}")]
+    [ProducesResponseType<TaskDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<TaskDto>(StatusCodes.Status201Created)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<TaskDto>> Upsert(
+        Guid projectId,
+        string externalKey,
+        UpsertTaskRequest request,
+        [FromServices] UpsertTaskHandler handler,
+        CancellationToken cancellationToken)
+    {
+        var result = await handler.HandleAsync(new UpsertTaskCommand(projectId, externalKey, request.ToFields()), cancellationToken);
+        if (!result.IsSuccess)
+        {
+            return ProblemFrom(result.Error);
+        }
+
+        var task = result.Value.Task;
+        return result.Value.Created
+            ? CreatedAtAction(nameof(Get), new { projectId, taskId = task.Id }, task)
+            : Ok(task);
+    }
+
+    /// <summary>
+    /// Creates or updates up to 200 tasks by <c>externalKey</c> in one transaction. It is all or nothing: if any item fails,
+    /// nothing is saved, the answer is 422 and each item says what happened (<c>Failed</c> with its <c>errorCode</c>, or
+    /// <c>NotApplied</c> for the ones that were fine). On success (200) each item is <c>Created</c> or <c>Updated</c>. Items follow
+    /// the rules of <c>PUT by-key</c>; <c>dependsOn</c> may name tasks of the same request, in any order.
+    /// </summary>
+    [HttpPost("sync")]
+    [ProducesResponseType<SyncTasksResult>(StatusCodes.Status200OK)]
+    [ProducesResponseType<SyncTasksResult>(StatusCodes.Status422UnprocessableEntity)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<SyncTasksResult>> Sync(
+        Guid projectId,
+        SyncTasksRequest request,
+        [FromServices] SyncTasksHandler handler,
+        CancellationToken cancellationToken)
+    {
+        var items = (request.Items ?? []).Select(item => new SyncTaskItem(item.ExternalKey, item.ToFields())).ToList();
+        var result = await handler.HandleAsync(new SyncTasksCommand(projectId, items), cancellationToken);
+        if (!result.IsSuccess)
+        {
+            return ProblemFrom(result.Error);
+        }
+
+        return result.Value.Applied ? Ok(result.Value) : UnprocessableEntity(result.Value);
+    }
+
     /// <summary>Edits the task's details. Send the <c>rowVersion</c> you read; a newer one answers 409.</summary>
     [HttpPut("{taskId:guid}")]
     [ProducesResponseType<TaskDto>(StatusCodes.Status200OK)]
@@ -117,5 +177,46 @@ public sealed record UpdateTaskRequest(
     int? EstimatedMinutes,
     byte[] RowVersion,
     IReadOnlyList<Guid>? LabelIds = null);
+
+/// <param name="Status">Omit to keep the status (To Do for a new task).</param>
+/// <param name="DependsOn">External keys of the tasks this one depends on. Omit to keep them, send <c>[]</c> to clear them.</param>
+public sealed record UpsertTaskRequest(
+    string Title,
+    string? Description,
+    TaskPriority Priority = TaskPriority.Medium,
+    Guid? AssigneeId = null,
+    DateOnly? StartDate = null,
+    DateOnly? DueDate = null,
+    int? EstimatedMinutes = null,
+    TaskItemStatus? Status = null,
+    bool IsBlocked = false,
+    string? StatusNote = null,
+    IReadOnlyList<string>? DependsOn = null)
+{
+    internal TaskUpsertFields ToFields() =>
+        new(Title, Description, Priority, AssigneeId, StartDate, DueDate, EstimatedMinutes, Status, IsBlocked, StatusNote, DependsOn);
+}
+
+/// <summary>One task of a sync: the fields of <see cref="UpsertTaskRequest"/> plus the key that identifies it.</summary>
+public sealed record SyncTaskItemRequest(
+    string ExternalKey,
+    string Title,
+    string? Description,
+    TaskPriority Priority = TaskPriority.Medium,
+    Guid? AssigneeId = null,
+    DateOnly? StartDate = null,
+    DateOnly? DueDate = null,
+    int? EstimatedMinutes = null,
+    TaskItemStatus? Status = null,
+    bool IsBlocked = false,
+    string? StatusNote = null,
+    IReadOnlyList<string>? DependsOn = null)
+{
+    internal TaskUpsertFields ToFields() =>
+        new(Title, Description, Priority, AssigneeId, StartDate, DueDate, EstimatedMinutes, Status, IsBlocked, StatusNote, DependsOn);
+}
+
+/// <param name="Items">Between 1 and 200 tasks, each with a different <c>externalKey</c>.</param>
+public sealed record SyncTasksRequest(IReadOnlyList<SyncTaskItemRequest> Items);
 
 public sealed record MoveTaskRequest(TaskItemStatus Status, int Position, byte[] RowVersion);

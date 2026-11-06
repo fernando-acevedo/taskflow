@@ -227,7 +227,11 @@
       "DependencyOnSelf": "Una tarea no puede depender de sí misma.",
       "DependencyNotInProject": "Una tarea solo puede depender de tareas del mismo proyecto.",
       "DependencyCycle": "Estas dependencias harían que las tareas se esperen entre sí en un ciclo.",
-      "TooManyDependencies": "Una tarea puede depender de 50 tareas como máximo."
+      "TooManyDependencies": "Una tarea puede depender de 50 tareas como máximo.",
+      "DependencyKeyNotFound": "No se encontró una tarea de la que esta depende, ni en el proyecto ni en el mismo pedido.",
+      "DuplicateExternalKey": "La misma clave externa aparece más de una vez en el pedido.",
+      "SyncEmpty": "Enviá al menos una tarea.",
+      "SyncTooLarge": "Una sincronización puede llevar como máximo 200 tareas."
     },
     "Concurrency": {
       "Stale": "Otra persona modificó esto mientras tanto. Lo recargamos; inténtalo de nuevo."

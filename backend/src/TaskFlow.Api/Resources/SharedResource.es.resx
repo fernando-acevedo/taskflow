@@ -72,4 +72,8 @@
   <data name="Tasks.DependencyNotInProject" xml:space="preserve"><value>Una tarea solo puede depender de tareas del mismo proyecto.</value></data>
   <data name="Tasks.DependencyCycle" xml:space="preserve"><value>Estas dependencias harían que las tareas se esperen entre sí en un ciclo.</value></data>
   <data name="Tasks.TooManyDependencies" xml:space="preserve"><value>Una tarea puede depender de 50 tareas como máximo.</value></data>
+  <data name="Tasks.DependencyKeyNotFound" xml:space="preserve"><value>No se encontró una tarea de la que esta depende, ni en el proyecto ni en el mismo pedido.</value></data>
+  <data name="Tasks.DuplicateExternalKey" xml:space="preserve"><value>La misma clave externa aparece más de una vez en el pedido.</value></data>
+  <data name="Tasks.SyncEmpty" xml:space="preserve"><value>Enviá al menos una tarea.</value></data>
+  <data name="Tasks.SyncTooLarge" xml:space="preserve"><value>Una sincronización puede llevar como máximo 200 tareas.</value></data>
 </root>

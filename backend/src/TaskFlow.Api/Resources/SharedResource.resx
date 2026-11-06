@@ -72,4 +72,8 @@
   <data name="Tasks.DependencyNotInProject" xml:space="preserve"><value>A task can only depend on tasks of the same project.</value></data>
   <data name="Tasks.DependencyCycle" xml:space="preserve"><value>These dependencies would make tasks wait for each other in a loop.</value></data>
   <data name="Tasks.TooManyDependencies" xml:space="preserve"><value>A task can depend on at most 50 tasks.</value></data>
+  <data name="Tasks.DependencyKeyNotFound" xml:space="preserve"><value>A task this one depends on was not found in the project or in the same request.</value></data>
+  <data name="Tasks.DuplicateExternalKey" xml:space="preserve"><value>The same external key appears more than once in the request.</value></data>
+  <data name="Tasks.SyncEmpty" xml:space="preserve"><value>Send at least one task.</value></data>
+  <data name="Tasks.SyncTooLarge" xml:space="preserve"><value>A sync can carry at most 200 tasks.</value></data>
 </root>
