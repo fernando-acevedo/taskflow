@@ -85,7 +85,7 @@ public sealed class SqlServerApiFactory : WebApplicationFactory<Program>, IAsync
     {
         await using var scope = Services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        await db.Tasks.Where(task => task.Id == taskId)
+        await db.Tasks.IgnoreQueryFilters().Where(task => task.Id == taskId)
             .ExecuteUpdateAsync(setters => setters.SetProperty(task => task.DueDate, dueDate), TestContext.Current.CancellationToken);
     }
 

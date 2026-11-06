@@ -16,8 +16,9 @@ public sealed class ListMyTenantsHandler(IAppDbContext db, ICurrentUser currentU
                 db.Tenants,
                 membership => membership.TenantId,
                 tenant => tenant.Id,
-                (membership, tenant) => new MyTenantDto(tenant.Id, tenant.Name, tenant.Slug, tenant.IsDemo, membership.Role))
-            .OrderBy(tenant => tenant.Name)
+                (membership, tenant) => new { tenant, membership.Role })
+            .OrderBy(row => row.tenant.Name)
+            .Select(row => new MyTenantDto(row.tenant.Id, row.tenant.Name, row.tenant.Slug, row.tenant.IsDemo, row.Role))
             .ToListAsync(cancellationToken);
         return Result<IReadOnlyList<MyTenantDto>>.Success(tenants);
     }
