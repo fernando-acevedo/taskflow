@@ -53,6 +53,9 @@ public static class TenantErrors
     public static readonly Error NotFound =
         Error.NotFound("Tenants.NotFound", "The tenant was not found.");
 
+    public static readonly Error Forbidden =
+        Error.Forbidden("Tenants.Forbidden", "You do not belong to this tenant.");
+
     public static readonly Error SlugTaken =
         Error.Conflict("Tenants.SlugTaken", "Another tenant already uses this slug.");
 

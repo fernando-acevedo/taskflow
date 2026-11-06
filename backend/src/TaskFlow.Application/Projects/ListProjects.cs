@@ -31,7 +31,7 @@ public sealed class ListProjectsHandler(IAppDbContext db, ICurrentUser currentUs
 
         var userId = currentUser.Id;
         var projects = db.Projects.AsNoTracking().Where(project => project.IsArchived == query.Archived);
-        if (!currentUser.IsAdmin)
+        if (!currentUser.IsTenantAdmin)
         {
             projects = projects.Where(project => project.Members.Any(member => member.UserId == userId));
         }

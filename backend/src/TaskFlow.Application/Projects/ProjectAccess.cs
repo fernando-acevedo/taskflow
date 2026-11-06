@@ -7,7 +7,7 @@ namespace TaskFlow.Application.Projects;
 
 public enum ProjectAccessLevel
 {
-    /// <summary>Read the project, its members and tasks: members, and admins in read-only mode.</summary>
+    /// <summary>Read the project, its members and tasks: members, and tenant admins in read-only mode.</summary>
     View,
 
     /// <summary>Create, edit and move tasks: any member.</summary>
@@ -49,7 +49,7 @@ public sealed class ProjectAccess(IAppDbContext db, ICurrentUser currentUser)
 
         return level switch
         {
-            ProjectAccessLevel.View => user.IsAdmin || project.IsMember(user.Id),
+            ProjectAccessLevel.View => user.IsTenantAdmin || project.IsMember(user.Id),
             ProjectAccessLevel.Work => project.IsMember(user.Id),
             ProjectAccessLevel.Manage => project.RoleOf(user.Id) == ProjectRole.Owner,
             _ => throw new ArgumentOutOfRangeException(nameof(level), level, null),

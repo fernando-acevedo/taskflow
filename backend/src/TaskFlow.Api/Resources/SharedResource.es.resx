@@ -22,6 +22,10 @@
   <data name="Clients.Archived" xml:space="preserve"><value>El cliente está archivado; restáuralo antes de agregarle proyectos.</value></data>
   <data name="Projects.NotFound" xml:space="preserve"><value>No se encontró el proyecto.</value></data>
   <data name="Projects.Forbidden" xml:space="preserve"><value>No tienes permiso para hacer esto en el proyecto.</value></data>
+  <data name="Tenants.NotFound" xml:space="preserve"><value>No se encontró la organización.</value></data>
+  <data name="Tenants.Forbidden" xml:space="preserve"><value>No perteneces a esta organización.</value></data>
+  <data name="Tenants.SlugTaken" xml:space="preserve"><value>Otra organización ya usa este identificador.</value></data>
+  <data name="Tenants.InvalidSlug" xml:space="preserve"><value>El identificador solo puede contener minúsculas, dígitos y guiones simples.</value></data>
   <data name="Projects.NameTaken" xml:space="preserve"><value>El cliente ya tiene un proyecto con ese nombre.</value></data>
   <data name="Projects.Archived" xml:space="preserve"><value>El proyecto está archivado y es de solo lectura.</value></data>
   <data name="Projects.AlreadyMember" xml:space="preserve"><value>El usuario ya es miembro del proyecto.</value></data>

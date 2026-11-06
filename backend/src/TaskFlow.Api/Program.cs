@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.HttpOverrides;
 using Scalar.AspNetCore;
@@ -27,7 +28,11 @@ builder.Services
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUser, HttpContextCurrentUser>();
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+    options.AddPolicy(AuthPolicies.TenantAdmin, policy => policy
+        .RequireAuthenticatedUser()
+        .AddRequirements(new TenantAdminRequirement())));
+builder.Services.AddScoped<IAuthorizationHandler, TenantAdminHandler>();
 
 builder.Services.AddControllers()
     .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
@@ -93,6 +98,7 @@ if (app.Environment.IsDevelopment())
 // HTTPS is enforced by the hosting platform (App Service "HTTPS only"), not by the app.
 app.UseAuthentication();
 app.UseMiddleware<SessionValidationMiddleware>();
+app.UseMiddleware<TenantResolutionMiddleware>();
 app.UseAuthorization();
 
 app.MapControllers();

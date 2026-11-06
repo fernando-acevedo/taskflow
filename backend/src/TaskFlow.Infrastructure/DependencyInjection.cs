@@ -77,6 +77,7 @@ public static class DependencyInjection
         services.AddScoped<IIdentityService, IdentityService>();
         services.AddMemoryCache();
         services.AddScoped<SessionValidator>();
+        services.AddScoped<Tenancy.TenantAccess>();
 
         services.Configure<EmailOptions>(configuration.GetSection(EmailOptions.SectionName));
         if (string.IsNullOrWhiteSpace(configuration[$"{EmailOptions.SectionName}:Smtp:Host"]))
