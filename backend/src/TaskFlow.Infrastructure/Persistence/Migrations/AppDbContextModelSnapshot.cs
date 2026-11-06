@@ -610,6 +610,13 @@ namespace TaskFlow.Infrastructure.Persistence.Migrations
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("ThemePreference")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)")
+                        .HasDefaultValue("System");
+
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("bit");
 
