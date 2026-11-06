@@ -15,7 +15,7 @@ describe('ThemeMenu', () => {
       imports: [
         ThemeMenu,
         TranslocoTestingModule.forRoot({
-          langs: { en: { theme: { label: 'Theme', System: 'System', Light: 'Light', Dark: 'Dark' } } },
+          langs: { en: { theme: { label: 'Theme', current: 'Theme: {{ theme }}', System: 'System', Light: 'Light', Dark: 'Dark' } } },
           translocoConfig: { availableLangs: ['en'], defaultLang: 'en' },
         }),
       ],
@@ -37,7 +37,7 @@ describe('ThemeMenu', () => {
 
   it('lists the three options with the current one checked, and has no axe violations', async () => {
     const { fixture, button } = await open();
-    expect(button.getAttribute('aria-label')).toBe('Theme');
+    expect(button.getAttribute('aria-label')).toBe('Theme: System');
     const items = Array.from(document.querySelectorAll<HTMLElement>('[role="menuitemradio"]'));
     expect(items.map((item) => item.querySelector('span')?.textContent?.trim())).toEqual(['System', 'Light', 'Dark']);
     expect(items.map((item) => item.getAttribute('aria-checked'))).toEqual(['true', 'false', 'false']);

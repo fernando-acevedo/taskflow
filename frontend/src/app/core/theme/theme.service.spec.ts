@@ -5,32 +5,27 @@ import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { environment } from '../../../environments/environment';
 import { User } from '../auth/auth.models';
 import { authFeature } from '../auth/store/auth.feature';
+import { HttpErrorResponse } from '@angular/common/http';
+import { AuthApiActions } from '../auth/store/auth.actions';
+import { Notifier } from '../notifications/notifier';
 import { THEME_STORAGE_KEY } from './theme';
 import { ThemeService } from './theme.service';
 
-class FakeMedia extends EventTarget {
-  matches = false;
-  change(matches: boolean): void {
-    this.matches = matches;
-    this.dispatchEvent(Object.assign(new Event('change'), { matches }));
-  }
-}
 
 const user = { id: 'u1', email: 'a@b.c', displayName: 'Ada', roles: [] } as unknown as User;
 
 describe('ThemeService', () => {
-  let media: FakeMedia;
   let store: MockStore;
+  const notifier = { error: vi.fn() };
+  const url = `${environment.apiUrl}/api/users/me/preferences`;
 
   function create(saved: string | null): ThemeService {
     localStorage.clear();
     if (saved) {
       localStorage.setItem(THEME_STORAGE_KEY, saved);
     }
-    media = new FakeMedia();
-    vi.stubGlobal('matchMedia', () => media);
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideMockStore({ selectors: [{ selector: authFeature.selectUser, value: null }] })],
+      providers: [{ provide: Notifier, useValue: notifier }, provideHttpClient(), provideHttpClientTesting(), provideMockStore({ selectors: [{ selector: authFeature.selectUser, value: null }] })],
     });
     store = TestBed.inject(MockStore) as MockStore<object>;
     return TestBed.inject(ThemeService);
@@ -43,7 +38,7 @@ describe('ThemeService', () => {
   }
 
   afterEach(() => {
-    vi.unstubAllGlobals();
+    notifier.error.mockClear();
     localStorage.clear();
     document.documentElement.style.colorScheme = '';
   });
@@ -55,14 +50,11 @@ describe('ThemeService', () => {
     expect(document.documentElement.style.colorScheme).toBe('dark');
   });
 
-  it('System follows the media query', () => {
+  it('System leaves the color scheme to the browser', () => {
     const service = create(null);
     TestBed.tick();
     expect(service.preference()).toBe('System');
     expect(document.documentElement.style.colorScheme).toBe('light dark');
-    expect(service.effective()).toBe('light');
-    media.change(true);
-    expect(service.effective()).toBe('dark');
   });
 
   it('saves a change in the browser without calling the API when signed out', () => {
@@ -99,5 +91,68 @@ describe('ThemeService', () => {
     expect(request.request.method).toBe('PUT');
     expect(request.request.body).toEqual({ themePreference: 'Dark' });
     request.flush(null);
+  });
+
+  it('a re-emitted user with the old value does not undo a change', () => {
+    const service = create(null);
+    TestBed.tick();
+    signIn({ ...user, themePreference: 'Light' });
+    service.use('Dark');
+    TestBed.inject(HttpTestingController).expectOne(url).flush(null);
+    // A new object for the same user (e.g. a display name change) still carries the stale value.
+    signIn({ ...user, displayName: 'Ada L.', themePreference: 'Light' });
+    expect(service.preference()).toBe('Dark');
+    expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe('Dark');
+  });
+
+  it('a change made signed out is replaced by the server value after login (ADR 0015)', () => {
+    const service = create(null);
+    TestBed.tick();
+    service.use('Light');
+    signIn({ ...user, themePreference: 'Dark' });
+    expect(service.preference()).toBe('Dark');
+    expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe('Dark');
+  });
+
+  it('a failed PUT warns and goes back to the last confirmed value', () => {
+    const service = create(null);
+    TestBed.tick();
+    signIn({ ...user, themePreference: 'Light' });
+    service.use('Dark');
+    TestBed.inject(HttpTestingController)
+      .expectOne(url)
+      .flush({ code: 'Users.NotFound' }, { status: 404, statusText: 'Not Found' } satisfies Partial<HttpErrorResponse>);
+    TestBed.tick();
+    expect(notifier.error).toHaveBeenCalledWith(expect.objectContaining({ code: 'Users.NotFound' }));
+    expect(service.preference()).toBe('Light');
+    expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe('Light');
+    expect(document.documentElement.style.colorScheme).toBe('light');
+  });
+
+  it('a confirmed PUT updates the stored user', () => {
+    const service = create(null);
+    TestBed.tick();
+    signIn(user);
+    const dispatch = vi.spyOn(store, 'dispatch');
+    service.use('Dark');
+    TestBed.inject(HttpTestingController).expectOne(url).flush(null);
+    expect(dispatch).toHaveBeenCalledWith(AuthApiActions.themePreferenceSaved({ themePreference: 'Dark' }));
+  });
+
+  it('two quick changes are sent in order, one at a time', () => {
+    const service = create(null);
+    TestBed.tick();
+    signIn(user);
+    service.use('Dark');
+    service.use('Light');
+    const http = TestBed.inject(HttpTestingController);
+    const first = http.expectOne(url);
+    expect(first.request.body).toEqual({ themePreference: 'Dark' });
+    http.expectNone(url);
+    first.flush(null);
+    const second = http.expectOne(url);
+    expect(second.request.body).toEqual({ themePreference: 'Light' });
+    second.flush(null);
+    expect(service.preference()).toBe('Light');
   });
 });

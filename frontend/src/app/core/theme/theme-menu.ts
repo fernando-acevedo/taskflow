@@ -15,7 +15,7 @@ const ICONS: Record<ThemePreference, string> = { System: 'brightness_auto', Ligh
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <ng-container *transloco="let t; prefix: 'theme'">
-      <button mat-icon-button type="button" [matMenuTriggerFor]="menu" [attr.aria-label]="t('label')">
+      <button mat-icon-button type="button" [matMenuTriggerFor]="menu" [attr.aria-label]="t('current', { theme: t(theme.preference()) })">
         <mat-icon aria-hidden="true">{{ icons[theme.preference()] }}</mat-icon>
       </button>
       <mat-menu #menu="matMenu" xPosition="before">

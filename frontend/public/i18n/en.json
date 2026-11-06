@@ -8,6 +8,7 @@
   "theme": {
     "label": "Theme",
     "title": "Appearance",
+    "current": "Theme: {{ theme }}",
     "hint": "Light or dark colors for the app.",
     "System": "System",
     "Light": "Light",

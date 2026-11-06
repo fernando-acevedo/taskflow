@@ -79,7 +79,7 @@ const LEVELS = ['', 'weak', 'fair', 'good', 'strong'] as const;
         --level-color: light-dark(#eb6834, #f0743a);
       }
       &[data-level='good'] {
-        --level-color: #eda100;
+        --level-color: light-dark(#a86f00, #eda100);
       }
       &[data-level='strong'] {
         --level-color: light-dark(#1baf7a, #2fb98a);
