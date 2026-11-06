@@ -3,10 +3,12 @@ using Microsoft.EntityFrameworkCore;
 using TaskFlow.Application.Abstractions;
 using TaskFlow.Application.Activity;
 using TaskFlow.Application.Common;
+using TaskFlow.Application.Notifications;
 using TaskFlow.Application.Projects;
 using TaskFlow.Application.Users;
 using TaskFlow.Domain.Activity;
 using TaskFlow.Domain.Common;
+using TaskFlow.Domain.Notifications;
 using TaskFlow.Domain.Tasks;
 
 namespace TaskFlow.Application.Comments;
@@ -27,6 +29,7 @@ public sealed class CreateTaskCommentHandler(
     IIdentityService identity,
     IValidator<CreateTaskCommentCommand> validator,
     ActivityLog activity,
+    Notifier notifier,
     TimeProvider time)
 {
     public async Task<Result<TaskCommentDto>> HandleAsync(CreateTaskCommentCommand command, CancellationToken cancellationToken)
@@ -43,14 +46,16 @@ public sealed class CreateTaskCommentHandler(
             return validation.ToError();
         }
 
-        var taskTitle = await db.Tasks
+        var found = await db.Tasks
             .Where(task => task.Id == command.TaskId && task.ProjectId == command.ProjectId)
-            .Select(task => task.Title)
+            .Select(task => new { task.Title, task.AssigneeId })
             .FirstOrDefaultAsync(cancellationToken);
-        if (taskTitle is null)
+        if (found is null)
         {
             return TaskErrors.NotFound;
         }
+
+        var taskTitle = found.Title;
 
         var created = TaskComment.Create(
             allowed.Value, command.TaskId, currentUser.Id, command.Body, command.MentionedUserIds, time.GetUtcNow());
@@ -69,8 +74,24 @@ public sealed class CreateTaskCommentHandler(
             ActivityType.CommentAdded,
             new { taskTitle, commentId = created.Value.Id },
             command.TaskId);
+        var projectName = allowed.Value.Name;
+        var mentioned = created.Value.Mentions.Select(mention => mention.UserId).ToList();
+        foreach (var userId in mentioned)
+        {
+            await notifier.NotifyAsync(
+                NotificationType.Mentioned, userId, command.ProjectId, projectName, command.TaskId, taskTitle, created.Value.Id, cancellationToken);
+        }
+
+        // A mention already tells the assignee about this comment, so they get one notification, not two.
+        if (found.AssigneeId is { } assigneeId && !mentioned.Contains(assigneeId))
+        {
+            await notifier.NotifyAsync(
+                NotificationType.CommentOnYourTask, assigneeId, command.ProjectId, projectName, command.TaskId, taskTitle, created.Value.Id, cancellationToken);
+        }
+
         db.TaskComments.Add(created.Value);
         await db.SaveChangesAsync(cancellationToken);
+        await notifier.SendEmailsAsync(cancellationToken);
 
         var author = await identity.FindByIdAsync(currentUser.Id, cancellationToken);
         return TaskCommentDto.From(created.Value, author?.DisplayName ?? string.Empty);

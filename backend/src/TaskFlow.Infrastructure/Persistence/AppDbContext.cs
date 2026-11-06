@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using TaskFlow.Application.Abstractions;
 using TaskFlow.Domain.Activity;
 using TaskFlow.Domain.Clients;
+using TaskFlow.Domain.Notifications;
 using TaskFlow.Domain.Projects;
 using TaskFlow.Domain.Tasks;
 using TaskFlow.Infrastructure.Identity;
@@ -28,6 +29,10 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<TaskCommentMention> TaskCommentMentions => Set<TaskCommentMention>();
 
     public DbSet<ActivityEntry> ActivityEntries => Set<ActivityEntry>();
+
+    public DbSet<Notification> Notifications => Set<Notification>();
+
+    public DbSet<NotificationPreferences> NotificationPreferences => Set<NotificationPreferences>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

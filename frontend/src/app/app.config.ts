@@ -25,14 +25,22 @@ import {
   resolveInitialLanguage,
 } from './core/i18n/languages';
 import { TranslocoHttpLoader } from './core/i18n/transloco-loader';
+import * as notificationsEffects from './features/notifications/data-access/store/notifications.effects';
+import { notificationsFeature } from './features/notifications/data-access/store/notifications.feature';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes, withComponentInputBinding()),
     provideHttpClient(withFetch(), withInterceptors([acceptLanguageInterceptor, authInterceptor])),
-    provideStore({ router: routerReducer, [authFeature.name]: authFeature.reducer }),
-    provideEffects(authEffects),
+    provideStore({
+      router: routerReducer,
+      [authFeature.name]: authFeature.reducer,
+      // Registered at the root, like auth, instead of on a route: the bell lives in the always-present shell
+      // toolbar, so its state must exist on every page for as long as the app does (ADR 0010).
+      [notificationsFeature.name]: notificationsFeature.reducer,
+    }),
+    provideEffects(authEffects, notificationsEffects),
     provideRouterStore(),
     // Development only: in production anyone with the extension could read every action and the state.
     ...(isDevMode()

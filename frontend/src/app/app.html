@@ -28,6 +28,7 @@
     </mat-button-toggle-group>
 
     @if (user(); as current) {
+      <app-notification-bell />
       <button mat-button type="button" class="account" [matMenuTriggerFor]="accountMenu" [attr.aria-label]="t('nav.account')">
         <mat-icon aria-hidden="true">account_circle</mat-icon>
         <span class="account-name">{{ current.displayName }}</span>

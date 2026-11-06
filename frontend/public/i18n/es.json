@@ -131,6 +131,32 @@
       "database": "Base de datos"
     }
   },
+  "notifications": {
+    "bell": "Notificaciones",
+    "bellUnread": "Notificaciones, {{ count }} sin leer",
+    "title": "Notificaciones",
+    "markAllRead": "Marcar todas como leídas",
+    "empty": "No tienes nada pendiente.",
+    "loading": "Cargando...",
+    "unread": "sin leer",
+    "messages": {
+      "TaskAssigned": "{{ actor }} te asignó \"{{ task }}\"",
+      "Mentioned": "{{ actor }} te mencionó en \"{{ task }}\"",
+      "CommentOnYourTask": "{{ actor }} comentó en \"{{ task }}\"",
+      "TaskDueSoon": "\"{{ task }}\" vence {{ dueDate }}"
+    },
+    "preferences": {
+      "title": "Notificaciones por email",
+      "hint": "Las notificaciones dentro de la app siempre están activas. Elige cuáles llegan también a tu correo.",
+      "emailOnAssigned": "Cuando me asignan una tarea",
+      "emailOnMentioned": "Cuando me mencionan en un comentario",
+      "emailOnCommentOnMyTask": "Cuando alguien comenta una tarea asignada a mí",
+      "emailDailyDigest": "Un resumen diario",
+      "save": "Guardar",
+      "saved": "Preferencias guardadas",
+      "retry": "Reintentar"
+    }
+  },
   "common": {
     "cancel": "Cancelar",
     "dismiss": "Cerrar",
@@ -196,6 +222,9 @@
       "InvalidRange": "Elegí una fecha de inicio y de fin, la de inicio no posterior a la de fin, con un rango de hasta 366 días.",
       "InvalidMinutes": "La duración debe estar entre 1 minuto y 24 horas.",
       "NoteTooLong": "La nota no puede superar los 500 caracteres."
+    },
+    "Notifications": {
+      "NotFound": "No se encontró la notificación."
     }
   },
   "clients": {

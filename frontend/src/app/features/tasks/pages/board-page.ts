@@ -1,10 +1,13 @@
 import { CdkDrag, CdkDragDrop, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-drop';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, untracked } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TranslocoDirective } from '@jsverse/transloco';
 import { Store } from '@ngrx/store';
+import { map, of } from 'rxjs';
 import { Notifier } from '../../../core/notifications/notifier';
 import { EmptyState } from '../../../shared/ui/empty-state';
 import { projectsFeature } from '../../projects/data-access/store/projects.feature';
@@ -38,6 +41,8 @@ import { TaskEditor } from '../ui/task-editor';
 })
 export class BoardPage {
   private readonly store = inject(Store);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   protected readonly editor = inject(TaskEditor);
   protected readonly notifier = inject(Notifier);
 
@@ -49,6 +54,50 @@ export class BoardPage {
   protected readonly canEdit = this.store.selectSignal(projectsFeature.selectCanEditTasks);
   private readonly projectId = this.store.selectSignal(tasksFeature.selectProjectId);
   private readonly memberNames = this.store.selectSignal(projectsFeature.selectMemberNames);
+
+  /** The task a notification (or an emailed link) points at: `?task={id}`. */
+  private readonly linkedTaskId = toSignal<string | null>(this.route.queryParamMap.pipe(map((params) => params.get('task'))), {
+    initialValue: null,
+  });
+
+  /** The project in the URL; the tasks in the store may still belong to the previous one. */
+  private readonly routeProjectId = toSignal<string | null>(
+    this.route.parent ? this.route.parent.paramMap.pipe(map((params) => params.get('projectId'))) : of(null),
+    { initialValue: null },
+  );
+
+  private handledTaskId: string | null = null;
+
+  constructor() {
+    // Opens the linked task once this project's tasks are in, then drops the parameter so a reload or a
+    // later move does not open it again.
+    effect(() => {
+      const taskId = this.linkedTaskId();
+      const loaded =
+        this.routeProjectId() !== null &&
+        this.projectId() === this.routeProjectId() &&
+        !this.loading() &&
+        this.loadError() === null;
+      if (!taskId) {
+        // The parameter is gone (we removed it): the same link can open its task again.
+        this.handledTaskId = null;
+        return;
+      }
+      if (!loaded || taskId === this.handledTaskId) {
+        return;
+      }
+      this.handledTaskId = taskId;
+      const task = Object.values(this.columns()).flat().find((candidate) => candidate.id === taskId);
+      untracked(() => {
+        if (task) {
+          this.editor.open(task);
+        } else {
+          this.notifier.error({ code: 'Tasks.NotFound', fields: {} });
+        }
+        void this.router.navigate([], { relativeTo: this.route, queryParams: { task: null }, queryParamsHandling: 'merge', replaceUrl: true });
+      });
+    });
+  }
 
   protected assigneeName(task: Task): string | null {
     return task.assigneeId ? (this.memberNames().get(task.assigneeId) ?? null) : null;

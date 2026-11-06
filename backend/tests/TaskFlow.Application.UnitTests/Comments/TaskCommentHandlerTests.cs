@@ -3,6 +3,7 @@ using NSubstitute;
 using TaskFlow.Application.Abstractions;
 using TaskFlow.Application.Activity;
 using TaskFlow.Application.Comments;
+using TaskFlow.Application.Notifications;
 using TaskFlow.Application.Projects;
 using TaskFlow.Application.Users;
 using TaskFlow.Domain.Activity;
@@ -156,10 +157,12 @@ public sealed class TaskCommentHandlerTests
 
     private CreateTaskCommentHandler CreateHandler() =>
         new(
-            _db, new ProjectAccess(_db, _currentUser), _currentUser, _identity, new CreateTaskCommentValidator(), Activity(), TimeProvider.System);
+            _db, new ProjectAccess(_db, _currentUser), _currentUser, _identity, new CreateTaskCommentValidator(), Activity(), Notifier(), TimeProvider.System);
 
     private DeleteTaskCommentHandler DeleteHandler() =>
         new(_db, new ProjectAccess(_db, _currentUser), _currentUser, Activity());
 
     private ActivityLog Activity() => new(_db, _currentUser, TimeProvider.System);
+
+    private Notifier Notifier() => new(_db, _currentUser, _identity, Substitute.For<INotificationEmailSender>(), TimeProvider.System);
 }

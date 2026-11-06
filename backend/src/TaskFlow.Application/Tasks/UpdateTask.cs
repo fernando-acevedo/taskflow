@@ -4,9 +4,11 @@ using Microsoft.EntityFrameworkCore;
 using TaskFlow.Application.Abstractions;
 using TaskFlow.Application.Activity;
 using TaskFlow.Application.Common;
+using TaskFlow.Application.Notifications;
 using TaskFlow.Application.Projects;
 using TaskFlow.Domain.Activity;
 using TaskFlow.Domain.Common;
+using TaskFlow.Domain.Notifications;
 using TaskFlow.Domain.Tasks;
 
 namespace TaskFlow.Application.Tasks;
@@ -40,6 +42,7 @@ public sealed class UpdateTaskHandler(
     IValidator<UpdateTaskCommand> validator,
     GetTaskHandler getTask,
     ActivityLog activity,
+    Notifier notifier,
     TimeProvider time)
 {
     public async Task<Result<TaskDto>> HandleAsync(UpdateTaskCommand command, CancellationToken cancellationToken)
@@ -92,7 +95,14 @@ public sealed class UpdateTaskHandler(
         }
 
         RecordChanges(command.ProjectId, task, before, labelsBefore);
+        if (before.AssigneeId != task.AssigneeId && task.AssigneeId is { } assigneeId)
+        {
+            await notifier.NotifyAsync(
+                NotificationType.TaskAssigned, assigneeId, command.ProjectId, allowed.Value.Name, task.Id, task.Title, null, cancellationToken);
+        }
+
         await db.SaveChangesAsync(cancellationToken);
+        await notifier.SendEmailsAsync(cancellationToken);
         return await getTask.HandleAsync(new GetTaskQuery(command.ProjectId, task.Id), cancellationToken);
     }
 

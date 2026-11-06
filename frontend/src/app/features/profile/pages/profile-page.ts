@@ -10,6 +10,7 @@ import { Store } from '@ngrx/store';
 import { ProfilePageActions } from '../../../core/auth/store/auth.actions';
 import { authFeature } from '../../../core/auth/store/auth.feature';
 import { ErrorTextPipe } from '../../../core/i18n/error-text.pipe';
+import { NotificationPreferencesCard } from '../../notifications/ui/notification-preferences';
 
 @Component({
   selector: 'app-profile-page',
@@ -22,6 +23,7 @@ import { ErrorTextPipe } from '../../../core/i18n/error-text.pipe';
     MatProgressBarModule,
     TranslocoDirective,
     ErrorTextPipe,
+    NotificationPreferencesCard,
   ],
   templateUrl: './profile-page.html',
   styleUrl: './profile-page.scss',
