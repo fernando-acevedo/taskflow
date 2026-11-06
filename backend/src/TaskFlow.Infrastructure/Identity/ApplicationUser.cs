@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using TaskFlow.Application.Users;
 
 namespace TaskFlow.Infrastructure.Identity;
 
@@ -10,6 +11,8 @@ public sealed class ApplicationUser : IdentityUser<Guid>
 
     /// <summary>Null until the user sets one; reads fall back to the email's local part.</summary>
     public string? DisplayName { get; set; }
+
+    public ThemePreference ThemePreference { get; set; } = ThemePreference.System;
 
     public bool IsActive { get; set; } = true;
 
@@ -22,6 +25,7 @@ internal sealed class ApplicationUserConfiguration : IEntityTypeConfiguration<Ap
     public void Configure(EntityTypeBuilder<ApplicationUser> builder)
     {
         builder.Property(user => user.DisplayName).HasMaxLength(ApplicationUser.DisplayNameMaxLength);
+        builder.Property(user => user.ThemePreference).HasConversion<string>().HasMaxLength(10).HasDefaultValue(ThemePreference.System);
         builder.Property(user => user.IsActive).HasDefaultValue(true);
     }
 }

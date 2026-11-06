@@ -33,6 +33,8 @@
       }
     </mat-button-toggle-group>
 
+    <app-theme-menu />
+
     @if (user() && demo().enabled) {
       <span class="badge demo-badge" [title]="t('demo.indicatorHint')">{{ t('demo.indicator') }}</span>
     }

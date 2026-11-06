@@ -119,7 +119,7 @@ interface EntryView {
     }
     .date,
     .note {
-      color: var(--mat-sys-on-surface-variant, #444);
+      color: var(--mat-sys-on-surface-variant);
     }
     .minutes {
       font-weight: 600;
@@ -131,7 +131,7 @@ interface EntryView {
     .entry-note {
       margin: 0;
       overflow-wrap: anywhere;
-      color: var(--mat-sys-on-surface-variant, #444);
+      color: var(--mat-sys-on-surface-variant);
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

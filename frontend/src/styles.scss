@@ -20,10 +20,8 @@ html {
 }
 
 body {
-  // Default the application to a light color theme. This can be changed to
-  // `dark` to enable the dark color theme, or to `light dark` to defer to the
-  // user's system settings.
-  color-scheme: light;
+  // The color scheme (light, dark or `light dark`) is set on <html> by ThemeService and by the inline
+  // script in index.html (ADR 0015); the Material tokens use light-dark() and follow it.
 
   // Set a default background, font and text colors for the application using
   // Angular Material's system-level CSS variables. Learn more about these
@@ -132,16 +130,18 @@ body {
   }
 }
 
-// Chart colors, all at least 3:1 against the surface (WCAG 1.4.11). Measured contrast: todo #2a78d6 4.29, in-progress
-// #dc5a22 3.69, review #14946a 3.73, done #b87e00 3.39. Status uses the first four categorical slots in a fixed order;
-// the colors changed since their CVD separation was checked, so recheck it when the dark palette lands (F8). The app is
-// light-only today. Magnitude bars use one hue. Values and labels always use text tokens, never these colors.
+// Chart colors as light-dark(light, dark), all at least 3:1 against the surface (WCAG 1.4.11). Measured contrast against
+// the light surface (#ffffff) / the dark one (#141218, M3 surface; against the dark track #2b2930 in parentheses):
+// todo #2a78d6 4.42 / #5b9ef0 6.72 (5.19), in-progress #dc5a22 3.80 / #f0743a 6.43 (4.97), review #14946a 3.84 /
+// #2fb98a 7.46 (5.76), done #b87e00 3.49 / #d99a1a 7.60 (5.87); bar uses the todo pair. Each state keeps its hue in
+// both themes. Status uses the first four categorical slots in a fixed order; recheck their CVD separation if the
+// hues change. Magnitude bars use one hue. Values and labels always use text tokens, never these colors.
 html {
-  --tf-chart-todo: #2a78d6;
-  --tf-chart-in-progress: #dc5a22;
-  --tf-chart-review: #14946a;
-  --tf-chart-done: #b87e00;
-  --tf-chart-bar: #2a78d6;
+  --tf-chart-todo: light-dark(#2a78d6, #5b9ef0);
+  --tf-chart-in-progress: light-dark(#dc5a22, #f0743a);
+  --tf-chart-review: light-dark(#14946a, #2fb98a);
+  --tf-chart-done: light-dark(#b87e00, #d99a1a);
+  --tf-chart-bar: light-dark(#2a78d6, #5b9ef0);
   --tf-chart-track: var(--mat-sys-surface-container-high);
 }
 
