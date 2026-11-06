@@ -7,6 +7,14 @@ subagentes trabajan en contexto aislado y devuelven solo un resumen. El estado d
 Agentes disponibles: `.claude/agents/` (`backend-dev`, `frontend-dev`, `db-migrator`, `test-runner`,
 `code-reviewer`). La tabla de qué agente usar para cada tarea está en `CLAUDE.md`.
 
+## Atajo: `/dev-flow`
+
+`/dev-flow F7 F8` ejecuta esas fases completas (agentes, tests, review, fixes, commit, PR y Gantt) sin pedir
+confirmación entre pasos; solo pregunta al principio por las decisiones abiertas de la fase
+(`docs/analysis/decisiones-*.md`) y ante un bloqueo real. `/dev-flow` sin argumentos lista las fases listas,
+qué espera a qué y qué pares pueden ir en paralelo (cada fase en su worktree), y te deja elegir. Las secciones
+de abajo describen el mismo flujo hecho a mano.
+
 ## a) Definir el lote y cargarlo en el Gantt
 
 1. Escribí 2 a 6 tareas con id (`T-07`), título, agente, fechas y dependencias.

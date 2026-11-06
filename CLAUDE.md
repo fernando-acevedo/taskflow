@@ -147,7 +147,9 @@ that don't need a database. `AuthApi` contains helpers for registering and loggi
 
 ## Workflow multiagente y ahorro de tokens
 
-El flujo completo está en `docs/workflow.md`. El estado de las tareas vive en el Panel Gantt (artifact), no en
+Para avanzar fases usá `/dev-flow F7 F8` (corre esas fases de punta a punta sin pedir confirmación) o `/dev-flow`
+solo (sugiere qué fases se pueden hacer y cuáles en paralelo); está en `.claude/skills/dev-flow/`. El flujo
+completo está en `docs/workflow.md`. El estado de las tareas vive en el Panel Gantt (artifact), no en
 el chat ni en este repo. Los subagentes no lo actualizan: cada uno devuelve una línea `Gantt: {...}` para pegarla.
 
 | Tipo de tarea | Agente | Modelo |

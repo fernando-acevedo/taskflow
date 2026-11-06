@@ -26,6 +26,11 @@ Desde `frontend/`:
 2. Lint de lo que tocaste: `npx eslint <archivos> 2>&1 | tail -n 20` (TODO: confirmar que da lo mismo que `npm run lint`; si dudás, usá `npm run lint`).
 3. Si cambiaste rutas, providers o templates compartidos: `npm run build 2>&1 | tail -n 20`.
 
+## Autonomía (obligatorio)
+- No hay nadie del otro lado para contestar: nunca termines con una pregunta ni pidas confirmación ("¿sigo?", "¿querés que...?").
+- Ante una duda que no bloquea, elegí la opción más consistente con CLAUDE.md, las ADRs y el código vecino, seguí, y anotala en "Supuestos".
+- Devolvé `bloqueado` solo si no podés avanzar: falta el trabajo de otro agente, un permiso denegado (no lo esquives), o una decisión de producto que cambia el modelo y no vino en el encargo.
+
 ## Respuesta final (solo esto, máx. 15 líneas)
 ```
 RESULTADO <id-tarea>
@@ -35,5 +40,6 @@ Lint: ok | <N problemas>
 Tests: <comando corto> → <N ok / M fallan>
 Blockers: ninguno | <1 línea cada uno>
 Pendiente para otros agentes: ninguno | <agente>: <qué>
+Supuestos: ninguno | <1 línea cada uno>
 Gantt: {"id":"<id-tarea>","status":"hecho|en_progreso|bloqueado","notes":"<≤80 caracteres>"}
 ```
