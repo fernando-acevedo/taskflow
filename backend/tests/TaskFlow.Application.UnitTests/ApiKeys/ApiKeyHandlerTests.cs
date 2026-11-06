@@ -15,6 +15,7 @@ public sealed class ApiKeyHandlerTests
     private readonly IAppDbContext _db = Substitute.For<IAppDbContext>();
     private readonly ICurrentUser _user = Substitute.For<ICurrentUser>();
     private readonly IDemoMode _demo = Substitute.For<IDemoMode>();
+    private readonly ITransactionRunner _transactions = Substitute.For<ITransactionRunner>();
     private readonly List<ApiKey> _added = [];
     private readonly TimeProvider _time = new FixedTime(Now);
 
@@ -22,6 +23,9 @@ public sealed class ApiKeyHandlerTests
     {
         _user.Id.Returns(UserId);
         _user.TenantId.Returns(Guid.NewGuid());
+        _transactions
+            .RunSerializableAsync(Arg.Any<Func<CancellationToken, Task<Result>>>(), Arg.Any<CancellationToken>())
+            .Returns(call => call.Arg<Func<CancellationToken, Task<Result>>>()(call.Arg<CancellationToken>()));
     }
 
     private CreateApiKeyHandler Create(params ApiKey[] existing)
@@ -29,7 +33,7 @@ public sealed class ApiKeyHandlerTests
         var set = FakeDbSet.Of(existing);
         set.When(s => s.Add(Arg.Any<ApiKey>())).Do(call => _added.Add(call.Arg<ApiKey>()));
         _db.ApiKeys.Returns(set);
-        return new CreateApiKeyHandler(_db, _user, _demo, new CreateApiKeyValidator(), _time);
+        return new CreateApiKeyHandler(_db, _user, _demo, new CreateApiKeyValidator(), _transactions, _time);
     }
 
     private static ApiKey KeyOf(Guid userId) => ApiKey.Create(userId, "k", ApiKeyScope.Read, null, Now).Value.Key;
@@ -66,6 +70,14 @@ public sealed class ApiKeyHandlerTests
         var result = await Create().HandleAsync(new CreateApiKeyCommand("x", ApiKeyScope.Read, null), TestContext.Current.CancellationToken);
 
         result.Error.ShouldBe(DemoErrors.ActionDisabled);
+    }
+
+    [Fact]
+    public async Task CountsAndInsertsInsideTheSerializableTransaction()
+    {
+        await Create().HandleAsync(new CreateApiKeyCommand("x", ApiKeyScope.Read, null), TestContext.Current.CancellationToken);
+
+        await _transactions.Received(1).RunSerializableAsync(Arg.Any<Func<CancellationToken, Task<Result>>>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]

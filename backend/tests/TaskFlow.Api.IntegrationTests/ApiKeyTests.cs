@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using TaskFlow.Api.IntegrationTests.Infrastructure;
@@ -122,6 +123,68 @@ public sealed class ApiKeyTests(SqlServerApiFactory factory)
         var after = await owner.Client.GetJsonAsync<ProjectResponse>(url);
         after.Name.ShouldBe(project.Name);
         after.IsArchived.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task AWriteKeyCannotRemoveItsOwnerFromTheProject()
+    {
+        using var owner = await NewOwnerAsync();
+        var project = await factory.CreateProjectAsync(owner.Client);
+        var (teammateClient, teammate) = await factory.CreateUserClientAsync();
+        teammateClient.Dispose();
+        using var add = await owner.Client.PostAsJsonAsync($"/api/projects/{project.Id}/members", new { email = teammate, role = "Member" }, Ct);
+        add.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var ownerId = (await owner.Client.GetJsonAsync<List<MemberResponse>>($"/api/projects/{project.Id}/members"))
+            .Single(member => string.Equals(member.Email, owner.Email, StringComparison.OrdinalIgnoreCase)).UserId;
+        using var writer = owner.UseKey((await owner.CreateKeyAsync("Writer", "Write")).Secret);
+
+        using var remove = await writer.DeleteAsync(new Uri($"/api/projects/{project.Id}/members/{ownerId}", UriKind.Relative), Ct);
+
+        remove.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await remove.ReadAsync<ProblemResponse>()).Code.ShouldBe("ApiKeys.NotAllowedWithKey");
+        (await owner.Client.GetJsonAsync<List<MemberResponse>>($"/api/projects/{project.Id}/members")).Count.ShouldBe(2);
+    }
+
+    [Fact]
+    public async Task AReadKeyGets403NotValidationErrorsOnUpsertAndSync()
+    {
+        using var owner = await NewOwnerAsync();
+        var project = await factory.CreateProjectAsync(owner.Client);
+        using var reader = owner.UseKey((await owner.CreateKeyAsync("Reader", "Read")).Secret);
+
+        using var put = await reader.PutAsJsonAsync($"/api/projects/{project.Id}/tasks/by-key/T-1", new { title = "" }, Ct);
+        using var sync = await reader.PostAsJsonAsync($"/api/projects/{project.Id}/tasks/sync", new { items = Array.Empty<object>() }, Ct);
+
+        put.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        sync.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task KeysStopWorkingInTheDemoAndUnknownSecretsAreRepeatedly401()
+    {
+        using var owner = await NewOwnerAsync();
+        var project = await factory.CreateProjectAsync(owner.Client);
+        var created = await owner.CreateKeyAsync("Reader", "Read");
+        var url = new Uri($"/api/projects/{project.Id}", UriKind.Relative);
+        using var viaKey = owner.UseKey(created.Secret);
+        (await viaKey.GetAsync(url, Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        using var unknown = owner.UseKey("tf_" + new string('z', 43));
+        (await unknown.GetAsync(url, Ct)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        (await unknown.GetAsync(url, Ct)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+
+        using var demoFactory = factory.WithWebHostBuilder(builder => builder.ConfigureTestServices(services =>
+            services.AddSingleton<TaskFlow.Application.Demo.IDemoMode, AlwaysDemo>()));
+        using var demoClient = demoFactory.CreateClient();
+        demoClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", created.Secret);
+        (await demoClient.GetAsync(url, Ct)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+    }
+
+    private sealed class AlwaysDemo : TaskFlow.Application.Demo.IDemoMode
+    {
+        public bool IsEnabled => true;
+
+        public bool IsProtectedAccount(string? email) => false;
     }
 
     [Fact]

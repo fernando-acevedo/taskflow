@@ -101,3 +101,12 @@ test("the hook falls back to the local file when the API is down", () => {
   assert.match(fs.readFileSync(path.join(root, "docs", "gantt-updates.js"), "utf8"), /"id":"T-1","status":"hecho"/);
   fs.rmSync(root, { recursive: true, force: true });
 });
+
+test("rejects an http: TASKFLOW_URL unless it is localhost or 127.0.0.1", () => {
+  const env = (url) => ({ TASKFLOW_URL: url, TASKFLOW_API_KEY: SECRET, TASKFLOW_PROJECT: "p" });
+  assert.equal(sync.config(env("http://taskflow.example.com")), null);
+  assert.equal(sync.insecureUrl(env("http://taskflow.example.com")), true);
+  assert.notEqual(sync.config(env("https://taskflow.example.com")), null);
+  assert.notEqual(sync.config(env("http://localhost:5080")), null);
+  assert.notEqual(sync.config(env("http://127.0.0.1:5080")), null);
+});

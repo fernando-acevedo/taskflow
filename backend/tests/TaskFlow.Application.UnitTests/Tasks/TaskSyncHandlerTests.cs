@@ -341,6 +341,23 @@ public sealed class TaskSyncHandlerTests
         result.Error!.Type.ShouldBe(ErrorType.Validation);
     }
 
+    [Fact]
+    public async Task AReadKeyGets403BeforeTheBodyIsChecked()
+    {
+        _user.ApiKeyId.Returns(Guid.NewGuid());
+        _user.ApiKeyScope.Returns(TaskFlow.Domain.ApiKeys.ApiKeyScope.Read);
+
+        (await Handler().HandleAsync(new SyncTasksCommand(_project.Id, []), Ct)).Error.ShouldBe(TaskFlow.Domain.ApiKeys.ApiKeyErrors.ScopeInsufficient);
+
+        var upserter = new TaskUpserter(
+            _db, _user, new ActivityLog(_db, _user, new FixedTime(Now)), Substitute.For<IUniqueViolationDetector>(), new FixedTime(Now));
+        var access = new ProjectAccess(_db, _user);
+        var handler = new UpsertTaskHandler(
+            access, new TaskUpsertFieldsValidator(), upserter, new GetTaskHandler(_db, access, new FixedTime(Now)), _transactions);
+        var invalid = new TaskUpsertFields("x", null, StatusNote: new string('n', 501));
+        (await handler.HandleAsync(new UpsertTaskCommand(_project.Id, "T-1", invalid), Ct)).Error.ShouldBe(TaskFlow.Domain.ApiKeys.ApiKeyErrors.ScopeInsufficient);
+    }
+
     private sealed class FixedTime(DateTimeOffset now) : TimeProvider
     {
         public override DateTimeOffset GetUtcNow() => now;

@@ -26,6 +26,14 @@ public sealed class UpsertTaskHandler(
     public async Task<Result<UpsertTaskResult>> HandleAsync(UpsertTaskCommand command, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(command);
+
+        // Access first, so a key without the scope gets 403 whatever the body is; it is checked again inside the transaction.
+        var early = await access.GetAsync(command.ProjectId, ProjectAccessLevel.Work, cancellationToken);
+        if (!early.IsSuccess)
+        {
+            return early.Error;
+        }
+
         var validation = await validator.ValidateAsync(command.Fields, cancellationToken);
         if (!validation.IsValid)
         {

@@ -27,6 +27,7 @@ public sealed class CreateApiKeyHandler(
     ICurrentUser currentUser,
     IDemoMode demo,
     IValidator<CreateApiKeyCommand> validator,
+    ITransactionRunner transactions,
     TimeProvider time)
 {
     public async Task<Result<CreatedApiKeyDto>> HandleAsync(CreateApiKeyCommand command, CancellationToken cancellationToken)
@@ -54,22 +55,31 @@ public sealed class CreateApiKeyHandler(
 
         var now = time.GetUtcNow();
         var userId = currentUser.Id;
-        var active = await db.ApiKeys.CountAsync(
-            key => key.UserId == userId && key.RevokedAt == null && key.ExpiresAt > now, cancellationToken);
-        if (active >= ApiKey.MaxActivePerUser)
-        {
-            return ApiKeyErrors.TooMany;
-        }
+        CreatedApiKeyDto? dto = null;
 
-        var created = ApiKey.Create(userId, command.Name.Trim(), command.Scope, command.ExpiresAt, now);
-        if (!created.IsSuccess)
+        // Serializable: the count and the insert are atomic, so concurrent requests can't go over the limit.
+        var result = await transactions.RunSerializableAsync(async token =>
         {
-            return created.Error;
-        }
+            var active = await db.ApiKeys.CountAsync(
+                key => key.UserId == userId && key.RevokedAt == null && key.ExpiresAt > now, token);
+            if (active >= ApiKey.MaxActivePerUser)
+            {
+                return ApiKeyErrors.TooMany;
+            }
 
-        var (key, secret) = created.Value;
-        db.ApiKeys.Add(key);
-        await db.SaveChangesAsync(cancellationToken);
-        return new CreatedApiKeyDto(key.Id, key.Name, key.Prefix, key.Scope, key.CreatedAt, key.ExpiresAt, secret);
+            var created = ApiKey.Create(userId, command.Name.Trim(), command.Scope, command.ExpiresAt, now);
+            if (!created.IsSuccess)
+            {
+                return created.Error;
+            }
+
+            var (key, secret) = created.Value;
+            db.ApiKeys.Add(key);
+            await db.SaveChangesAsync(token);
+            dto = new CreatedApiKeyDto(key.Id, key.Name, key.Prefix, key.Scope, key.CreatedAt, key.ExpiresAt, secret);
+            return Result.Success();
+        }, cancellationToken);
+
+        return result.IsSuccess ? dto! : result.Error;
     }
 }

@@ -45,6 +45,14 @@ public sealed class SyncTasksHandler(
     public async Task<Result<SyncTasksResult>> HandleAsync(SyncTasksCommand command, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(command);
+
+        // Access first, so a key without the scope gets 403 whatever the body is; it is checked again inside the transaction.
+        var early = await access.GetAsync(command.ProjectId, ProjectAccessLevel.Work, cancellationToken);
+        if (!early.IsSuccess)
+        {
+            return early.Error;
+        }
+
         if (command.Items.Count == 0)
         {
             return TaskSyncErrors.SyncEmpty;

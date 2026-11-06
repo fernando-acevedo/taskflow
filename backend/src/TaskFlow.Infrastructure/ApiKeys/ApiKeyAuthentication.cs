@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using TaskFlow.Application.Demo;
 using TaskFlow.Domain.ApiKeys;
 using TaskFlow.Infrastructure.Persistence;
 
@@ -28,6 +29,11 @@ public static class ApiKeyDefaults
 
     public static string OwnerCacheKey(Guid userId) => $"apikey-owner:{userId}";
 
+    /// <summary>How long an unknown secret is remembered (by hash, never the secret) so repeats don't query the database.</summary>
+    public static readonly TimeSpan UnknownCacheDuration = TimeSpan.FromSeconds(5);
+
+    public static string UnknownCacheKey(string hash) => $"apikey-unknown:{hash}";
+
     /// <summary><c>LastUsedAt</c> is written at most this often per key.</summary>
     public static readonly TimeSpan LastUsedInterval = TimeSpan.FromMinutes(5);
 
@@ -47,7 +53,7 @@ public static class ApiKeyDefaults
 /// <summary>
 /// Authenticates <c>Authorization: Bearer tf_...</c>. The key is found by the hash of the secret, which happens before
 /// the request has a tenant, so this is the only lookup that ignores the tenant filter (the key itself says which
-/// tenant the request is in). It is not cached: a revoked key stops working at once.
+/// tenant the request is in). Found keys are not cached (a revoked key stops working at once); unknown secrets are, for seconds.
 /// </summary>
 internal sealed class ApiKeyAuthenticationHandler(
     IOptionsMonitor<AuthenticationSchemeOptions> options,
@@ -55,6 +61,7 @@ internal sealed class ApiKeyAuthenticationHandler(
     UrlEncoder encoder,
     AppDbContext db,
     IMemoryCache cache,
+    IDemoMode demo,
     TimeProvider time)
     : AuthenticationHandler<AuthenticationSchemeOptions>(options, loggerFactory, encoder)
 {
@@ -66,15 +73,32 @@ internal sealed class ApiKeyAuthenticationHandler(
             return AuthenticateResult.NoResult();
         }
 
+        if (demo.IsEnabled)
+        {
+            return AuthenticateResult.Fail("API keys are disabled in the public demo.");
+        }
+
         var cancellationToken = Context.RequestAborted;
         var hash = ApiKey.HashSecret(secret);
+        if (cache.TryGetValue(ApiKeyDefaults.UnknownCacheKey(hash), out _))
+        {
+            return AuthenticateResult.Fail("Invalid API key.");
+        }
+
+        // Plain equality in SQL is enough: the hash is SHA-256 of 256 random bits, so nothing can be learned from timing.
         var found = await db.ApiKeys.IgnoreQueryFilters().AsNoTracking()
             .Where(key => key.KeyHash == hash)
             .Select(key => new { Key = key, TenantId = EF.Property<Guid>(key, AppDbContext.TenantIdProperty) })
             .FirstOrDefaultAsync(cancellationToken);
 
         var now = time.GetUtcNow();
-        if (found is null || !found.Key.IsUsable(now))
+        if (found is null)
+        {
+            cache.Set(ApiKeyDefaults.UnknownCacheKey(hash), true, ApiKeyDefaults.UnknownCacheDuration);
+            return AuthenticateResult.Fail("Invalid API key.");
+        }
+
+        if (!found.Key.IsUsable(now))
         {
             return AuthenticateResult.Fail("Invalid API key.");
         }

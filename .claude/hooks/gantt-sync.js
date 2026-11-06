@@ -80,7 +80,7 @@ function buildItem(root, update) {
 
 async function sendToTaskFlow(root, update) {
   const cfg = taskflow.config();
-  if (!cfg) return "";
+  if (!cfg) return taskflow.insecureUrl() ? " (TaskFlow: TASKFLOW_URL con http: no se usa, salvo localhost; queda el respaldo local)" : "";
   const item = buildItem(root, update);
   if (!item) return " (TaskFlow: tarea desconocida, no enviada)";
   const result = await taskflow.post(cfg, [item]);
