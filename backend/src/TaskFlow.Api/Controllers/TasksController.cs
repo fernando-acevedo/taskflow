@@ -134,11 +134,11 @@ public sealed class TasksController : ApiControllerBase
 
     /// <summary>Moves the task to a column and position, as a Kanban drag and drop does.</summary>
     [HttpPut("{taskId:guid}/position")]
-    [ProducesResponseType<TaskDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<MoveTaskResultDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<TaskDto>> Move(
+    public async Task<ActionResult<MoveTaskResultDto>> Move(
         Guid projectId,
         Guid taskId,
         MoveTaskRequest request,

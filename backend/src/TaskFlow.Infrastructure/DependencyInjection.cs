@@ -13,6 +13,7 @@ using TaskFlow.Application.Users;
 using TaskFlow.Infrastructure.ApiKeys;
 using TaskFlow.Infrastructure.Demo;
 using TaskFlow.Infrastructure.Email;
+using TaskFlow.Infrastructure.Email.Outbox;
 using TaskFlow.Infrastructure.Identity;
 using TaskFlow.Infrastructure.Notifications;
 using TaskFlow.Infrastructure.Persistence;
@@ -42,7 +43,7 @@ public static class DependencyInjection
         services.AddScoped<ITransactionRunner, Persistence.TransactionRunner>();
 
         services.AddHealthChecks()
-            .AddDbContextCheck<AppDbContext>("database");
+            .AddDbContextCheck<AppDbContext>("database", tags: ["ready"]);
 
         services.AddIdentityApiEndpoints<ApplicationUser>(options =>
             {
@@ -101,6 +102,12 @@ public static class DependencyInjection
         {
             services.AddSingleton<IEmailSender, SmtpEmailSender>();
         }
+
+        services.AddOptions<OutboxOptions>().Bind(configuration.GetSection(OutboxOptions.SectionName)).ValidateOnStart();
+        services.AddSingleton<IValidateOptions<OutboxOptions>, OutboxOptionsValidator>();
+        services.AddScoped<IEmailOutbox, EmailOutbox>();
+        services.AddSingleton<OutboxDispatcher>();
+        services.AddHostedService<OutboxProcessor>();
 
         services.AddScoped<IInvitationSender, InvitationSender>();
         services.AddScoped<INotificationEmailSender, NotificationEmailSender>();

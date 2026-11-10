@@ -96,6 +96,10 @@ export const projectsFeature = createFeature({
       }),
     ),
     on(
+      ProjectsApiActions.projectRefreshed,
+      (state, { project }): ProjectsState => (state.current?.id === project.id ? { ...state, current: project } : state),
+    ),
+    on(
       ProjectsApiActions.projectLoadFailed,
       (state, { error }): ProjectsState => ({ ...state, currentLoading: false, saving: false, currentError: error }),
     ),

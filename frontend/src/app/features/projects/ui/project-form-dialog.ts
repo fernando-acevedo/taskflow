@@ -7,8 +7,11 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
+import { Observable } from 'rxjs';
 import { TranslocoDirective } from '@jsverse/transloco';
 import { applyApiFieldErrors } from '../../../shared/data-access/api-field-errors';
+import { isStale } from '../../../core/http/api-error';
+import { StaleNotice } from '../../../shared/ui/stale-notice';
 import { SaveFn } from '../../../shared/data-access/submission';
 import { ClientOption, Project, ProjectInput } from '../data-access/projects-api.service';
 
@@ -16,6 +19,8 @@ export interface ProjectFormData {
   readonly project: Project | null;
   readonly clients: readonly ClientOption[];
   readonly save: SaveFn<ProjectInput>;
+  /** The server's current project (null if it can't be fetched); the store then holds its new row version. */
+  readonly refresh?: () => Observable<Project | null>;
 }
 
 /** Creates a project, or edits the one passed in. Stays open, keeping the values, until the save succeeds. */
@@ -30,6 +35,7 @@ export interface ProjectFormData {
     MatProgressBarModule,
     MatSelectModule,
     TranslocoDirective,
+    StaleNotice,
   ],
   template: `
     <ng-container *transloco="let t; prefix: 'projects'">
@@ -38,6 +44,9 @@ export interface ProjectFormData {
         <mat-dialog-content>
           @if (saving()) {
             <mat-progress-bar mode="indeterminate" />
+          }
+          @if (stale()) {
+            <app-stale-notice [message]="t('staleMessage')" [busy]="saving()" (reload)="reload()" (overwrite)="overwrite()" />
           }
           <mat-form-field appearance="outline">
             <mat-label>{{ t('client') }}</mat-label>
@@ -91,6 +100,8 @@ export class ProjectFormDialog {
   protected readonly data = inject<ProjectFormData>(MAT_DIALOG_DATA);
   private readonly destroyRef = inject(DestroyRef);
   protected readonly saving = signal(false);
+  /** Someone else changed the project while this dialog was open. */
+  protected readonly stale = signal(false);
 
   /** The project's current client stays selectable even when it isn't among the active ones. */
   protected readonly clients: readonly ClientOption[] =
@@ -111,15 +122,51 @@ export class ProjectFormDialog {
     }
     const { clientId, name, description } = this.form.getRawValue();
     this.saving.set(true);
+    this.stale.set(false);
     this.data
       .save({ clientId, name: name.trim(), description: description.trim() || null })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((error) => {
         this.saving.set(false);
-        if (error) {
+        if (isStale(error)) {
+          this.stale.set(true);
+        } else if (error) {
           applyApiFieldErrors(this.form, error);
         } else {
           this.dialogRef.close(true);
+        }
+      });
+  }
+
+  /** Replaces the form with the server's version, losing what was typed. */
+  protected reload(): void {
+    this.fetchLatest((project) => {
+      this.form.reset({
+        clientId: project.clientId,
+        name: project.name,
+        description: project.description ?? '',
+      });
+    });
+  }
+
+  /** Takes the server's row version, then saves the typed values again. */
+  protected overwrite(): void {
+    this.fetchLatest(() => this.submit());
+  }
+
+  private fetchLatest(then: (project: Project) => void): void {
+    const refresh = this.data.refresh;
+    if (!refresh) {
+      return;
+    }
+    this.saving.set(true);
+    refresh()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((project) => {
+        this.saving.set(false);
+        if (project) {
+          this.stale.set(false);
+          then(project);
         }
       });
   }

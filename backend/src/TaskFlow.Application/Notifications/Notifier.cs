@@ -9,8 +9,8 @@ namespace TaskFlow.Application.Notifications;
 
 /// <summary>
 /// Handlers call <see cref="NotifyAsync"/> next to the change they make, and their own <c>SaveChangesAsync</c> stores
-/// the notification in the same transaction (ADR 0009, ADR 0010). After saving they call <see cref="SendEmailsAsync"/>
-/// for the users who asked for email. The current user is never notified about their own action.
+/// the notification, and the outbox row of its email for the users who asked for one, in the same transaction
+/// (ADR 0009, ADR 0010, ADR 0018). The current user is never notified about their own action.
 /// </summary>
 public sealed class Notifier(
     IAppDbContext db,
@@ -25,8 +25,9 @@ public sealed class Notifier(
         Converters = { new JsonStringEnumConverter() },
     };
 
-    private readonly List<Notification> _pending = [];
     private readonly Dictionary<Guid, bool> _members = [];
+    private readonly Dictionary<Guid, NotificationPreferences?> _preferences = [];
+    private readonly Dictionary<Guid, UserDto?> _recipients = [];
     private string? _actorName;
 
     /// <param name="commentId">The comment that caused it, for mentions and comments.</param>
@@ -49,7 +50,7 @@ public sealed class Notifier(
         var data = JsonSerializer.Serialize(new { taskTitle, projectName, actorName = _actorName, commentId }, Json);
         var notification = Notification.Create(recipientId, type, projectId, taskId, currentUser.Id, data, time.GetUtcNow());
         db.Notifications.Add(notification);
-        _pending.Add(notification);
+        await QueueEmailAsync(notification, cancellationToken);
     }
 
     /// <summary>Defense in depth: only members of the current tenant are notified (someone removed from it is not).</summary>
@@ -70,31 +71,33 @@ public sealed class Notifier(
         return isMember;
     }
 
-    /// <summary>Emails the notifications added since the last call to the recipients whose preferences ask for it.</summary>
-    public async Task SendEmailsAsync(CancellationToken cancellationToken)
+    /// <summary>
+    /// Queues the email (the outbox row joins the handler's own <c>SaveChangesAsync</c>) when the recipient's
+    /// preferences ask for it and the account is active.
+    /// </summary>
+    private async Task QueueEmailAsync(Notification notification, CancellationToken cancellationToken)
     {
-        if (_pending.Count == 0)
+        if (!_preferences.TryGetValue(notification.UserId, out var preferences))
+        {
+            preferences = await db.NotificationPreferences.AsNoTracking()
+                .FirstOrDefaultAsync(preference => preference.UserId == notification.UserId, cancellationToken);
+            _preferences[notification.UserId] = preferences;
+        }
+
+        if (preferences is null || !preferences.WantsEmailFor(notification.Type))
         {
             return;
         }
 
-        var pending = _pending.ToList();
-        _pending.Clear();
-        var recipientIds = pending.Select(notification => notification.UserId).Distinct().ToList();
-        var preferences = await db.NotificationPreferences.AsNoTracking()
-            .Where(preference => recipientIds.Contains(preference.UserId))
-            .ToListAsync(cancellationToken);
-        var users = (await identity.FindByIdsAsync(recipientIds, cancellationToken)).ToDictionary(user => user.Id);
-
-        foreach (var preference in preferences)
+        if (!_recipients.TryGetValue(notification.UserId, out var user))
         {
-            var wanted = pending
-                .Where(notification => notification.UserId == preference.UserId && preference.WantsEmailFor(notification.Type))
-                .ToList();
-            if (wanted.Count > 0 && users.TryGetValue(preference.UserId, out var user) && user.IsActive)
-            {
-                await emails.SendAsync(user, wanted, cancellationToken);
-            }
+            user = await identity.FindByIdAsync(notification.UserId, cancellationToken);
+            _recipients[notification.UserId] = user;
+        }
+
+        if (user is { IsActive: true })
+        {
+            emails.Enqueue(user, [notification]);
         }
     }
 }

@@ -13,6 +13,8 @@ public sealed class EndpointSecurityTests(NoDatabaseApiFactory factory) : IClass
     private static readonly HashSet<string> PublicRoutes =
     [
         "health",
+        "health/live",
+        "health/ready",
         "api/system/info",
         "api/demo/status",
         "api/invitations/accept",

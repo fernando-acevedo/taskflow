@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
-import { filter, switchMap } from 'rxjs';
+import { Observable, filter, map, switchMap } from 'rxjs';
 import { SaveFn, Submissions, nextSubmissionId } from '../../../shared/data-access/submission';
 import { confirm } from '../../../shared/ui/confirm-dialog';
 import { labelsFeature } from '../../labels/data-access/store/labels.feature';
@@ -34,9 +34,14 @@ export class TaskEditor {
           : TasksPageActions.createSubmitted({ task: input, submissionId: nextSubmissionId() }),
       );
 
+    const refresh = (): Observable<Task | null> =>
+      this.submissions
+        .dispatchAndWait(TasksPageActions.refreshRequested({ taskId: task?.id ?? '', submissionId: nextSubmissionId() }))
+        .pipe(map((error) => (error ? null : (this.allTasks().find((t) => t.id === task?.id) ?? null))));
+
     const closed = this.dialog
       .open<TaskFormDialog, TaskFormData, TaskFormResult>(TaskFormDialog, {
-        data: { task, members: this.members(), labels: this.labels(), tasks: this.allTasks(), readOnly: !this.canEdit(), save },
+        data: { task, members: this.members(), labels: this.labels(), tasks: this.allTasks(), readOnly: !this.canEdit(), save, refresh },
         width: '600px',
         maxWidth: 'calc(100vw - 32px)',
       })

@@ -50,11 +50,14 @@ public static class ProjectApi
         this HttpClient client, Guid projectId, TaskResponse task, string status, int position) =>
         client.PutAsJsonAsync($"/api/projects/{projectId}/tasks/{task.Id}/position", new { status, position, task.RowVersion }, Ct);
 
-    public static async Task<TaskResponse> MoveTaskAsync(this HttpClient client, Guid projectId, TaskResponse task, string status, int position)
+    public static async Task<TaskResponse> MoveTaskAsync(this HttpClient client, Guid projectId, TaskResponse task, string status, int position) =>
+        (await client.MoveTaskWithResultAsync(projectId, task, status, position)).Task;
+
+    public static async Task<MoveResponse> MoveTaskWithResultAsync(this HttpClient client, Guid projectId, TaskResponse task, string status, int position)
     {
         using var response = await client.TryMoveTaskAsync(projectId, task, status, position);
         response.EnsureSuccessStatusCode();
-        return await response.ReadAsync<TaskResponse>();
+        return await response.ReadAsync<MoveResponse>();
     }
 
     public static async Task<HttpResponseMessage> AddMemberAsync(this HttpClient owner, Guid projectId, string email, string role = "Member") =>
@@ -79,6 +82,10 @@ public sealed record ProjectResponse(
     byte[] RowVersion);
 
 public sealed record MemberResponse(Guid UserId, string Email, string Role);
+
+public sealed record MoveResponse(TaskResponse Task, IReadOnlyList<TaskPositionResponse> Reordered);
+
+public sealed record TaskPositionResponse(Guid Id, string Status, int Position, byte[] RowVersion);
 
 public sealed record TaskResponse(
     Guid Id,

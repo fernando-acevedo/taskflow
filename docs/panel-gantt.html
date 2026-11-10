@@ -76,6 +76,12 @@ button, select, input, textarea { font: inherit; color: inherit; }
 .s-bloqueado { --st: var(--st-block); }
 .s-hecho { --st: var(--st-done); }
 .dot { background: var(--st); }
+.progress { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; margin-top: 10px; }
+.prog { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; display: grid; gap: 6px; min-width: 0; }
+.prog-top { display: flex; justify-content: space-between; gap: 8px; font-variant-numeric: tabular-nums; }
+.prog-top span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.prog-track { height: 8px; border-radius: 999px; background: var(--line); overflow: hidden; }
+.prog-fill { height: 100%; border-radius: 999px; background: var(--accent); }
 .stat.warn { background: var(--warn-bg); color: var(--warn-fg); border-color: transparent; }
 
 .note { background: var(--surface-2); border-radius: 6px; padding: 8px 12px; color: var(--muted); }
@@ -159,6 +165,7 @@ button.g-left:hover .g-title { text-decoration: underline; }
   </header>
 
   <div class="stats" id="stats"></div>
+  <div class="progress" id="progress" aria-label="Avance por fase"></div>
   <p class="note" id="sync-note" role="status" hidden></p>
   <p class="note" id="example-note" hidden>Estas tareas son un ejemplo de lote. Editalas, borralas o pegá tu propio JSON con "Reemplazar todo".</p>
 
@@ -203,7 +210,7 @@ button.g-left:hover .g-title { text-decoration: underline; }
 <script>
 (function () {
   "use strict";
-  var KEY = "panel-gantt.taskflow.v8";
+  var KEY = "panel-gantt.taskflow.v15";
   var AGENTS = ["backend-dev", "frontend-dev", "db-migrator", "test-runner", "code-reviewer", "yo"];
   var STATUSES = [["pendiente", "Pendiente"], ["en_progreso", "En progreso"], ["bloqueado", "Bloqueado"], ["hecho", "Hecho"]];
   var LABEL = {}; STATUSES.forEach(function (s) { LABEL[s[0]] = s[1]; });
@@ -304,7 +311,19 @@ button.g-left:hover .g-title { text-decoration: underline; }
     {"id":"T-88","title":"F9 API keys: fixes del review","agent":"backend-dev","status":"hecho","start":"2026-12-24","end":"2026-12-25","deps":["T-87"],"notes":"PR #20"},
     {"id":"T-89","title":"Fase 6 Fixes del review: anuncio de título solo al cambiar de ruta, caché de nombres de idioma, script de screenshots más robusto, docs","agent":"frontend-dev","status":"hecho","start":"2026-11-06","end":"2026-11-06","deps":["T-57"],"notes":"Announce only on path change (+spec); languageName cached in a constant map; specs for skip link and language aria-labels; chart color comment reworded; screenshots.mjs opens first card and closes contexts in finally; testing/** excluded from tsconfig.app.json (only specs import it) and added to tsconfig.spec.json include so lint still finds axe.ts. lint, test (291) and build OK. · Commit + PR #16"},
     {"id":"T-90","title":"F7 Multitenant: fixes del review (front): queryChanged perdido, respuestas en vuelo del tenant viejo, reintento con tenant, errores de carga","agent":"frontend-dev","status":"hecho","start":"2026-12-03","end":"2026-12-03","deps":["T-67"],"notes":"Fixes front; 359 tests OK. PR #19"},
-    {"id":"T-91","title":"F9 API keys: editar inicio, bloqueo y nota en UpdateTask + \"vía API key\" en Actividad (back + front)","agent":"backend-dev","status":"hecho","start":"2026-12-22","end":"2026-12-23","deps":["T-82","T-85"],"notes":"PR #20"}
+    {"id":"T-91","title":"F9 API keys: editar inicio, bloqueo y nota en UpdateTask + \"vía API key\" en Actividad (back + front)","agent":"backend-dev","status":"hecho","start":"2026-12-22","end":"2026-12-23","deps":["T-82","T-85"],"notes":"PR #20"},
+    {"id":"T-92","title":"F10 Hardening: ADRs 0018 (outbox de emails) y 0019 (movimientos del tablero serializables, respuesta con reordenadas, health live/ready)","agent":"backend-dev","status":"hecho","start":"2026-11-10","end":"2026-11-10","deps":[],"notes":"ADR 0018 outbox y 0019 moves+health"},
+    {"id":"T-93","title":"F10 Hardening: MoveTask serializable + respuesta {task, reordered} + test concurrente (C1)","agent":"backend-dev","status":"hecho","start":"2026-11-10","end":"2026-11-11","deps":["T-92"],"notes":"MoveTask serializable + MoveTaskResultDto con reordered; test concurrente"},
+    {"id":"T-94","title":"F10 Hardening: health /health/live y /health/ready (E4)","agent":"backend-dev","status":"hecho","start":"2026-11-11","end":"2026-11-11","deps":["T-92"],"notes":"/health/live y /health/ready, /health alias"},
+    {"id":"T-95","title":"F10 Hardening: outbox transaccional de emails + BackgroundService con reintentos (E1)","agent":"backend-dev","status":"hecho","start":"2026-11-11","end":"2026-11-12","deps":["T-93"],"notes":"OutboxMessage + OutboxDispatcher (UPDLOCK/READPAST con lease) + OutboxProcessor con backoff; 6 tests nuevos"},
+    {"id":"T-96","title":"F10 Hardening: migración AddOutbox","agent":"db-migrator","status":"hecho","start":"2026-11-12","end":"2026-11-12","deps":["T-95"],"notes":"AddOutbox: tabla + 2 índices filtrados; back 468 tests OK"},
+    {"id":"T-97","title":"F10 Hardening: el tablero aplica la respuesta del movimiento sin recargar (FE1)","agent":"frontend-dev","status":"hecho","start":"2026-11-10","end":"2026-11-11","deps":["T-92"],"notes":"Move aplica reordered sin recargar; recarga solo en Stale"},
+    {"id":"T-98","title":"F10 Hardening: UX de conflicto 409 Stale en editor y tablero (C2)","agent":"frontend-dev","status":"hecho","start":"2026-11-10","end":"2026-11-11","deps":[],"notes":"Aviso Stale en diálogos de tarea y proyecto + snackbar de move"},
+    {"id":"T-99","title":"F10 Hardening: CSP y Permissions-Policy en staticwebapp.config.json (T1)","agent":"frontend-dev","status":"hecho","start":"2026-11-10","end":"2026-11-10","deps":[],"notes":"CSP + Permissions-Policy; apply-csp.mjs resuelve hashes y origen de la API en el build"},
+    {"id":"T-100","title":"F10 Hardening: tests del lote (back + front)","agent":"test-runner","status":"hecho","start":"2026-11-13","end":"2026-11-13","deps":["T-96","T-97","T-98","T-99"],"notes":"Back 474, front 405 OK; CI verde. PR #21"},
+    {"id":"T-101","title":"F10 Hardening: review del diff","agent":"code-reviewer","status":"hecho","start":"2026-11-13","end":"2026-11-13","deps":["T-100"],"notes":"1 alto, 4 medios, 3 bajos. PR #21"},
+    {"id":"T-102","title":"F10 Hardening: fixes del review","agent":"backend-dev","status":"hecho","start":"2026-11-14","end":"2026-11-14","deps":["T-101"],"notes":"Outbox: payload vaciado, purga de fallidas, SendTimeout < lease; ADRs. PR #21"},
+    {"id":"T-103","title":"F10 Hardening: fixes del review (front): claves common.stale, test de paridad i18n, flaky de X-Tenant en auth.interceptor.spec, chequeo de on* en check:csp","agent":"frontend-dev","status":"hecho","start":"2026-11-14","end":"2026-11-14","deps":["T-101"],"notes":"Flaky de MockStore, common.stale, paridad i18n, check:csp on*=. PR #21"}
   ] };
 
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
@@ -399,6 +418,31 @@ button.g-left:hover .g-title { text-decoration: underline; }
     }).join("");
     if (waiting) html += '<span class="stat warn"><b>' + waiting + "</b> en curso con dependencias sin cerrar</span>";
     $("stats").innerHTML = html;
+    renderProgress();
+  }
+
+  // Progress per phase (title prefix "F10 ..." or "Fase 5 ..."): open phases first, then the overall total.
+  function phaseName(t) {
+    var m = /^(F\d+|Fase \d+)\b/.exec(t.title);
+    return m ? m[1] : "Otras";
+  }
+  function renderProgress() {
+    var groups = {}, order = [], done = 0;
+    state.tasks.forEach(function (t) {
+      var k = phaseName(t);
+      if (!groups[k]) { groups[k] = { total: 0, done: 0 }; order.push(k); }
+      groups[k].total++;
+      if (t.status === "hecho") { groups[k].done++; done++; }
+    });
+    var open = order.filter(function (k) { return groups[k].done < groups[k].total; });
+    function box(name, d, total) {
+      var pct = total ? Math.round(d * 100 / total) : 0;
+      return '<div class="prog"><div class="prog-top"><span><b>' + esc(name) + "</b> · " + d + "/" + total +
+        "</span><b>" + pct + '%</b></div><div class="prog-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' +
+        pct + '" aria-label="' + esc(name) + '"><div class="prog-fill" style="width:' + pct + '%"></div></div></div>';
+    }
+    $("progress").innerHTML = open.map(function (k) { return box(k, groups[k].done, groups[k].total); }).join("") +
+      box("Total", done, state.tasks.length);
   }
 
   function depsHtml(t, map) {

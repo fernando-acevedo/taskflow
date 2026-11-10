@@ -2,16 +2,18 @@ using System.Globalization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using TaskFlow.Application.Users;
+using TaskFlow.Infrastructure.Email.Outbox;
 using TaskFlow.Infrastructure.Identity;
 
 namespace TaskFlow.Infrastructure.Email;
 
 /// <summary>
 /// Writes the invitation in the language of the request that triggered it (the admin's), and links to the
-/// frontend's accept-invitation page with the user's email and token.
+/// frontend's accept-invitation page with the user's email and token. The message is saved to the outbox at once
+/// (ADR 0018) and sent, with retries, by the background worker; "not sent" now means "could not be queued".
 /// </summary>
 internal sealed partial class InvitationSender(
-    IEmailSender sender,
+    IEmailOutbox outbox,
     IOptions<EmailOptions> emailOptions,
     IOptions<InvitationTokenProviderOptions> tokenOptions,
     ILogger<InvitationSender> logger) : IInvitationSender
@@ -20,7 +22,7 @@ internal sealed partial class InvitationSender(
     {
         try
         {
-            await sender.SendAsync(Compose(user, BuildLink(user.Email, token)), cancellationToken);
+            await outbox.EnqueueAndSaveAsync("Invitation", Compose(user, BuildLink(user.Email, token)), cancellationToken);
             return true;
         }
 #pragma warning disable CA1031 // Any delivery failure (settings, network, SMTP) is reported to the admin as "not sent".
@@ -38,7 +40,8 @@ internal sealed partial class InvitationSender(
         {
             var link = LinkEmail.FrontendLink(emailOptions.Value, "login").TrimEnd('#');
             var text = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "es" ? SpanishAdded : EnglishAdded;
-            await sender.SendAsync(
+            await outbox.EnqueueAndSaveAsync(
+                "TenantAdded",
                 LinkEmail.Compose(
                     user.Email,
                     string.Format(CultureInfo.InvariantCulture, text.Subject, tenantName),

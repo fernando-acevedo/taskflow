@@ -4,10 +4,17 @@ using TaskFlow.Infrastructure.Email;
 
 namespace TaskFlow.Api.IntegrationTests.Infrastructure;
 
-/// <summary>Keeps the emails the API would send so tests can follow the links in them.</summary>
+/// <summary>
+/// Keeps the emails the API would send so tests can follow the links in them. Emails leave through the outbox (ADR 0018),
+/// whose background worker is off in tests: <see cref="SentTo"/> first drains the outbox through <see cref="Drain"/>, so
+/// everything a request queued has been "sent" by the time a test reads it.
+/// </summary>
 public sealed partial class TestEmailSender : IEmailSender
 {
     private readonly ConcurrentQueue<EmailMessage> _sent = new();
+
+    /// <summary>Runs the outbox once; set by the factory.</summary>
+    public Func<Task>? Drain { get; set; }
 
     public Task SendAsync(EmailMessage message, CancellationToken cancellationToken)
     {
@@ -15,8 +22,12 @@ public sealed partial class TestEmailSender : IEmailSender
         return Task.CompletedTask;
     }
 
-    public IReadOnlyList<EmailMessage> SentTo(string email) =>
-        [.. _sent.Where(message => string.Equals(message.To, email, StringComparison.OrdinalIgnoreCase))];
+    public IReadOnlyList<EmailMessage> SentTo(string email)
+    {
+        // Blocking is fine in this test helper: a sync API keeps the many readers of emails simple.
+        Drain?.Invoke().GetAwaiter().GetResult();
+        return [.. _sent.Where(message => string.Equals(message.To, email, StringComparison.OrdinalIgnoreCase))];
+    }
 
     /// <summary>The token from the newest invitation link sent to <paramref name="email"/>.</summary>
     public string InvitationTokenFor(string email)

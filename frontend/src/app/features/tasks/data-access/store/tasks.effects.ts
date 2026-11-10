@@ -2,7 +2,7 @@ import { inject } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
 import { EMPTY, catchError, concatMap, filter, map, of, switchMap, tap, withLatestFrom } from 'rxjs';
-import { ApiError, toApiError } from '../../../../core/http/api-error';
+import { ApiError, isStale, toApiError } from '../../../../core/http/api-error';
 import { Notifier } from '../../../../core/notifications/notifier';
 import { LabelsApiActions } from '../../../labels/data-access/store/labels.actions';
 import { TasksApiService } from '../tasks-api.service';
@@ -13,11 +13,10 @@ import { untilTenantChanges } from '../../../../shared/data-access/until-tenant-
 export const loadTasks = createEffect(
   (actions$ = inject(Actions), store = inject(Store), api = inject(TasksApiService)) =>
     actions$.pipe(
-      // Editing or deleting a label changes the labels each task carries.
+      // Editing or deleting a label changes the labels each task carries. A move needs no reload: its answer
+      // carries the neighbors' new positions and versions. A stale move does (see `reloadAfterStaleMove`).
       ofType(
         TasksPageActions.opened,
-        TasksApiActions.taskMoved,
-        TasksApiActions.taskMoveFailed,
         LabelsApiActions.labelSaved,
         LabelsApiActions.labelDeleted,
       ),
@@ -112,10 +111,48 @@ export const moveTask = createEffect(
           return EMPTY;
         }
         return api.move(before, status, position).pipe(
-          map((task) => TasksApiActions.taskMoved({ task })),
+          map((result) => TasksApiActions.taskMoved({ result })),
           catchError((error: unknown) => of(TasksApiActions.taskMoveFailed({ error: toApiError(error) }))),
         );
       }),
+    ),
+  { functional: true },
+);
+
+/** Another user changed the task: the reducer rolls the optimistic move back, and the board reloads. */
+export const reloadAfterStaleMove = createEffect(
+  (actions$ = inject(Actions), store = inject(Store), api = inject(TasksApiService)) =>
+    actions$.pipe(
+      ofType(TasksApiActions.taskMoveFailed),
+      filter(({ error }) => isStale(error)),
+      withLatestFrom(store.select(tasksFeature.selectProjectId)),
+      map(([, projectId]) => projectId),
+      filter((projectId): projectId is string => projectId !== null),
+      switchMap((projectId) =>
+        api.list(projectId).pipe(
+          untilTenantChanges(actions$),
+          map((tasks) => TasksApiActions.tasksLoaded({ projectId, tasks })),
+          catchError((error: unknown) => of(TasksApiActions.tasksLoadFailed({ error: toApiError(error) }))),
+        ),
+      ),
+    ),
+  { functional: true },
+);
+
+/** The edit dialog's "Reload": the server's version of the task, so the next save carries its row version. */
+export const refreshTask = createEffect(
+  (actions$ = inject(Actions), store = inject(Store), api = inject(TasksApiService)) =>
+    actions$.pipe(
+      ofType(TasksPageActions.refreshRequested),
+      withLatestFrom(store.select(tasksFeature.selectProjectId)),
+      concatMap(([{ taskId, submissionId }, projectId]) =>
+        projectId === null
+          ? of(TasksApiActions.taskSaveFailed({ error: taskGone, submissionId }))
+          : api.get(projectId, taskId).pipe(
+              map((task) => TasksApiActions.taskRefreshed({ task, submissionId })),
+              catchError((error: unknown) => of(TasksApiActions.taskSaveFailed({ error: toApiError(error), submissionId }))),
+            ),
+      ),
     ),
   { functional: true },
 );
@@ -137,8 +174,18 @@ export const notify = createEffect(
           case TasksApiActions.taskDeleted.type:
             notifier.success('tasks.deleted');
             break;
+          case TasksApiActions.taskMoveFailed.type:
+            if (isStale(action.error)) {
+              notifier.warning('tasks.moveStale');
+            } else {
+              notifier.error(action.error);
+            }
+            break;
           default:
-            notifier.error(action.error);
+            // A stale save is shown inside the dialog that submitted it, not as a snackbar.
+            if (!(isStale(action.error) && action.submissionId !== undefined)) {
+              notifier.error(action.error);
+            }
         }
       }),
     ),

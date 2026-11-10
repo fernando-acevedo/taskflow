@@ -2,8 +2,10 @@ using System.Globalization;
 using System.Net;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using TaskFlow.Infrastructure.Email.Outbox;
 using TaskFlow.Infrastructure.Identity;
 
 namespace TaskFlow.Infrastructure.Email;
@@ -13,9 +15,10 @@ namespace TaskFlow.Infrastructure.Email;
 /// <c>/register</c> sends the email confirmation (needed before Identity sends a password reset), and
 /// <c>/forgotPassword</c> the reset link. A failure is logged rather than thrown: the account already exists when
 /// these run, and <c>/forgotPassword</c> answers 200 whether or not it does, so a 500 would tell the caller it does.
+/// The message is saved to the outbox (ADR 0018) and sent by the background worker.
 /// </summary>
 internal sealed partial class IdentityEmailSender(
-    IEmailSender sender,
+    IServiceScopeFactory scopes,
     IOptions<EmailOptions> emailOptions,
     IOptions<DataProtectionTokenProviderOptions> tokenOptions,
     ILogger<IdentityEmailSender> logger) : IEmailSender<ApplicationUser>
@@ -67,7 +70,11 @@ internal sealed partial class IdentityEmailSender(
                 text.Button,
                 buildLink(),
                 string.Format(CultureInfo.InvariantCulture, text.Expiry, hours));
-            await sender.SendAsync(message, CancellationToken.None);
+
+            // This sender is a singleton (MapIdentityApi resolves it from the root provider), so it saves through its own scope.
+            await using var scope = scopes.CreateAsyncScope();
+            await scope.ServiceProvider.GetRequiredService<IEmailOutbox>()
+                .EnqueueAndSaveAsync(texts.Kind, message, CancellationToken.None);
         }
 #pragma warning disable CA1031 // Any delivery failure (settings, network, SMTP) must not change the endpoint's answer.
         catch (Exception exception)

@@ -38,6 +38,13 @@ export function problemBody(error: HttpErrorResponse): ProblemBody {
   };
 }
 
+/** The API's code for an edit based on a version of the record that someone else has since changed (HTTP 409). */
+export const STALE_CODE = 'Concurrency.Stale';
+
+export function isStale(error: ApiError | null | undefined): boolean {
+  return error?.code === STALE_CODE;
+}
+
 export function toApiError(error: unknown): ApiError {
   if (!(error instanceof HttpErrorResponse)) {
     return { code: 'unexpected', fields: {} };

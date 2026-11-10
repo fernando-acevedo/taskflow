@@ -227,7 +227,11 @@
   "common": {
     "cancel": "Cancelar",
     "dismiss": "Cerrar",
-    "retry": "Reintentar"
+    "retry": "Reintentar",
+    "stale": {
+      "reload": "Recargar",
+      "overwrite": "Guardar igual"
+    }
   },
   "apiErrors": {
     "Demo": {
@@ -434,6 +438,7 @@
     "archiveTitle": "¿Archivar {{ name }}?",
     "archiveMessage": "El proyecto pasa a ser de solo lectura y se mueve a la lista de archivados. Los propietarios pueden restaurarlo.",
     "saved": "Proyecto guardado",
+    "staleMessage": "Otra persona cambió este proyecto mientras lo editabas.",
     "archived": "Proyecto archivado",
     "restored": "Proyecto restaurado"
   },
@@ -527,6 +532,8 @@
     "showing": "Mostrando {{ count }} de {{ total }} tareas",
     "created": "Tarea creada",
     "saved": "Tarea guardada",
+    "staleMessage": "Otra persona cambió esta tarea mientras la editabas.",
+    "moveStale": "La tarea cambió en otro lado; el tablero se actualizó.",
     "deleted": "Tarea eliminada",
     "deleteTitle": "¿Eliminar esta tarea?",
     "deleteMessage": "«{{ title }}» se eliminará para siempre.",

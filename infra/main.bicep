@@ -76,7 +76,7 @@ param smtpPassword string = ''
 @description('From address of outgoing email (Email:FromAddress). Most SMTP providers require it.')
 param emailFromAddress string = ''
 
-@description('Health check path of the web app. Empty disables it (the App Service health check is not offered on the Free plan).')
+@description('Health check path of the web app. Use '/health/ready' when enabled. Empty disables it (the App Service health check is not offered on the Free plan).')
 param healthCheckPath string = ''
 
 var suffix = uniqueString(resourceGroup().id)

@@ -18,6 +18,8 @@ export const ProjectPageActions = createActionGroup({
   events: {
     Opened: props<{ projectId: string }>(),
     'Update Submitted': props<{ project: ProjectInput } & Required<Submission>>(),
+    /** The edit dialog asks for the server's version after a stale save. */
+    'Refresh Requested': props<Required<Submission>>(),
     'Archive Confirmed': emptyProps(),
     'Restore Clicked': emptyProps(),
     'Member Add Submitted': props<{ email: string; role: ProjectRole } & Required<Submission>>(),
@@ -35,6 +37,8 @@ export const ProjectsApiActions = createActionGroup({
     'Client Options Loaded': props<{ clients: ClientOption[] }>(),
     'Project Created': props<{ project: Project } & Submission>(),
     'Project Loaded': props<{ project: Project; members: ProjectMember[] }>(),
+    /** The server's current version of the open project, fetched on request. */
+    'Project Refreshed': props<{ project: Project } & Submission>(),
     'Project Load Failed': props<{ error: ApiError }>(),
     /** An edit, archive or membership change succeeded; the project is reloaded. */
     'Project Changed': props<{ message: string } & Submission>(),

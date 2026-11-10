@@ -1,7 +1,7 @@
 import { createActionGroup, props } from '@ngrx/store';
 import { ApiError } from '../../../../core/http/api-error';
 import { Submission } from '../../../../shared/data-access/submission';
-import { Task, TaskInput, TaskStatus } from '../tasks-api.service';
+import { MoveResult, Task, TaskInput, TaskStatus } from '../tasks-api.service';
 
 /** Used by both views of a project's tasks: the board and the list. */
 export const TasksPageActions = createActionGroup({
@@ -13,6 +13,8 @@ export const TasksPageActions = createActionGroup({
     'Create Submitted': props<{ task: TaskInput } & Required<Submission>>(),
     'Update Submitted': props<{ taskId: string; changes: TaskInput } & Required<Submission>>(),
     'Delete Confirmed': props<{ taskId: string }>(),
+    /** The edit dialog asks for the server's version after a stale save. */
+    'Refresh Requested': props<{ taskId: string } & Required<Submission>>(),
   },
 });
 
@@ -24,8 +26,10 @@ export const TasksApiActions = createActionGroup({
     'Task Saved': props<{ task: Task; message: string } & Submission>(),
     'Task Deleted': props<{ taskId: string }>(),
     'Task Save Failed': props<{ error: ApiError } & Submission>(),
-    /** The move was stored; the other tasks of both columns got new positions and versions, so tasks reload. */
-    'Task Moved': props<{ task: Task }>(),
+    /** The server's current version of a task, fetched on request. */
+    'Task Refreshed': props<{ task: Task } & Submission>(),
+    /** The move was stored; `reordered` holds the neighbors' new positions and versions, so no reload is needed. */
+    'Task Moved': props<{ result: MoveResult }>(),
     'Task Move Failed': props<{ error: ApiError }>(),
   },
 });

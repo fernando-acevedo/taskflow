@@ -40,6 +40,21 @@ export interface Task {
   readonly dependsOn: readonly string[];
 }
 
+/** A task other than the moved one whose status or position changed because of a move. */
+export interface ReorderedTask {
+  readonly id: string;
+  readonly status: TaskStatus;
+  readonly position: number;
+  /** The new version of the task. */
+  readonly rowVersion: string;
+}
+
+/** The answer to a move: the moved task and the neighbors the API renumbered. */
+export interface MoveResult {
+  readonly task: Task;
+  readonly reordered: readonly ReorderedTask[];
+}
+
 export interface TaskInput {
   readonly title: string;
   readonly description: string | null;
@@ -74,8 +89,13 @@ export class TasksApiService {
     return this.http.put<Task>(`${this.url(task.projectId)}/${task.id}`, { ...changes, rowVersion: task.rowVersion });
   }
 
-  move(task: Task, status: TaskStatus, position: number): Observable<Task> {
-    return this.http.put<Task>(`${this.url(task.projectId)}/${task.id}/position`, {
+  /** The server's current version of the task. */
+  get(projectId: string, taskId: string): Observable<Task> {
+    return this.http.get<Task>(`${this.url(projectId)}/${taskId}`);
+  }
+
+  move(task: Task, status: TaskStatus, position: number): Observable<MoveResult> {
+    return this.http.put<MoveResult>(`${this.url(task.projectId)}/${task.id}/position`, {
       status,
       position,
       rowVersion: task.rowVersion,
