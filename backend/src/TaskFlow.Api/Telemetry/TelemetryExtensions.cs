@@ -26,8 +26,12 @@ internal static class TelemetryExtensions
             .ConfigureResource(resource => resource.AddService("taskflow-api"))
             .WithTracing(tracing => tracing
                 .SetSampler(new ParentBasedSampler(new TraceIdRatioBasedSampler(samplingRatio)))
-                .AddAspNetCoreInstrumentation(options => options.Filter = context =>
-                    !context.Request.Path.StartsWithSegments("/health", StringComparison.OrdinalIgnoreCase))
+                .AddAspNetCoreInstrumentation(options =>
+                {
+                    options.Filter = context => !context.Request.Path.StartsWithSegments("/health", StringComparison.OrdinalIgnoreCase);
+                    // The hub's access_token travels in the query string (ADR 0023): it must never reach a trace.
+                    options.EnrichWithHttpRequest = (activity, request) => TelemetryRedaction.RedactHubQuery(activity, request.Path, request.QueryString.HasValue);
+                })
                 .AddHttpClientInstrumentation()
                 .AddSqlClientInstrumentation(options => options.RecordException = true)
                 .AddSource(TaskFlowTelemetry.SourceName))
@@ -85,6 +89,35 @@ internal sealed class TraceLogContextMiddleware(RequestDelegate next)
         using (LogContext.PushProperty("SpanId", Activity.Current?.SpanId.ToString()))
         {
             await next(context);
+        }
+    }
+}
+
+/// <summary>Keeps the <c>access_token</c> of a hub connection (a bearer token in the query string, ADR 0023) out of the traces.</summary>
+internal static class TelemetryRedaction
+{
+    public const string Redacted = "REDACTED";
+
+    private static readonly string[] QueryTags = ["url.query", "http.target", "url.full", "http.url"];
+
+    /// <summary>On <c>/hubs/</c> requests replaces the whole query (and the query inside the URL tags) with a placeholder.</summary>
+    public static void RedactHubQuery(Activity activity, PathString path, bool hasQuery)
+    {
+        ArgumentNullException.ThrowIfNull(activity);
+        if (!hasQuery || !path.StartsWithSegments("/hubs", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        foreach (var tag in QueryTags)
+        {
+            if (activity.GetTagItem(tag) is not string value)
+            {
+                continue;
+            }
+
+            var query = value.IndexOf('?', StringComparison.Ordinal);
+            activity.SetTag(tag, tag == "url.query" ? Redacted : query < 0 ? value : $"{value[..query]}?{Redacted}");
         }
     }
 }

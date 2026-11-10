@@ -24,5 +24,8 @@
 | [20](0020-distributed-cache-and-job-locks.md) | Distributed cache with tag invalidation, and database locks for background jobs | Accepted | `HybridCache` with optional Redis L2 and `RemoveByTagAsync`; `sp_getapplock` for jobs; more than one instance needs Redis. |
 | [21](0021-observability.md) | Observability with OpenTelemetry | Accepted | Traces and metrics always on, exported to Azure Monitor or OTLP only when configured; `traceId` in ProblemDetails and logs. |
 | [22](0022-http-contract.md) | HTTP contract: security headers, rate limits, compression, versioning and conditional requests | Accepted | Headers + HSTS, token bucket per user/tenant, Brotli/gzip, `Asp.Versioning` (v1 default), ETag / If-Match (412) / If-None-Match (304). |
+| [23](0023-realtime-with-signalr.md) | Real-time updates with a SignalR hub | Accepted | `/hubs/projects`, groups per project with a View check, events after the commit, `X-Client-Id` echo suppression, optional Azure SignalR Service. |
+| [24](0024-domain-events.md) | Domain events dispatched around SaveChanges | Accepted | `IHasDomainEvents` + interceptor; before-commit handlers (activity, notifications, outbox) and best-effort after-commit handlers; no mediator. |
+| [25](0025-cursor-pagination.md) | Cursor pagination for activity and notifications | Accepted | `?cursor&pageSize` returns `{ items, nextCursor }`, keyset on (timestamp, sequence/id), no COUNT; breaking for those two listings. |
 
 Add a new ADR when making a decision of comparable weight, and add it to this table.

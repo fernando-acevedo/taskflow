@@ -1,4 +1,4 @@
-import { AuthApiActions, ShellActions } from '../../../../core/auth/store/auth.actions';
+import { AuthApiActions, ShellActions } from '@core/auth/store/auth.actions';
 import { aComment } from './testing';
 import { CommentsApiActions, CommentsPageActions } from './comments.actions';
 import { commentsFeature, initialCommentsState } from './comments.feature';

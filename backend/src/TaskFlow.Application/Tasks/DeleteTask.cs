@@ -1,8 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TaskFlow.Application.Abstractions;
-using TaskFlow.Application.Activity;
 using TaskFlow.Application.Projects;
-using TaskFlow.Domain.Activity;
 using TaskFlow.Domain.Common;
 using TaskFlow.Domain.Tasks;
 
@@ -11,7 +9,7 @@ namespace TaskFlow.Application.Tasks;
 public sealed record DeleteTaskCommand(Guid ProjectId, Guid TaskId, byte[]? RowVersion = null);
 
 /// <summary>Any member deletes a task. The gap it leaves in its column is harmless: the board orders by position.</summary>
-public sealed class DeleteTaskHandler(IAppDbContext db, ProjectAccess access, ActivityLog activity)
+public sealed class DeleteTaskHandler(IAppDbContext db, ProjectAccess access)
 {
     public async Task<Result> HandleAsync(DeleteTaskCommand command, CancellationToken cancellationToken)
     {
@@ -41,7 +39,7 @@ public sealed class DeleteTaskHandler(IAppDbContext db, ProjectAccess access, Ac
 
         var dependents = await db.TaskDependencies.Where(dependency => dependency.DependsOnTaskId == task.Id).ToListAsync(cancellationToken);
         db.TaskDependencies.RemoveRange(dependents);
-        activity.Record(command.ProjectId, ActivityType.TaskDeleted, new { taskTitle = task.Title }, task.Id);
+        task.MarkDeleted();
         db.Tasks.Remove(task);
         await db.SaveChangesAsync(cancellationToken);
         return Result.Success();

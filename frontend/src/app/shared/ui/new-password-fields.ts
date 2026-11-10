@@ -13,7 +13,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { TranslocoDirective } from '@jsverse/transloco';
 import { startWith, switchMap } from 'rxjs';
-import { NewPasswordGroup } from '../../core/auth/password-rules';
+import { NewPasswordGroup } from '@shared/ui/password-rules';
 import { PasswordStrengthMeter } from './password-strength';
 
 /** The new password, its strength, the policy and the confirmation, shared by sign-up and invitation acceptance. */

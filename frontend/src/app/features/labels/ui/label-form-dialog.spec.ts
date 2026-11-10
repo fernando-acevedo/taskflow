@@ -2,8 +2,9 @@ import { TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 import { Subject, of } from 'rxjs';
-import { ApiError } from '../../../core/http/api-error';
+import { ApiError } from '@shared/data-access/api-error';
 import { LabelFormData, LabelFormDialog } from './label-form-dialog';
+import { fakeDialogRef } from '@shared/testing/fake-dialog-ref';
 
 describe('LabelFormDialog', () => {
   const close = vi.fn();
@@ -20,7 +21,7 @@ describe('LabelFormDialog', () => {
       ],
       providers: [
         { provide: MAT_DIALOG_DATA, useValue: { label, save } satisfies LabelFormData },
-        { provide: MatDialogRef, useValue: { close } },
+        { provide: MatDialogRef, useValue: fakeDialogRef(close) },
       ],
     });
     const fixture = TestBed.createComponent(LabelFormDialog);

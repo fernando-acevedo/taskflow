@@ -33,7 +33,28 @@ public sealed class NotificationTests(SqlServerApiFactory factory)
         notification.Data.GetProperty("taskTitle").GetString().ShouldBe("Write copy");
         notification.Data.GetProperty("projectName").GetString().ShouldBe(team.Project.Name);
         notification.Data.GetProperty("actorName").GetString().ShouldNotBeNullOrWhiteSpace();
-        (await ListAsync(team.Owner)).TotalCount.ShouldBe(0);
+        (await ListAsync(team.Owner)).Items.Count.ShouldBe(0);
+    }
+
+    [Fact]
+    public async Task SyncingTasksNotifiesTheDeclaredAssignmentOfACreatedAndOfAnUpdatedTask()
+    {
+        var team = await TeamAsync();
+        var uri = new Uri($"/api/projects/{team.Project.Id}/tasks/sync", UriKind.Relative);
+
+        using var created = await team.Owner.PostAsJsonAsync(uri, new { items = new[] { new { externalKey = "ext-1", title = "Imported", assigneeId = team.MemberId } } }, Ct);
+        created.EnsureSuccessStatusCode();
+
+        var forMember = (await ListAsync(team.Member)).Items.ShouldHaveSingleItem();
+        forMember.Type.ShouldBe("TaskAssigned");
+        forMember.Data.GetProperty("taskTitle").GetString().ShouldBe("Imported");
+
+        using var updated = await team.Owner.PostAsJsonAsync(uri, new { items = new[] { new { externalKey = "ext-1", title = "Imported", assigneeId = team.ThirdId } } }, Ct);
+        updated.EnsureSuccessStatusCode();
+
+        (await ListAsync(team.Third)).Items.ShouldHaveSingleItem().Type.ShouldBe("TaskAssigned");
+        (await ListAsync(team.Member)).Items.Count.ShouldBe(1);
+        (await ListAsync(team.Owner)).Items.Count.ShouldBe(0);
     }
 
     [Fact]
@@ -50,7 +71,7 @@ public sealed class NotificationTests(SqlServerApiFactory factory)
         response.EnsureSuccessStatusCode();
 
         (await ListAsync(team.Owner)).Items.ShouldHaveSingleItem().Type.ShouldBe("TaskAssigned");
-        (await ListAsync(team.Member)).TotalCount.ShouldBe(1);
+        (await ListAsync(team.Member)).Items.Count.ShouldBe(1);
     }
 
     [Fact]
@@ -71,9 +92,9 @@ public sealed class NotificationTests(SqlServerApiFactory factory)
             Ct);
         edit.EnsureSuccessStatusCode();
 
-        (await ListAsync(team.Member)).TotalCount.ShouldBe(1);
+        (await ListAsync(team.Member)).Items.Count.ShouldBe(1);
         (await ListAsync(team.Third)).Items.ShouldHaveSingleItem().Type.ShouldBe("Mentioned");
-        (await ListAsync(team.Owner)).TotalCount.ShouldBe(0);
+        (await ListAsync(team.Owner)).Items.Count.ShouldBe(0);
     }
 
     [Fact]
@@ -88,7 +109,7 @@ public sealed class NotificationTests(SqlServerApiFactory factory)
 
         var types = (await ListAsync(team.Member)).Items.Select(item => item.Type).Order().ToList();
         types.ShouldBe(["CommentOnYourTask", "Mentioned", "TaskAssigned"]);
-        (await ListAsync(team.Owner)).TotalCount.ShouldBe(0);
+        (await ListAsync(team.Owner)).Items.Count.ShouldBe(0);
     }
 
     [Fact]
@@ -151,7 +172,7 @@ public sealed class NotificationTests(SqlServerApiFactory factory)
         sent.TextBody.ShouldContain("Email me");
         sent.TextBody.ShouldContain($"/projects/{projectId}/board?task={task.Id}");
         (await GetPreferencesAsync(team.Member)).EmailOnAssigned.ShouldBeTrue();
-        (await ListAsync(team.Member)).TotalCount.ShouldBe(3);
+        (await ListAsync(team.Member)).Items.Count.ShouldBe(3);
     }
 
     [Fact]
@@ -191,19 +212,19 @@ public sealed class NotificationTests(SqlServerApiFactory factory)
         again.StatusCode.ShouldBe(HttpStatusCode.NoContent);
 
         (await UnreadCountAsync(team.Member)).ShouldBe(2);
-        var unread = await team.Member.GetJsonAsync<PagedResponse<NotificationResponse>>("/api/notifications?unreadOnly=true");
-        unread.TotalCount.ShouldBe(2);
+        var unread = await team.Member.GetJsonAsync<CursorResponse<NotificationResponse>>("/api/notifications?unreadOnly=true");
+        unread.Items.Count.ShouldBe(2);
         unread.Items.ShouldAllBe(item => item.ReadAt == null);
         (await ListAsync(team.Member)).Items.Single(item => item.Id == items[0].Id).ReadAt.ShouldNotBeNull();
 
         using var all = await team.Member.PostAsync(new Uri("/api/notifications/read-all", UriKind.Relative), null, Ct);
         all.StatusCode.ShouldBe(HttpStatusCode.NoContent);
         (await UnreadCountAsync(team.Member)).ShouldBe(0);
-        (await ListAsync(team.Member)).TotalCount.ShouldBe(3);
+        (await ListAsync(team.Member)).Items.Count.ShouldBe(3);
     }
 
     [Fact]
-    public async Task ListIsPagedNewestFirst()
+    public async Task ListIsPagedByCursorNewestFirst()
     {
         var team = await TeamAsync();
         for (var index = 0; index < 3; index++)
@@ -212,10 +233,23 @@ public sealed class NotificationTests(SqlServerApiFactory factory)
             await team.Owner.CreateTaskAsync(team.Project.Id, new { title = $"Task {index}", assigneeId = team.MemberId });
         }
 
-        var page = await team.Member.GetJsonAsync<PagedResponse<NotificationResponse>>("/api/notifications?page=1&pageSize=2");
+        var first = await team.Member.GetJsonAsync<CursorResponse<NotificationResponse>>("/api/notifications?pageSize=2");
+        factory.Time.Advance(TimeSpan.FromMinutes(1));
+        await team.Owner.CreateTaskAsync(team.Project.Id, new { title = "Task 3", assigneeId = team.MemberId });
+        var second = await team.Member.GetJsonAsync<CursorResponse<NotificationResponse>>(
+            $"/api/notifications?pageSize=2&cursor={first.NextCursor}");
+        var unread = await team.Member.GetJsonAsync<CursorResponse<NotificationResponse>>("/api/notifications?unreadOnly=true&pageSize=3");
 
-        page.TotalCount.ShouldBe(3);
-        page.Items.Select(item => item.Data.GetProperty("taskTitle").GetString()).ShouldBe(["Task 2", "Task 1"]);
+        static string?[] Titles(CursorResponse<NotificationResponse> page) =>
+            [.. page.Items.Select(item => item.Data.GetProperty("taskTitle").GetString())];
+        Titles(first).ShouldBe(["Task 2", "Task 1"]);
+        first.NextCursor.ShouldNotBeNull();
+        Titles(second).ShouldBe(["Task 0"]);
+        second.NextCursor.ShouldBeNull();
+        unread.Items.Count.ShouldBe(3);
+        unread.NextCursor.ShouldNotBeNull();
+        using var badCursor = await team.Member.GetAsync(new Uri("/api/notifications?cursor=nope!", UriKind.Relative), Ct);
+        badCursor.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         using var invalid = await team.Member.GetAsync(new Uri("/api/notifications?pageSize=1000", UriKind.Relative), Ct);
         invalid.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
@@ -231,7 +265,7 @@ public sealed class NotificationTests(SqlServerApiFactory factory)
 
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
         (await response.ReadAsync<ProblemResponse>()).Code.ShouldBe("Notifications.NotFound");
-        (await ListAsync(team.Third)).TotalCount.ShouldBe(0);
+        (await ListAsync(team.Third)).Items.Count.ShouldBe(0);
         (await UnreadCountAsync(team.Member)).ShouldBe(1);
     }
 
@@ -240,13 +274,13 @@ public sealed class NotificationTests(SqlServerApiFactory factory)
     {
         var team = await TeamAsync();
         await team.Owner.CreateTaskAsync(team.Project.Id, new { title = "Secret", assigneeId = team.MemberId });
-        (await ListAsync(team.Member)).TotalCount.ShouldBe(1);
+        (await ListAsync(team.Member)).Items.Count.ShouldBe(1);
         (await UnreadCountAsync(team.Member)).ShouldBe(1);
 
         using var removed = await team.Owner.DeleteAsync(new Uri($"/api/projects/{team.Project.Id}/members/{team.MemberId}", UriKind.Relative), Ct);
         removed.EnsureSuccessStatusCode();
 
-        (await ListAsync(team.Member)).TotalCount.ShouldBe(0);
+        (await ListAsync(team.Member)).Items.Count.ShouldBe(0);
         (await UnreadCountAsync(team.Member)).ShouldBe(0);
     }
 
@@ -294,8 +328,8 @@ public sealed class NotificationTests(SqlServerApiFactory factory)
             Ct);
     }
 
-    private static Task<PagedResponse<NotificationResponse>> ListAsync(HttpClient client) =>
-        client.GetJsonAsync<PagedResponse<NotificationResponse>>("/api/notifications");
+    private static Task<CursorResponse<NotificationResponse>> ListAsync(HttpClient client) =>
+        client.GetJsonAsync<CursorResponse<NotificationResponse>>("/api/notifications");
 
     private static async Task<int> UnreadCountAsync(HttpClient client) =>
         (await client.GetJsonAsync<UnreadCountResponse>("/api/notifications/unread-count")).Count;

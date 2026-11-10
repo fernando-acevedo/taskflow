@@ -14,6 +14,7 @@ public sealed class RemoveProjectMemberHandler(
     ProjectAccess access,
     ICurrentUser currentUser,
     ActivityLog activity,
+    IRealtimeRevoker realtime,
     TimeProvider time)
 {
     public async Task<Result> HandleAsync(RemoveProjectMemberCommand command, CancellationToken cancellationToken)
@@ -40,6 +41,7 @@ public sealed class RemoveProjectMemberHandler(
 
         activity.Record(command.ProjectId, ActivityType.MemberRemoved, new { memberId = command.UserId, role });
         await db.SaveChangesAsync(cancellationToken);
+        await realtime.ProjectAccessRevokedAsync(command.ProjectId, command.UserId, cancellationToken);
         return Result.Success();
     }
 }

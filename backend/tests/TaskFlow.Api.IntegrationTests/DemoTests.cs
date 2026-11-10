@@ -140,6 +140,10 @@ public sealed class DemoTests(SqlServerApiFactory factory) : IAsyncLifetime
             (await db.TaskComments.AnyAsync(token)).ShouldBeTrue();
             (await db.TimeEntries.AnyAsync(token)).ShouldBeTrue();
 
+            // The seeder builds history: it raises no domain events, so no activity or notification comes out of it (ADR 0024).
+            (await db.ActivityEntries.AnyAsync(token)).ShouldBeFalse();
+            (await db.Notifications.AnyAsync(token)).ShouldBeFalse();
+
             // The demo accounts are members of the demo tenant (the admin owns it) and are not super-admins.
             var members = await db.TenantMemberships.Where(m => m.TenantId == TenantDefaults.DemoId).ToListAsync(token);
             members.ShouldContain(m => m.Role == TenantRole.Owner);

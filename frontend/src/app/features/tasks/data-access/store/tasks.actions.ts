@@ -1,6 +1,6 @@
 import { createActionGroup, props } from '@ngrx/store';
-import { ApiError } from '../../../../core/http/api-error';
-import { Submission } from '../../../../shared/data-access/submission';
+import { ApiError } from '@shared/data-access/api-error';
+import { Submission } from '@shared/data-access/submission';
 import { MoveResult, Task, TaskInput, TaskStatus } from '../tasks-api.service';
 
 /** Used by both views of a project's tasks: the board and the list. */

@@ -2,7 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { PagedResult } from '../../../core/http/api-error';
+import { PagedResult } from '@shared/data-access/api-error';
 
 export interface Client {
   readonly id: string;

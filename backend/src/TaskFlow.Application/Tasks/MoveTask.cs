@@ -1,7 +1,6 @@
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using TaskFlow.Application.Abstractions;
-using TaskFlow.Application.Activity;
 using TaskFlow.Application.Common;
 using TaskFlow.Application.Projects;
 using TaskFlow.Domain.Common;
@@ -34,7 +33,6 @@ public sealed class MoveTaskHandler(
     ProjectAccess access,
     IValidator<MoveTaskCommand> validator,
     GetTaskHandler getTask,
-    ActivityLog activity,
     ITransactionRunner transactions,
     TimeProvider time)
 {
@@ -71,7 +69,7 @@ public sealed class MoveTaskHandler(
             }
 
             var changed = new List<TaskItem>();
-            var moved = await TaskMoves.MoveAsync(db, activity, time, allowed.Value, task, command.Status, command.Position, token, changed);
+            var moved = await TaskMoves.MoveAsync(db, time, allowed.Value, task, command.Status, command.Position, token, changed);
             if (!moved.IsSuccess)
             {
                 return moved;

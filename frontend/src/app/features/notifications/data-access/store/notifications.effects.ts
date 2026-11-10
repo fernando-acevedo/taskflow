@@ -1,18 +1,20 @@
 import { DOCUMENT } from '@angular/common';
 import { inject } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
-import { EMPTY, catchError, concatMap, exhaustMap, filter, fromEvent, map, merge, of, switchMap, tap, timer } from 'rxjs';
-import { AuthApiActions, ShellActions } from '../../../../core/auth/store/auth.actions';
-import { TenantActions, TenantApiActions } from '../../../../core/tenant/store/tenant.actions';
-import { toApiError } from '../../../../core/http/api-error';
-import { Notifier } from '../../../../core/notifications/notifier';
+import { Store } from '@ngrx/store';
+import { EMPTY, catchError, concatMap, exhaustMap, filter, fromEvent, map, merge, of, switchMap, tap, timer, withLatestFrom } from 'rxjs';
+import { AuthApiActions, ShellActions } from '@core/auth/store/auth.actions';
+import { TenantActions, TenantApiActions } from '@core/tenant/store/tenant.actions';
+import { toApiError } from '@shared/data-access/api-error';
+import { Notifier } from '@core/notifications/notifier';
 import { NotificationsApiService, POLL_INTERVAL_MS } from '../notifications-api.service';
 import {
   NotificationBellActions,
   NotificationPreferencesActions,
   NotificationsApiActions,
 } from './notifications.actions';
-import { untilTenantChanges } from '../../../../shared/data-access/until-tenant-changes';
+import { notificationsFeature } from './notifications.feature';
+import { untilTenantChanges } from '@core/tenant/until-tenant-changes';
 
 
 /**
@@ -50,7 +52,7 @@ export const pollUnreadCount = createEffect(
   { functional: true },
 );
 
-/** Opening the bell reloads the list. */
+/** Opening the bell reloads the list from the first page. */
 export const loadNotifications = createEffect(
   (actions$ = inject(Actions), api = inject(NotificationsApiService)) =>
     actions$.pipe(
@@ -58,9 +60,28 @@ export const loadNotifications = createEffect(
       switchMap(() =>
         api.list().pipe(
           untilTenantChanges(actions$),
-          map((page) => NotificationsApiActions.notificationsLoaded({ items: page.items })),
+          map((page) => NotificationsApiActions.notificationsLoaded({ items: page.items, nextCursor: page.nextCursor, append: false })),
           catchError((error: unknown) => of(NotificationsApiActions.notificationsLoadFailed({ error: toApiError(error) }))),
         ),
+      ),
+    ),
+  { functional: true },
+);
+
+/** "Load more": the page after the cursor of the last one; a click while one is loading is ignored. */
+export const loadMoreNotifications = createEffect(
+  (actions$ = inject(Actions), store = inject(Store), api = inject(NotificationsApiService)) =>
+    actions$.pipe(
+      ofType(NotificationBellActions.loadMoreClicked),
+      withLatestFrom(store.select(notificationsFeature.selectNextCursor)),
+      exhaustMap(([, cursor]) =>
+        cursor === null
+          ? EMPTY
+          : api.list(cursor).pipe(
+              untilTenantChanges(actions$),
+              map((page) => NotificationsApiActions.notificationsLoaded({ items: page.items, nextCursor: page.nextCursor, append: true })),
+              catchError((error: unknown) => of(NotificationsApiActions.notificationsLoadFailed({ error: toApiError(error) }))),
+            ),
       ),
     ),
   { functional: true },

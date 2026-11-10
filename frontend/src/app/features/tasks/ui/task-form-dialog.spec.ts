@@ -4,15 +4,16 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 import { of } from 'rxjs';
 import { provideStore } from '@ngrx/store';
-import { authFeature } from '../../../core/auth/store/auth.feature';
-import { LanguageService } from '../../../core/i18n/language.service';
-import { expectNoAxeViolations } from '../../../shared/testing/axe';
-import { activityFeature } from '../../activity/data-access/store/activity.feature';
-import { commentsFeature } from '../../comments/data-access/store/comments.feature';
-import { projectsFeature } from '../../projects/data-access/store/projects.feature';
-import { timeTrackingFeature } from '../../time-tracking/data-access/store/time-tracking.feature';
+import { authFeature } from '@core/auth/store/auth.feature';
+import { LanguageService } from '@core/i18n/language.service';
+import { expectNoAxeViolations } from '@shared/testing/axe';
+import { activityFeature } from '@features/activity';
+import { commentsFeature } from '@features/comments';
+import { projectsFeature } from '@features/projects';
+import { timeTrackingFeature } from '@features/time-tracking';
 import { aTask } from '../data-access/store/testing';
 import { TaskFormData, TaskFormDialog } from './task-form-dialog';
+import { fakeDialogRef } from '@shared/testing/fake-dialog-ref';
 
 describe('TaskFormDialog', () => {
   function render(data: Partial<TaskFormData>) {
@@ -30,7 +31,7 @@ describe('TaskFormDialog', () => {
           [timeTrackingFeature.name]: timeTrackingFeature.reducer,
           [activityFeature.name]: activityFeature.reducer,
         }),
-        { provide: MatDialogRef, useValue: { close: vi.fn() } },
+        { provide: MatDialogRef, useValue: fakeDialogRef() },
         { provide: MAT_DIALOG_DATA, useValue: { task: null, members: [], labels: [], readOnly: false, save: vi.fn(), ...data } },
         { provide: LanguageService, useValue: { current: signal('en') } },
       ],

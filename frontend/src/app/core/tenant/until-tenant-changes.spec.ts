@@ -1,7 +1,7 @@
 import { Action } from '@ngrx/store';
 import { Subject } from 'rxjs';
-import { AuthApiActions, ShellActions } from '../../core/auth/store/auth.actions';
-import { TenantActions } from '../../core/tenant/store/tenant.actions';
+import { AuthApiActions, ShellActions } from '@core/auth/store/auth.actions';
+import { TenantActions } from '@core/tenant/store/tenant.actions';
 import { untilTenantChanges } from './until-tenant-changes';
 
 describe('untilTenantChanges', () => {

@@ -2,12 +2,12 @@ import { inject } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
 import { catchError, concatMap, map, of, switchMap, tap, withLatestFrom } from 'rxjs';
-import { isStale, toApiError } from '../../../../core/http/api-error';
-import { Notifier } from '../../../../core/notifications/notifier';
+import { isStale, toApiError } from '@shared/data-access/api-error';
+import { Notifier } from '@core/notifications/notifier';
 import { LabelsApiService } from '../labels-api.service';
 import { LabelsApiActions, LabelsPageActions } from './labels.actions';
 import { labelsFeature } from './labels.feature';
-import { untilTenantChanges } from '../../../../shared/data-access/until-tenant-changes';
+import { untilTenantChanges } from '@core/tenant/until-tenant-changes';
 
 export const loadLabels = createEffect(
   (actions$ = inject(Actions), api = inject(LabelsApiService)) =>

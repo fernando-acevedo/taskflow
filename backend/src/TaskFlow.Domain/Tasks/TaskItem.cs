@@ -25,7 +25,7 @@ public enum TaskPriority
 /// A task on a project's board. Named TaskItem to avoid clashing with <see cref="Task"/>. Changes take the
 /// owning <see cref="Project"/> so its rules apply: no changes while archived, and the assignee is a member.
 /// </summary>
-public sealed partial class TaskItem : ITenantOwned
+public sealed partial class TaskItem : ITenantOwned, IHasDomainEvents
 {
     public const int TitleMaxLength = 200;
     public const int DescriptionMaxLength = 4000;
@@ -35,6 +35,11 @@ public sealed partial class TaskItem : ITenantOwned
 
     private readonly List<Label> _labels = [];
     private readonly List<TaskDependency> _dependencies = [];
+    private readonly List<IDomainEvent> _events = [];
+    private Baseline? _baseline;
+    private bool _isNew;
+    private bool _dependenciesChanged;
+    private string _projectName = string.Empty;
 
     private TaskItem(Guid id, Guid projectId, string title, Guid createdById, DateTimeOffset createdAt)
     {
@@ -120,7 +125,7 @@ public sealed partial class TaskItem : ITenantOwned
             return check.Error;
         }
 
-        return new TaskItem(Guid.CreateVersion7(now), project.Id, title, createdById, now)
+        var task = new TaskItem(Guid.CreateVersion7(now), project.Id, title, createdById, now)
         {
             Description = description,
             Priority = priority,
@@ -128,7 +133,89 @@ public sealed partial class TaskItem : ITenantOwned
             DueDate = dueDate,
             Position = position,
             EstimatedMinutes = estimatedMinutes,
+            _isNew = true,
+            _projectName = project.Name,
         };
+        task._events.Add(new TaskCreated(project.Id, project.Name, task.Id, task.Title, task.Status, task.Priority, task.AssigneeId));
+        return task;
+    }
+
+    /// <summary>
+    /// The events raised so far. Field changes made by <see cref="Update"/>, <see cref="SetSchedule"/>, <see cref="SetPlanning"/>,
+    /// <see cref="SetLabels"/> and <see cref="SetDependencies"/> are folded into one <see cref="TaskUpdated"/> (the net change
+    /// since the last call), placed after the events raised before it.
+    /// </summary>
+    public IReadOnlyList<IDomainEvent> TakeDomainEvents()
+    {
+        var events = new List<IDomainEvent>(_events);
+        if (_baseline is { } before && !_isNew)
+        {
+            var fields = before.Diff(this);
+            if (fields.Any || before.AssigneeId != AssigneeId || _dependenciesChanged)
+            {
+                events.Add(new TaskUpdated(ProjectId, _projectName, Id, Title, fields, before.AssigneeId, AssigneeId));
+            }
+        }
+
+        _events.Clear();
+        _baseline = null;
+        _isNew = false;
+        _dependenciesChanged = false;
+        return events;
+    }
+
+    /// <summary>Raises <see cref="TaskDeleted"/>; the caller removes the task. The project rules are checked by the caller.</summary>
+    public void MarkDeleted() => _events.Add(new TaskDeleted(ProjectId, Id, Title));
+
+    /// <summary>Raises <see cref="TasksReordered"/> for the neighbors whose position changed because this task moved.</summary>
+    public void MarkNeighborsReordered(IReadOnlyList<TaskItem> neighbors)
+    {
+        ArgumentNullException.ThrowIfNull(neighbors);
+        if (neighbors.Count > 0)
+        {
+            _events.Add(new TasksReordered(ProjectId, [.. neighbors]));
+        }
+    }
+
+    private void Track(Project project)
+    {
+        _projectName = project.Name;
+        _baseline ??= new Baseline(this);
+    }
+
+    private sealed record Baseline(
+        string Title,
+        string? Description,
+        TaskPriority Priority,
+        Guid? AssigneeId,
+        DateOnly? DueDate,
+        int? EstimatedMinutes,
+        DateOnly? StartDate,
+        bool IsBlocked,
+        string? StatusNote,
+        List<string> Labels)
+    {
+        public Baseline(TaskItem task)
+            : this(task.Title, task.Description, task.Priority, task.AssigneeId, task.DueDate, task.EstimatedMinutes, task.StartDate,
+                task.IsBlocked, task.StatusNote, [.. task._labels.Select(label => label.Name)])
+        {
+        }
+
+        public TaskFieldChanges Diff(TaskItem task)
+        {
+            var after = task._labels.Select(label => label.Name).ToList();
+            return new TaskFieldChanges(
+                Title != task.Title ? new Change<string>(Title, task.Title) : null,
+                Priority != task.Priority ? new Change<TaskPriority>(Priority, task.Priority) : null,
+                DueDate != task.DueDate ? new Change<DateOnly?>(DueDate, task.DueDate) : null,
+                EstimatedMinutes != task.EstimatedMinutes ? new Change<int?>(EstimatedMinutes, task.EstimatedMinutes) : null,
+                StartDate != task.StartDate ? new Change<DateOnly?>(StartDate, task.StartDate) : null,
+                IsBlocked != task.IsBlocked ? new Change<bool>(IsBlocked, task.IsBlocked) : null,
+                StatusNote != task.StatusNote,
+                Description != task.Description,
+                [.. after.Except(Labels).Order()],
+                [.. Labels.Except(after).Order()]);
+        }
     }
 
     public Result Update(
@@ -147,6 +234,7 @@ public sealed partial class TaskItem : ITenantOwned
             return check;
         }
 
+        Track(project);
         if (StartDate > dueDate)
         {
             return TaskErrors.StartAfterDue;
@@ -184,6 +272,8 @@ public sealed partial class TaskItem : ITenantOwned
             return check;
         }
 
+        _projectName = project.Name;
+        _events.Add(new TaskMoved(ProjectId, project.Name, Id, Title, Status, status));
         if (status != Status)
         {
             CompletedAt = status == TaskItemStatus.Done ? now : null;
@@ -209,6 +299,8 @@ public sealed partial class TaskItem : ITenantOwned
         {
             return LabelErrors.NotInProject;
         }
+
+        Track(project);
 
         var wanted = labels.Select(label => label.Id).ToHashSet();
         _labels.RemoveAll(label => !wanted.Contains(label.Id));
@@ -237,6 +329,7 @@ public sealed partial class TaskItem : ITenantOwned
             return TaskErrors.StartAfterDue;
         }
 
+        Track(project);
         StartDate = startDate;
         DueDate = dueDate;
         UpdatedAt = now;
@@ -271,6 +364,7 @@ public sealed partial class TaskItem : ITenantOwned
             return TaskErrors.StartAfterDue;
         }
 
+        Track(project);
         ExternalKey ??= key;
         StartDate = startDate;
         IsBlocked = isBlocked;
@@ -333,6 +427,8 @@ public sealed partial class TaskItem : ITenantOwned
 
         if (removed + added > 0)
         {
+            Track(project);
+            _dependenciesChanged = true;
             UpdatedAt = now;
         }
 

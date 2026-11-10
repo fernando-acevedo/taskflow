@@ -12,5 +12,6 @@ public sealed class NoDatabaseApiFactory : WebApplicationFactory<Program>
         builder.UseSetting("ConnectionStrings:TaskFlow", "Server=unused;Database=unused");
         builder.UseSetting("Notifications:DueSoonEnabled", "false");
         builder.UseSetting("Outbox:Enabled", "false");
+        builder.UseSetting("Cors:AllowedOrigins:0", "http://localhost:4200");
     }
 }

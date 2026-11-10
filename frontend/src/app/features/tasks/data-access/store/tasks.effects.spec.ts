@@ -4,7 +4,7 @@ import { Observable, of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TasksApiService } from '../tasks-api.service';
 import { TasksApiActions, TasksPageActions } from './tasks.actions';
-import { Notifier } from '../../../../core/notifications/notifier';
+import { Notifier } from '@core/notifications/notifier';
 import { createTask, loadTasks, moveTask, notify, refreshTask, reloadAfterStaleMove, updateTask } from './tasks.effects';
 import { tasksFeature } from './tasks.feature';
 import { aTask } from './testing';

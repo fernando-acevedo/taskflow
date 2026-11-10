@@ -9,11 +9,12 @@ namespace TaskFlow.Domain.Tasks;
 /// read-only. Mentions are user ids that must be members of the project; they are stored as rows
 /// (<see cref="TaskCommentMention"/>) so that notifications can query them.
 /// </summary>
-public sealed class TaskComment : ITenantOwned
+public sealed class TaskComment : ITenantOwned, IHasDomainEvents
 {
     public const int BodyMaxLength = 4000;
 
     private readonly List<TaskCommentMention> _mentions = [];
+    private readonly List<IDomainEvent> _events = [];
 
     private TaskComment(Guid id, Guid taskItemId, Guid authorId, string body, DateTimeOffset createdAt)
     {
@@ -58,7 +59,22 @@ public sealed class TaskComment : ITenantOwned
 
         var comment = new TaskComment(Guid.CreateVersion7(now), taskItemId, authorId, body.Trim(), now);
         comment.SetMentions(mentions);
+        comment._events.Add(new CommentAdded(project.Id, project.Name, taskItemId, comment.Id, mentions));
         return comment;
+    }
+
+    public IReadOnlyList<IDomainEvent> TakeDomainEvents()
+    {
+        var events = _events.ToList();
+        _events.Clear();
+        return events;
+    }
+
+    /// <summary>Raises <see cref="CommentDeleted"/>; the caller removes the comment after <see cref="CanDelete"/>.</summary>
+    public void MarkDeleted(Project project)
+    {
+        ArgumentNullException.ThrowIfNull(project);
+        _events.Add(new CommentDeleted(project.Id, TaskItemId, Id));
     }
 
     /// <summary>Only the author edits a comment, and only while the project is editable.</summary>
@@ -81,9 +97,11 @@ public sealed class TaskComment : ITenantOwned
             return check;
         }
 
+        var before = _mentions.Select(mention => mention.UserId).ToList();
         Body = body.Trim();
         EditedAt = now;
         SetMentions(mentions);
+        _events.Add(new CommentUpdated(project.Id, project.Name, TaskItemId, Id, [.. mentions.Except(before)]));
         return Result.Success();
     }
 

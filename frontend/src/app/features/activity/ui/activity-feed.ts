@@ -2,8 +2,8 @@ import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, input, output, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { TranslocoDirective } from '@jsverse/transloco';
-import { LanguageService } from '../../../core/i18n/language.service';
-import { relativeTime } from '../../../shared/ui/relative-time';
+import { LanguageService } from '@core/i18n/language.service';
+import { relativeTime } from '@shared/ui/relative-time';
 import { ActivityEntry } from '../data-access/activity-api.service';
 import { describeActivity } from './activity-text';
 

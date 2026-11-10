@@ -102,7 +102,7 @@ public sealed class TaskUpserter(IAppDbContext db, ICurrentUser currentUser, Act
             return applied;
         }
 
-        var labelled = await ApplyLabelNamesAsync(project, applied.Value.Task, fields.Labels, applied.Value.Created, cancellationToken);
+        var labelled = await ApplyLabelNamesAsync(project, applied.Value.Task, fields.Labels, cancellationToken);
         return labelled.IsSuccess ? applied : labelled.Error;
     }
 
@@ -111,7 +111,7 @@ public sealed class TaskUpserter(IAppDbContext db, ICurrentUser currentUser, Act
     /// created with the rules of creating a label by hand: it needs <see cref="ProjectAccessLevel.Manage"/>, which an API key
     /// never has (ADR 0016).
     /// </summary>
-    private async Task<Result> ApplyLabelNamesAsync(Project project, TaskItem task, IReadOnlyList<string> names, bool isNew, CancellationToken cancellationToken)
+    private async Task<Result> ApplyLabelNamesAsync(Project project, TaskItem task, IReadOnlyList<string> names, CancellationToken cancellationToken)
     {
         var wanted = names.Select(name => name.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
         // A sync saves after each task, so a label created for an earlier task is already in the database here.
@@ -146,20 +146,11 @@ public sealed class TaskUpserter(IAppDbContext db, ICurrentUser currentUser, Act
             labels.Add(label);
         }
 
-        var before = task.Labels.Select(label => label.Name).Order().ToList();
-        var result = task.SetLabels(project, labels);
-        if (result.IsSuccess && !isNew && !before.SequenceEqual(labels.Select(label => label.Name).Order()))
-        {
-            activity.Record(project.Id, ActivityType.TaskUpdated, new { taskTitle = task.Title, fields = LabelsField }, task.Id);
-        }
-
-        return result;
+        return task.SetLabels(project, labels);
     }
 
     /// <summary>The color of a label created by an upsert; it can be changed afterwards.</summary>
     private const string NewLabelColor = "#6B7280";
-
-    private static readonly string[] LabelsField = ["labels"];
 
     /// <summary>
     /// Sets the dependencies given as external keys. <paramref name="known"/> holds the tasks already at hand (case-insensitive
@@ -273,16 +264,11 @@ public sealed class TaskUpserter(IAppDbContext db, ICurrentUser currentUser, Act
             return planned.Error;
         }
 
-        activity.Record(
-            project.Id,
-            ActivityType.TaskCreated,
-            new { taskTitle = task.Title, status = task.Status, priority = task.Priority, assigneeId = task.AssigneeId },
-            task.Id);
         db.Tasks.Add(task);
 
         if (fields.Status is { } status && status != TaskItemStatus.ToDo)
         {
-            var moved = await TaskMoves.MoveAsync(db, activity, time, project, task, status, int.MaxValue, cancellationToken);
+            var moved = await TaskMoves.MoveAsync(db, time, project, task, status, int.MaxValue, cancellationToken);
             if (!moved.IsSuccess)
             {
                 return moved.Error;
@@ -295,8 +281,6 @@ public sealed class TaskUpserter(IAppDbContext db, ICurrentUser currentUser, Act
     private async Task<Result<UpsertedTask>> UpdateAsync(Project project, TaskItem task, string key, TaskUpsertFields fields, CancellationToken cancellationToken)
     {
         var now = time.GetUtcNow();
-        var before = Snapshot(task);
-
         var result = task.SetSchedule(project, fields.StartDate, fields.DueDate, now);
         if (result.IsSuccess)
         {
@@ -321,15 +305,9 @@ public sealed class TaskUpserter(IAppDbContext db, ICurrentUser currentUser, Act
             return result.Error;
         }
 
-        var changed = ChangedFields(before, Snapshot(task));
-        if (changed.Count > 0)
-        {
-            activity.Record(project.Id, ActivityType.TaskUpdated, new { taskTitle = task.Title, fields = changed }, task.Id);
-        }
-
         if (fields.Status is { } status && status != task.Status)
         {
-            var moved = await TaskMoves.MoveAsync(db, activity, time, project, task, status, int.MaxValue, cancellationToken);
+            var moved = await TaskMoves.MoveAsync(db, time, project, task, status, int.MaxValue, cancellationToken);
             if (!moved.IsSuccess)
             {
                 return moved.Error;
@@ -338,20 +316,4 @@ public sealed class TaskUpserter(IAppDbContext db, ICurrentUser currentUser, Act
 
         return new UpsertedTask(task, false);
     }
-
-    private static Dictionary<string, object?> Snapshot(TaskItem task) => new()
-    {
-        ["title"] = task.Title,
-        ["description"] = task.Description,
-        ["priority"] = task.Priority,
-        ["assigneeId"] = task.AssigneeId,
-        ["startDate"] = task.StartDate,
-        ["dueDate"] = task.DueDate,
-        ["estimatedMinutes"] = task.EstimatedMinutes,
-        ["isBlocked"] = task.IsBlocked,
-        ["statusNote"] = task.StatusNote,
-    };
-
-    private static List<string> ChangedFields(Dictionary<string, object?> before, Dictionary<string, object?> after) =>
-        after.Keys.Where(name => !Equals(before[name], after[name])).ToList();
 }

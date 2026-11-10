@@ -6,7 +6,7 @@ import { catchError, filter, map, merge, of, switchMap, takeUntil, tap, withLate
 import { AuthApiActions, ShellActions } from '../../auth/store/auth.actions';
 import { authFeature } from '../../auth/store/auth.feature';
 import { DemoService } from '../../demo/demo.service';
-import { toApiError } from '../../http/api-error';
+import { toApiError } from '@shared/data-access/api-error';
 import { Notifier } from '../../notifications/notifier';
 import { TenantApiService } from '../tenant-api.service';
 import { TenantStorage } from '../tenant-storage';

@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { TenantRole } from '../../../core/tenant/tenant.models';
+import { TenantRole } from '@core/tenant/tenant.models';
 
 export interface TenantMember {
   readonly userId: string;

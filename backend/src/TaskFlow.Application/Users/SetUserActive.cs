@@ -6,7 +6,7 @@ namespace TaskFlow.Application.Users;
 
 public sealed record SetUserActiveCommand(Guid UserId, bool IsActive);
 
-public sealed class SetUserActiveHandler(IIdentityService identity, ICurrentUser currentUser, IDemoMode demo)
+public sealed class SetUserActiveHandler(IIdentityService identity, ICurrentUser currentUser, IDemoMode demo, IRealtimeRevoker realtime)
 {
     public async Task<Result> HandleAsync(SetUserActiveCommand command, CancellationToken cancellationToken)
     {
@@ -27,6 +27,11 @@ public sealed class SetUserActiveHandler(IIdentityService identity, ICurrentUser
         }
 
         await identity.SetActiveAsync(command.UserId, command.IsActive, cancellationToken);
+        if (!command.IsActive)
+        {
+            await realtime.UserDeactivatedAsync(command.UserId, cancellationToken);
+        }
+
         return Result.Success();
     }
 }

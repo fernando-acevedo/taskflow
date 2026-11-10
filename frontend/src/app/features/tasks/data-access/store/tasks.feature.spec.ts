@@ -1,4 +1,5 @@
-import { ShellActions } from '../../../../core/auth/store/auth.actions';
+import { ShellActions } from '@core/auth/store/auth.actions';
+import { RealtimeActions } from '@core/realtime/realtime.actions';
 import { TasksApiActions, TasksPageActions } from './tasks.actions';
 import { initialTasksState, tasksFeature } from './tasks.feature';
 import { aTask } from './testing';
@@ -93,6 +94,66 @@ describe('tasksFeature', () => {
 
     expect(state.ids).toEqual([]);
     expect(state.loading).toBe(true);
+  });
+
+  it('keeps the tasks of the same project on screen while it reloads, and replaces them on arrival', () => {
+    const reopened = reducer(loaded(), TasksPageActions.opened({ projectId: 'p1' }));
+
+    expect(reopened.ids).toHaveLength(tasks.length);
+    expect(reopened.refreshing).toBe(true);
+    expect(reopened.loading).toBe(false);
+
+    const state = reducer(reopened, TasksApiActions.tasksLoaded({ projectId: 'p1', tasks: [tasks[0]] }));
+
+    expect(state.ids).toEqual(['a']);
+    expect(state.refreshing).toBe(false);
+  });
+
+  it('empties the board and shows loading when another project opens', () => {
+    const state = reducer(loaded(), TasksPageActions.opened({ projectId: 'p2' }));
+
+    expect(state.ids).toEqual([]);
+    expect(state.loading).toBe(true);
+    expect(state.refreshing).toBe(false);
+  });
+
+  it('keeps the tasks of the same project on screen while it reloads, and replaces them on arrival', () => {
+    const reopened = reducer(loaded(), TasksPageActions.opened({ projectId: 'p1' }));
+
+    expect(reopened.ids).toHaveLength(tasks.length);
+    expect(reopened.refreshing).toBe(true);
+    expect(reopened.loading).toBe(false);
+
+    const state = reducer(reopened, TasksApiActions.tasksLoaded({ projectId: 'p1', tasks: [tasks[0]] }));
+
+    expect(state.ids).toEqual(['a']);
+    expect(state.refreshing).toBe(false);
+  });
+
+  it('empties the board and shows loading when another project opens', () => {
+    const state = reducer(loaded(), TasksPageActions.opened({ projectId: 'p2' }));
+
+    expect(state.ids).toEqual([]);
+    expect(state.loading).toBe(true);
+    expect(state.refreshing).toBe(false);
+  });
+
+  it('does not bring back a task deleted by someone else when an own move is undone', () => {
+    const dropped = reducer(loaded(), TasksPageActions.taskDropped({ taskId: 'a', status: 'Done', position: 1 }));
+
+    const deleted = reducer(dropped, RealtimeActions.taskDeleted({ projectId: 'p1', taskId: 'b' }));
+    expect(deleted.resyncAfterMove).toBe(true);
+    const state = reducer(deleted, TasksApiActions.taskMoveFailed({ error: { code: 'Concurrency.Stale', fields: {} } }));
+
+    expect(state.entities['b']).toBeUndefined();
+    expect(column(state, 'ToDo')).toEqual(['a']);
+  });
+
+  it('does not ask for a reload when a task is deleted outside any move', () => {
+    const state = reducer(loaded(), RealtimeActions.taskDeleted({ projectId: 'p1', taskId: 'b' }));
+
+    expect(state.entities['b']).toBeUndefined();
+    expect(state.resyncAfterMove).toBe(false);
   });
 
   it('forgets every task on sign-out', () => {

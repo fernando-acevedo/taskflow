@@ -3,10 +3,10 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 import { provideMockStore } from '@ngrx/store/testing';
-import { authFeature } from '../../../core/auth/store/auth.feature';
-import { DemoService } from '../../../core/demo/demo.service';
-import { LanguageService } from '../../../core/i18n/language.service';
-import { expectNoAxeViolations } from '../../../shared/testing/axe';
+import { authFeature } from '@core/auth/store/auth.feature';
+import { DemoService } from '@core/demo/demo.service';
+import { LanguageService } from '@core/i18n/language.service';
+import { expectNoAxeViolations } from '@shared/testing/axe';
 import { LoginPage } from './login-page';
 
 describe('LoginPage', () => {

@@ -1,8 +1,8 @@
 import { Actions } from '@ngrx/effects';
 import { Action } from '@ngrx/store';
 import { Subject, of, throwError } from 'rxjs';
-import { AuthApiActions } from '../../../../core/auth/store/auth.actions';
-import { Notifier } from '../../../../core/notifications/notifier';
+import { AuthApiActions } from '@core/auth/store/auth.actions';
+import { Notifier } from '@core/notifications/notifier';
 import { ApiKey, ApiKeysApiService, CreatedApiKey } from '../api-keys-api.service';
 import { ApiKeysApiActions, ApiKeysPageActions } from './api-keys.actions';
 import { createKey, notify, revokeKey } from './api-keys.effects';

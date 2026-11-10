@@ -1,7 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using TaskFlow.Application.Abstractions;
-using TaskFlow.Application.Activity;
-using TaskFlow.Domain.Activity;
 using TaskFlow.Domain.Common;
 using TaskFlow.Domain.Projects;
 using TaskFlow.Domain.Tasks;
@@ -10,14 +8,13 @@ namespace TaskFlow.Application.Tasks;
 
 /// <summary>
 /// The Kanban move shared by <see cref="MoveTaskHandler"/> and the task upserts (ADR 0017): puts the task at a position of
-/// a column, renumbers the columns it left and entered, and records the activity. It does not save. <paramref name="repositioned"/> receives the other tasks whose position changed.
+/// a column, renumbers the columns it left and entered,. It does not save; the task raises the events of the move (ADR 0024). <paramref name="repositioned"/> receives the other tasks whose position changed.
 /// </summary>
 internal static class TaskMoves
 {
     /// <param name="position">Index in the target column, counted without the moved task; past the end means last.</param>
     public static async Task<Result> MoveAsync(
         IAppDbContext db,
-        ActivityLog activity,
         TimeProvider time,
         Project project,
         TaskItem task,
@@ -36,21 +33,16 @@ internal static class TaskMoves
             return moved;
         }
 
+        var neighbors = new List<TaskItem>();
+        target.Insert(index, task);
+        Renumber(target, task, neighbors);
         if (sourceStatus != status)
         {
-            activity.Record(
-                project.Id,
-                ActivityType.TaskMoved,
-                new { taskTitle = task.Title, from = sourceStatus, to = status },
-                task.Id);
+            Renumber(await ColumnWithoutAsync(db, task, sourceStatus, cancellationToken), task, neighbors);
         }
 
-        target.Insert(index, task);
-        Renumber(target, task, repositioned);
-        if (sourceStatus != status)
-        {
-            Renumber(await ColumnWithoutAsync(db, task, sourceStatus, cancellationToken), task, repositioned);
-        }
+        repositioned?.AddRange(neighbors);
+        task.MarkNeighborsReordered(neighbors);
 
         return Result.Success();
     }
@@ -61,7 +53,7 @@ internal static class TaskMoves
             .OrderBy(other => other.Position)
             .ToListAsync(cancellationToken);
 
-    private static void Renumber(List<TaskItem> column, TaskItem moved, List<TaskItem>? repositioned)
+    private static void Renumber(List<TaskItem> column, TaskItem moved, List<TaskItem> repositioned)
     {
         for (var index = 0; index < column.Count; index++)
         {
@@ -70,7 +62,7 @@ internal static class TaskMoves
                 column[index].Reposition(index);
                 if (column[index] != moved)
                 {
-                    repositioned?.Add(column[index]);
+                    repositioned.Add(column[index]);
                 }
             }
         }

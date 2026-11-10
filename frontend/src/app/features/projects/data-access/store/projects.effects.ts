@@ -2,15 +2,16 @@ import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
-import { Observable, catchError, concatMap, filter, forkJoin, map, of, switchMap, tap, withLatestFrom } from 'rxjs';
-import { User } from '../../../../core/auth/auth.models';
-import { authFeature } from '../../../../core/auth/store/auth.feature';
-import { isStale, toApiError } from '../../../../core/http/api-error';
-import { Notifier } from '../../../../core/notifications/notifier';
+import { EMPTY, Observable, catchError, concatMap, filter, forkJoin, map, of, switchMap, tap, withLatestFrom } from 'rxjs';
+import { User } from '@core/auth/auth.models';
+import { authFeature } from '@core/auth/store/auth.feature';
+import { isStale, toApiError } from '@shared/data-access/api-error';
+import { Notifier } from '@core/notifications/notifier';
+import { RealtimeActions } from '@core/realtime/realtime.actions';
 import { Project, ProjectsApiService } from '../projects-api.service';
 import { ProjectPageActions, ProjectsApiActions, ProjectsPageActions } from './projects.actions';
 import { projectsFeature } from './projects.feature';
-import { untilTenantChanges } from '../../../../shared/data-access/until-tenant-changes';
+import { untilTenantChanges } from '@core/tenant/until-tenant-changes';
 
 export const loadProjects = createEffect(
   (actions$ = inject(Actions), store = inject(Store), api = inject(ProjectsApiService)) =>
@@ -72,15 +73,22 @@ export const openCreatedProject = createEffect(
 export const loadProject = createEffect(
   (actions$ = inject(Actions), store = inject(Store), api = inject(ProjectsApiService)) =>
     actions$.pipe(
-      ofType(ProjectPageActions.opened, ProjectsApiActions.projectChanged),
+      // A resync (reconnected, tab visible again) reloads the project and its members too: a role or a member may
+      // have changed while events were missed. Its failure is silent: the page keeps what it shows.
+      ofType(ProjectPageActions.opened, ProjectsApiActions.projectChanged, RealtimeActions.resyncRequested),
       withLatestFrom(store.select(projectsFeature.selectCurrent)),
-      map(([action, current]) => (action.type === ProjectPageActions.opened.type ? action.projectId : current?.id)),
-      filter((projectId): projectId is string => !!projectId),
-      switchMap((projectId) =>
+      map(([action, current]) => ({
+        projectId: action.type === ProjectsApiActions.projectChanged.type ? current?.id : action.projectId,
+        silent: action.type === RealtimeActions.resyncRequested.type,
+      })),
+      filter((request): request is { projectId: string; silent: boolean } => !!request.projectId),
+      switchMap(({ projectId, silent }) =>
         forkJoin({ project: api.get(projectId), members: api.members(projectId) }).pipe(
           untilTenantChanges(actions$),
           map(({ project, members }) => ProjectsApiActions.projectLoaded({ project, members })),
-          catchError((error: unknown) => of(ProjectsApiActions.projectLoadFailed({ error: toApiError(error) }))),
+          catchError((error: unknown) =>
+            silent ? EMPTY : of(ProjectsApiActions.projectLoadFailed({ error: toApiError(error) })),
+          ),
         ),
       ),
     ),

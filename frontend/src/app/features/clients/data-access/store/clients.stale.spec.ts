@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Actions } from '@ngrx/effects';
 import { Action, Store } from '@ngrx/store';
 import { Observable, of, throwError } from 'rxjs';
-import { Notifier } from '../../../../core/notifications/notifier';
+import { Notifier } from '@core/notifications/notifier';
 import { Client, ClientsApiService } from '../clients-api.service';
 import { ClientsApiActions, ClientsPageActions } from './clients.actions';
 import { loadClients, notify, refreshClients, saveClient } from './clients.effects';

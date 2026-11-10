@@ -3,9 +3,10 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 import { of } from 'rxjs';
 import en from '../../../../../public/i18n/en.json';
-import { expectNoAxeViolations } from '../../../shared/testing/axe';
+import { expectNoAxeViolations } from '@shared/testing/axe';
 import { Label } from '../data-access/labels-api.service';
 import { LabelFormData, LabelFormDialog } from './label-form-dialog';
+import { fakeDialogRef } from '@shared/testing/fake-dialog-ref';
 
 const stale = { code: 'Concurrency.Stale', fields: {} };
 const mine: Label = { id: 'l1', name: 'Bug', color: '#D32F2F', rowVersion: 'rv1' };
@@ -21,7 +22,7 @@ describe('LabelFormDialog when someone else changed the label (stale)', () => {
         TranslocoTestingModule.forRoot({ langs: { en }, translocoConfig: { availableLangs: ['en'], defaultLang: 'en' } }),
       ],
       providers: [
-        { provide: MatDialogRef, useValue: { close } },
+        { provide: MatDialogRef, useValue: fakeDialogRef(close) },
         { provide: MAT_DIALOG_DATA, useValue: { label: mine, save: vi.fn(), ...data } },
       ],
     });

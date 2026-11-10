@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Actions } from '@ngrx/effects';
 import { Action, Store } from '@ngrx/store';
 import { Observable, of, throwError } from 'rxjs';
-import { Notifier } from '../../../../core/notifications/notifier';
+import { Notifier } from '@core/notifications/notifier';
 import { CommentsApiService } from '../comments-api.service';
 import { CommentsApiActions, CommentsPageActions } from './comments.actions';
 import { createComment, deleteComment, loadComments, notify, refreshComments, updateComment } from './comments.effects';

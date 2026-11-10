@@ -1383,7 +1383,7 @@ export interface paths {
                 query?: {
                     /** @description The requested API version */
                     "api-version"?: "1.0";
-                    page?: number;
+                    cursor?: string;
                     pageSize?: number;
                     unreadOnly?: boolean;
                 };
@@ -1402,7 +1402,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["PagedResultOfNotificationDto"];
+                        "application/json": components["schemas"]["CursorPageOfNotificationDto"];
                     };
                 };
                 /** @description Bad Request */
@@ -1976,7 +1976,7 @@ export interface paths {
                 query?: {
                     /** @description The requested API version */
                     "api-version"?: "1.0";
-                    page?: number;
+                    cursor?: string;
                     pageSize?: number;
                 };
                 header?: {
@@ -1996,7 +1996,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["PagedResultOfActivityEntryDto"];
+                        "application/json": components["schemas"]["CursorPageOfActivityEntryDto"];
                     };
                 };
                 /** @description Bad Request */
@@ -3230,7 +3230,7 @@ export interface paths {
                 query?: {
                     /** @description The requested API version */
                     "api-version"?: "1.0";
-                    page?: number;
+                    cursor?: string;
                     pageSize?: number;
                 };
                 header?: {
@@ -3251,7 +3251,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["PagedResultOfActivityEntryDto"];
+                        "application/json": components["schemas"]["CursorPageOfActivityEntryDto"];
                     };
                 };
                 /** @description Bad Request */
@@ -5364,6 +5364,14 @@ export interface components {
             email: string;
             isAdmin: boolean;
         };
+        CursorPageOfActivityEntryDto: {
+            items: components["schemas"]["ActivityEntryDto"][];
+            nextCursor: null | string;
+        };
+        CursorPageOfNotificationDto: {
+            items: components["schemas"]["NotificationDto"][];
+            nextCursor: null | string;
+        };
         DemoAccountResponse: {
             email: string;
             password: string;
@@ -5484,26 +5492,8 @@ export interface components {
         };
         /** @enum {string} */
         NotificationType: "TaskAssigned" | "Mentioned" | "CommentOnYourTask" | "TaskDueSoon";
-        PagedResultOfActivityEntryDto: {
-            items: components["schemas"]["ActivityEntryDto"][];
-            /** Format: int32 */
-            page: number;
-            /** Format: int32 */
-            pageSize: number;
-            /** Format: int32 */
-            totalCount: number;
-        };
         PagedResultOfClientDto: {
             items: components["schemas"]["ClientDto"][];
-            /** Format: int32 */
-            page: number;
-            /** Format: int32 */
-            pageSize: number;
-            /** Format: int32 */
-            totalCount: number;
-        };
-        PagedResultOfNotificationDto: {
-            items: components["schemas"]["NotificationDto"][];
             /** Format: int32 */
             page: number;
             /** Format: int32 */

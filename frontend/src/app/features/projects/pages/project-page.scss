@@ -19,6 +19,24 @@
     gap: 8px 12px;
   }
 
+  .live {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font: var(--mat-sys-label-medium);
+    color: var(--mat-sys-on-surface-variant);
+
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+
+    &.reconnecting {
+      color: var(--mat-sys-error);
+    }
+  }
+
   h1 {
     font: var(--mat-sys-headline-medium);
     margin: 0;
@@ -65,4 +83,13 @@ a[mat-tab-link] mat-icon {
 mat-tab-nav-panel {
   display: block;
   padding-top: 16px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }

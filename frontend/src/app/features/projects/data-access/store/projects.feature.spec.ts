@@ -1,5 +1,5 @@
 import { Project } from '../projects-api.service';
-import { TenantActions } from '../../../../core/tenant/store/tenant.actions';
+import { TenantActions } from '@core/tenant/store/tenant.actions';
 import { ProjectPageActions, ProjectsApiActions, ProjectsPageActions } from './projects.actions';
 import { initialProjectsState, projectsFeature } from './projects.feature';
 

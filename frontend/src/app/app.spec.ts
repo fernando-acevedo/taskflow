@@ -4,12 +4,12 @@ import { provideRouter } from '@angular/router';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 import { provideMockStore } from '@ngrx/store/testing';
 import { App } from './app';
-import { tenantFeature } from './core/tenant/store/tenant.feature';
-import { authFeature } from './core/auth/store/auth.feature';
-import { DemoService, DemoStatus } from './core/demo/demo.service';
-import { LanguageService } from './core/i18n/language.service';
-import { expectNoAxeViolations } from './shared/testing/axe';
-import { notificationsFeature } from './features/notifications/data-access/store/notifications.feature';
+import { tenantFeature } from '@core/tenant/store/tenant.feature';
+import { authFeature } from '@core/auth/store/auth.feature';
+import { DemoService, DemoStatus } from '@core/demo/demo.service';
+import { LanguageService } from '@core/i18n/language.service';
+import { expectNoAxeViolations } from '@shared/testing/axe';
+import { notificationsFeature } from '@features/notifications';
 
 const demoOn: DemoStatus = { enabled: true, nextResetAt: null, accounts: [] };
 const tenants = [

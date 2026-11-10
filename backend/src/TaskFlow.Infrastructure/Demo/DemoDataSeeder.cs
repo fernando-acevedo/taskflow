@@ -150,6 +150,7 @@ internal static class DemoDataSeeder
             positions[key] = position + 1;
             Unwrap(task.Move(project, seed.Status, position, now.AddDays(seed.Status == TaskItemStatus.Done ? -2 : -1)));
             Unwrap(task.SetLabels(project, [.. seed.Labels.Select(label => labels[seed.Project][label])]));
+            task.TakeDomainEvents(); // seeded history has no activity, notifications or real-time updates (ADR 0024)
             tasks.Add(task);
         }
 
@@ -158,7 +159,9 @@ internal static class DemoDataSeeder
         foreach (var (taskIndex, authorIndex, body) in Comments)
         {
             var task = tasks[taskIndex];
-            db.TaskComments.Add(Unwrap(TaskComment.Create(projects[Tasks[taskIndex].Project], task.Id, people[authorIndex], body, null, now.AddHours(-3 * (taskIndex + 1)))));
+            var comment = Unwrap(TaskComment.Create(projects[Tasks[taskIndex].Project], task.Id, people[authorIndex], body, null, now.AddHours(-3 * (taskIndex + 1))));
+            comment.TakeDomainEvents();
+            db.TaskComments.Add(comment);
         }
 
         for (var i = 0; i < Tasks.Length; i++)

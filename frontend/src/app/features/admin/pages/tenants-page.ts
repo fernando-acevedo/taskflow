@@ -7,13 +7,14 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { TranslocoDirective } from '@jsverse/transloco';
-import { ApiError, toApiError } from '../../../core/http/api-error';
-import { LanguageService } from '../../../core/i18n/language.service';
-import { Notifier } from '../../../core/notifications/notifier';
-import { TenantApiService } from '../../../core/tenant/tenant-api.service';
-import { TenantSummary } from '../../../core/tenant/tenant.models';
-import { applyApiFieldErrors } from '../../../shared/data-access/api-field-errors';
-import { EmptyState } from '../../../shared/ui/empty-state';
+import { ApiError, toApiError } from '@shared/data-access/api-error';
+import { LanguageService } from '@core/i18n/language.service';
+import { Notifier } from '@core/notifications/notifier';
+import { TenantApiService } from '@core/tenant/tenant-api.service';
+import { TenantSummary } from '@core/tenant/tenant.models';
+import { applyApiFieldErrors } from '@shared/data-access/api-field-errors';
+import { HasUnsavedChanges, warnBeforeUnload } from '@shared/ui/unsaved-changes';
+import { EmptyState } from '@shared/ui/empty-state';
 
 /**
  * Platform view for the super-admin: every tenant, and a form to create one. It is a small admin screen, so it
@@ -145,7 +146,7 @@ import { EmptyState } from '../../../shared/ui/empty-state';
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TenantsPage {
+export class TenantsPage implements HasUnsavedChanges {
   private readonly api = inject(TenantApiService);
   protected readonly notifier = inject(Notifier);
   protected readonly language = inject(LanguageService);
@@ -169,7 +170,12 @@ export class TenantsPage {
   });
 
   constructor() {
+    warnBeforeUnload(() => this.hasUnsavedChanges());
     this.load();
+  }
+
+  hasUnsavedChanges(): boolean {
+    return this.form.dirty;
   }
 
   protected load(): void {

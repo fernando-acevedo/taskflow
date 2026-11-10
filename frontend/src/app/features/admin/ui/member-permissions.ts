@@ -1,4 +1,4 @@
-import { TenantRole } from '../../../core/tenant/tenant.models';
+import { TenantRole } from '@core/tenant/tenant.models';
 import { TenantMember } from '../data-access/tenant-members-api.service';
 
 export interface MemberActionContext {

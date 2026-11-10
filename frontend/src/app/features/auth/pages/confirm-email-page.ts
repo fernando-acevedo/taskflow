@@ -5,9 +5,9 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslocoDirective } from '@jsverse/transloco';
 import { Store } from '@ngrx/store';
-import { readEmailedLink } from '../../../core/auth/emailed-link';
-import { ConfirmEmailPageActions } from '../../../core/auth/store/auth.actions';
-import { authFeature } from '../../../core/auth/store/auth.feature';
+import { readEmailedLink } from '@core/auth/emailed-link';
+import { ConfirmEmailPageActions } from '@core/auth/store/auth.actions';
+import { authFeature } from '@core/auth/store/auth.feature';
 
 /** Where the email sent on registration links to: confirms the email as soon as it opens. */
 @Component({

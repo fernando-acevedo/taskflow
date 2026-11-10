@@ -1,9 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 import { Observable, of } from 'rxjs';
-import { ApiError } from '../../../core/http/api-error';
+import { ApiError } from '@shared/data-access/api-error';
 import en from '../../../../../public/i18n/en.json';
-import { expectNoAxeViolations } from '../../../shared/testing/axe';
+import { expectNoAxeViolations } from '@shared/testing/axe';
 import { CommentEditor } from './comment-editor';
 
 const stale = { code: 'Concurrency.Stale', fields: {} };

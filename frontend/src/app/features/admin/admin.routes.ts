@@ -1,7 +1,8 @@
 import { Routes } from '@angular/router';
 import { provideEffects } from '@ngrx/effects';
 import { provideState } from '@ngrx/store';
-import { adminGuard, tenantAdminGuard } from '../../core/auth/auth.guards';
+import { adminGuard, tenantAdminGuard } from '@core/auth/auth.guards';
+import { lazyUnsavedChangesGuard } from '@core/navigation/lazy-unsaved-changes-guard';
 import * as membersEffects from './data-access/store/members.effects';
 import { membersFeature } from './data-access/store/members.feature';
 
@@ -19,6 +20,7 @@ export const adminRoutes: Routes = [
     path: 'tenants',
     title: 'titles.tenants',
     canActivate: [adminGuard],
+    canDeactivate: [lazyUnsavedChangesGuard],
     loadComponent: () => import('./pages/tenants-page').then((m) => m.TenantsPage),
   },
 ];

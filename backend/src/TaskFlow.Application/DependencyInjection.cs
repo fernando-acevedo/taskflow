@@ -26,6 +26,7 @@ public static class DependencyInjection
         services.AddScoped<Tasks.TaskUpserter>();
         services.AddScoped<Tenants.TenantMemberInviter>();
         services.AddScoped<Notifier>();
+        services.AddDomainEventHandlers(typeof(DependencyInjection).Assembly);
         services.TryAddSingleton(TimeProvider.System);
         return services;
     }

@@ -1,10 +1,10 @@
 import { inject } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { catchError, map, of, switchMap } from 'rxjs';
-import { toApiError } from '../../../../core/http/api-error';
+import { toApiError } from '@shared/data-access/api-error';
 import { DashboardApiService } from '../dashboard-api.service';
 import { DashboardApiActions, DashboardPageActions } from './dashboard.actions';
-import { untilTenantChanges } from '../../../../shared/data-access/until-tenant-changes';
+import { untilTenantChanges } from '@core/tenant/until-tenant-changes';
 
 export const loadMyDashboard = createEffect(
   (actions$ = inject(Actions), api = inject(DashboardApiService)) =>

@@ -1,54 +1,48 @@
 import { Routes } from '@angular/router';
-import { provideEffects } from '@ngrx/effects';
-import { provideState } from '@ngrx/store';
-import { authGuard, guestGuard, tenantAdminGuard } from './core/auth/auth.guards';
-import * as apiKeysEffects from './features/api-keys/data-access/store/api-keys.effects';
-import { apiKeysFeature } from './features/api-keys/data-access/store/api-keys.feature';
-import * as statusEffects from './features/status/data-access/store/status.effects';
-import { statusFeature } from './features/status/data-access/store/status.feature';
+import { authGuard, guestGuard, tenantAdminGuard } from '@core/auth/auth.guards';
 
+// Features are reached only through their public API (`index.ts`), loaded on demand: the barrels re-export the
+// routes (or lazy page loaders), so nothing of a feature lands in the initial bundle.
 export const routes: Routes = [
   {
     path: 'login',
     title: 'titles.login',
     canActivate: [guestGuard],
-    loadComponent: () => import('./features/auth/pages/login-page').then((m) => m.LoginPage),
+    loadComponent: () => import('@features/auth').then((m) => m.loadLoginPage()),
   },
   {
     path: 'register',
     title: 'titles.register',
     canActivate: [guestGuard],
-    loadComponent: () => import('./features/auth/pages/register-page').then((m) => m.RegisterPage),
+    loadComponent: () => import('@features/auth').then((m) => m.loadRegisterPage()),
   },
   {
     path: 'forgot-password',
     title: 'titles.forgotPassword',
     canActivate: [guestGuard],
-    loadComponent: () => import('./features/auth/pages/forgot-password-page').then((m) => m.ForgotPasswordPage),
+    loadComponent: () => import('@features/auth').then((m) => m.loadForgotPasswordPage()),
   },
   {
     // No guard: registering signs the user in, so the link is usually opened while signed in.
     path: 'confirm-email',
     title: 'titles.confirmEmail',
-    loadComponent: () => import('./features/auth/pages/confirm-email-page').then((m) => m.ConfirmEmailPage),
+    loadComponent: () => import('@features/auth').then((m) => m.loadConfirmEmailPage()),
   },
   {
     // No guard, like accept-invitation: the link may be opened in a browser where someone else is signed in.
     path: 'reset-password',
     title: 'titles.resetPassword',
-    loadComponent: () => import('./features/auth/pages/reset-password-page').then((m) => m.ResetPasswordPage),
+    loadComponent: () => import('@features/auth').then((m) => m.loadResetPasswordPage()),
   },
   {
     // No guard: the invited user may open the link in a browser where someone else is signed in.
     path: 'accept-invitation',
     title: 'titles.acceptInvitation',
-    loadComponent: () => import('./features/auth/pages/accept-invitation-page').then((m) => m.AcceptInvitationPage),
+    loadComponent: () => import('@features/auth').then((m) => m.loadAcceptInvitationPage()),
   },
   {
     path: 'status',
-    title: 'titles.status',
-    loadComponent: () => import('./features/status/pages/status-page').then((m) => m.StatusPage),
-    providers: [provideState(statusFeature), provideEffects(statusEffects)],
+    loadChildren: () => import('@features/status').then((m) => m.loadStatusRoutes()),
   },
   {
     path: '',
@@ -57,27 +51,24 @@ export const routes: Routes = [
       {
         path: '',
         pathMatch: 'full',
-        loadChildren: () => import('./features/dashboard/dashboard.routes').then((m) => m.dashboardRoutes),
+        loadChildren: () => import('@features/dashboard').then((m) => m.loadDashboardRoutes()),
       },
       {
         path: 'profile',
-        title: 'titles.profile',
-        providers: [provideState(apiKeysFeature), provideEffects(apiKeysEffects)],
-        loadComponent: () => import('./features/profile/pages/profile-page').then((m) => m.ProfilePage),
+        loadChildren: () => import('@features/profile').then((m) => m.loadProfileRoutes()),
       },
       {
         path: 'projects',
-        loadChildren: () => import('./features/projects/projects.routes').then((m) => m.projectsRoutes),
+        loadChildren: () => import('@features/projects').then((m) => m.loadProjectsRoutes()),
       },
       {
         path: 'clients',
         canActivate: [tenantAdminGuard],
-        loadChildren: () =>
-          import('./features/clients/clients.routes').then((m) => m.clientsRoutes),
+        loadChildren: () => import('@features/clients').then((m) => m.loadClientsRoutes()),
       },
       {
         path: 'admin',
-        loadChildren: () => import('./features/admin/admin.routes').then((m) => m.adminRoutes),
+        loadChildren: () => import('@features/admin').then((m) => m.loadAdminRoutes()),
       },
     ],
   },

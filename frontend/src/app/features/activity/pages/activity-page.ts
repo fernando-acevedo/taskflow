@@ -1,9 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject } from '@angular/core';
 import { TranslocoDirective } from '@jsverse/transloco';
 import { Store } from '@ngrx/store';
-import { projectsFeature } from '../../projects/data-access/store/projects.feature';
-import { tasksFeature } from '../../tasks/data-access/store/tasks.feature';
-import { TaskEditor } from '../../tasks/ui/task-editor';
+import { projectsFeature } from '@features/projects';
+import { tasksFeature } from '@features/tasks';
+import { TaskEditor } from '@features/tasks';
 import { ActivityPageActions } from '../data-access/store/activity.actions';
 import { activityFeature } from '../data-access/store/activity.feature';
 import { ActivityFeed } from '../ui/activity-feed';

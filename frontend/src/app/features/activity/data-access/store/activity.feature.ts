@@ -1,7 +1,7 @@
 import { createFeature, createReducer, createSelector, on } from '@ngrx/store';
-import { AuthApiActions, ShellActions } from '../../../../core/auth/store/auth.actions';
-import { TenantActions } from '../../../../core/tenant/store/tenant.actions';
-import { ApiError } from '../../../../core/http/api-error';
+import { AuthApiActions, ShellActions } from '@core/auth/store/auth.actions';
+import { TenantActions } from '@core/tenant/store/tenant.actions';
+import { ApiError } from '@shared/data-access/api-error';
 import { ActivityEntry } from '../activity-api.service';
 import { ActivityApiActions, ActivityPageActions, ActivityScope } from './activity.actions';
 
@@ -9,9 +9,8 @@ export interface ActivityFeed {
   projectId: string | null;
   taskId: string | null;
   items: readonly ActivityEntry[];
-  /** The last page loaded (0 before the first). */
-  page: number;
-  totalCount: number;
+  /** Cursor of the next page; null when the last one is loaded (or nothing is yet). */
+  nextCursor: string | null;
   loading: boolean;
   error: ApiError | null;
 }
@@ -21,7 +20,7 @@ export interface ActivityState {
   task: ActivityFeed;
 }
 
-const emptyFeed: ActivityFeed = { projectId: null, taskId: null, items: [], page: 0, totalCount: 0, loading: false, error: null };
+const emptyFeed: ActivityFeed = { projectId: null, taskId: null, items: [], nextCursor: null, loading: false, error: null };
 
 export const initialActivityState: ActivityState = { project: emptyFeed, task: emptyFeed };
 
@@ -51,22 +50,22 @@ export const activityFeature = createFeature({
     on(ActivityPageActions.loadMoreClicked, (state, { scope }): ActivityState =>
       withFeed(state, scope, { ...state[scope], loading: true, error: null }),
     ),
-    on(ActivityApiActions.pageLoaded, (state, { scope, projectId, taskId, result }): ActivityState => {
+    on(ActivityApiActions.pageLoaded, (state, { scope, projectId, taskId, append, result }): ActivityState => {
       const feed = state[scope];
       if (!matches(feed, projectId, taskId)) {
         return state;
       }
-      const known = result.page > 1 ? feed.items : [];
+      const known = append ? feed.items : [];
       const seen = new Set(known.map((item) => item.id));
       const items = [...known, ...result.items.filter((item) => !seen.has(item.id))];
-      return withFeed(state, scope, { ...feed, items, page: result.page, totalCount: result.totalCount, loading: false });
+      return withFeed(state, scope, { ...feed, items, nextCursor: result.nextCursor, loading: false });
     }),
     on(ActivityApiActions.loadFailed, (state, { scope, projectId, taskId, error }): ActivityState =>
       matches(state[scope], projectId, taskId) ? withFeed(state, scope, { ...state[scope], loading: false, error }) : state,
     ),
   ),
   extraSelectors: ({ selectProject, selectTask }) => ({
-    selectProjectHasMore: createSelector(selectProject, (feed) => feed.items.length < feed.totalCount),
-    selectTaskHasMore: createSelector(selectTask, (feed) => feed.items.length < feed.totalCount),
+    selectProjectHasMore: createSelector(selectProject, (feed) => feed.nextCursor !== null),
+    selectTaskHasMore: createSelector(selectTask, (feed) => feed.nextCursor !== null),
   }),
 });

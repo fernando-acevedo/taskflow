@@ -1,8 +1,8 @@
 import { EntityState, createEntityAdapter } from '@ngrx/entity';
 import { createFeature, createReducer, on } from '@ngrx/store';
-import { AuthApiActions, ShellActions } from '../../../../core/auth/store/auth.actions';
-import { ApiError } from '../../../../core/http/api-error';
-import { TenantActions } from '../../../../core/tenant/store/tenant.actions';
+import { AuthApiActions, ShellActions } from '@core/auth/store/auth.actions';
+import { ApiError } from '@shared/data-access/api-error';
+import { TenantActions } from '@core/tenant/store/tenant.actions';
 import { ApiKey } from '../api-keys-api.service';
 import { ApiKeysApiActions, ApiKeysPageActions } from './api-keys.actions';
 

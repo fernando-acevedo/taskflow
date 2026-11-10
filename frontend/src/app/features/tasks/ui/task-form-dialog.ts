@@ -11,20 +11,21 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
 import { Observable } from 'rxjs';
 import { TranslocoDirective } from '@jsverse/transloco';
-import { LanguageService } from '../../../core/i18n/language.service';
-import { isStale } from '../../../core/http/api-error';
-import { StaleNotice } from '../../../shared/ui/stale-notice';
-import { applyApiFieldErrors } from '../../../shared/data-access/api-field-errors';
-import { SaveFn } from '../../../shared/data-access/submission';
-import { parseDuration, toClockText } from '../../../shared/ui/duration';
-import { localToday } from '../../../shared/ui/local-today';
-import { LabelSummary } from '../../labels/data-access/labels-api.service';
-import { TaskHistory } from '../../activity/ui/task-history';
-import { TaskComments } from '../../comments/ui/task-comments';
-import { LabelChip } from '../../labels/ui/label-chip';
-import { TaskTime } from '../../time-tracking/ui/task-time';
-import { ProjectMember } from '../../projects/data-access/projects-api.service';
+import { LanguageService } from '@core/i18n/language.service';
+import { isStale } from '@shared/data-access/api-error';
+import { StaleNotice } from '@shared/ui/stale-notice';
+import { applyApiFieldErrors } from '@shared/data-access/api-field-errors';
+import { SaveFn } from '@shared/data-access/submission';
+import { parseDuration, toClockText } from '@shared/ui/duration';
+import { localToday } from '@shared/ui/local-today';
+import { LabelSummary } from '@features/labels';
+import { TaskHistory } from '@features/activity';
+import { TaskComments } from '@features/comments';
+import { LabelChip } from '@features/labels';
+import { TaskTime } from '@features/time-tracking';
+import { ProjectMember } from '@features/projects';
 import { TASK_PRIORITIES, Task, TaskInput, TaskPriority } from '../data-access/tasks-api.service';
+import { confirmCloseWhenModified } from '@shared/ui/unsaved-changes';
 
 export interface TaskFormData {
   readonly task: Task | null;
@@ -142,6 +143,7 @@ export class TaskFormDialog {
   });
 
   constructor() {
+    confirmCloseWhenModified(this.dialogRef, () => this.form.dirty);
     if (this.data.readOnly) {
       this.form.disable();
     }

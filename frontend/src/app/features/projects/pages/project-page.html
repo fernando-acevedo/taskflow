@@ -13,6 +13,36 @@
       <div class="title">
         <h1>{{ current.name }}</h1>
         <span class="chip">{{ current.clientName }}</span>
+        <span class="live" [class.reconnecting]="realtimeState() === 'reconnecting' || realtimeState() === 'disconnected'">
+          @switch (realtimeState()) {
+            @case ('connecting') {
+              <mat-icon aria-hidden="true">sync</mat-icon>
+              {{ t('project.realtime.connecting') }}
+            }
+            @case ('live') {
+              <mat-icon aria-hidden="true">sensors</mat-icon>
+              {{ t('project.realtime.live') }}
+            }
+            @case ('reconnecting') {
+              <mat-icon aria-hidden="true">sync_problem</mat-icon>
+              {{ t('project.realtime.reconnecting') }}
+            }
+            @case ('disconnected') {
+              <mat-icon aria-hidden="true">sensors_off</mat-icon>
+              {{ t('project.realtime.disconnected') }}
+            }
+          }
+        </span>
+        <span class="visually-hidden" aria-live="polite">
+          @switch (realtimeAnnouncement()) {
+            @case ('reconnecting') {
+              {{ t('project.realtime.reconnecting') }}
+            }
+            @case ('restored') {
+              {{ t('project.realtime.restored') }}
+            }
+          }
+        </span>
         @if (current.isArchived) {
           <span class="chip error">{{ t('projects.archivedChip') }}</span>
         }

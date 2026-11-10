@@ -1,8 +1,8 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { TranslocoTestingModule } from '@jsverse/transloco';
-import { LanguageService } from '../../../core/i18n/language.service';
-import { expectNoAxeViolations } from '../../../shared/testing/axe';
+import { LanguageService } from '@core/i18n/language.service';
+import { expectNoAxeViolations } from '@shared/testing/axe';
 import { aTask } from '../data-access/store/testing';
 import { Task } from '../data-access/tasks-api.service';
 import { TaskCard } from './task-card';

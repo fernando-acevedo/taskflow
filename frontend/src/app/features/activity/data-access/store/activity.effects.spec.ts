@@ -13,10 +13,10 @@ function run(effect: Observable<Action>): Action[] {
   return emitted;
 }
 
-const result = { items: [], page: 1, pageSize: 50, totalCount: 0 };
+const result = { items: [], nextCursor: null };
 
-function storeWith(taskId: string | null, page: number): Store {
-  const state = { ...initialActivityState, project: { ...initialActivityState.project, projectId: 'p1', taskId, page } };
+function storeWith(taskId: string | null, nextCursor: string | null): Store {
+  const state = { ...initialActivityState, project: { ...initialActivityState.project, projectId: 'p1', taskId, nextCursor } };
   return { select: (selector: unknown) => of(selector === activityFeature.selectActivityState ? state : undefined) } as unknown as Store;
 }
 
@@ -26,9 +26,9 @@ describe('activity effects', () => {
     const actions$ = of(ActivityPageActions.opened({ scope: 'task', projectId: 'p1', taskId: 't1' })) as Actions;
 
     expect(run(loadActivity(actions$, api))).toEqual([
-      ActivityApiActions.pageLoaded({ scope: 'task', projectId: 'p1', taskId: 't1', result }),
+      ActivityApiActions.pageLoaded({ scope: 'task', projectId: 'p1', taskId: 't1', append: false, result }),
     ]);
-    expect(api.list).toHaveBeenCalledWith('p1', 't1', 1);
+    expect(api.list).toHaveBeenCalledWith('p1', 't1', null);
   });
 
   it('does not let a load of one scope cancel the other', () => {
@@ -46,8 +46,8 @@ describe('activity effects', () => {
     task$.next(result);
 
     expect(emitted).toEqual([
-      ActivityApiActions.pageLoaded({ scope: 'project', projectId: 'p1', taskId: null, result }),
-      ActivityApiActions.pageLoaded({ scope: 'task', projectId: 'p1', taskId: 't1', result }),
+      ActivityApiActions.pageLoaded({ scope: 'project', projectId: 'p1', taskId: null, append: false, result }),
+      ActivityApiActions.pageLoaded({ scope: 'task', projectId: 'p1', taskId: 't1', append: false, result }),
     ]);
   });
 
@@ -63,7 +63,7 @@ describe('activity effects', () => {
     first$.next(result);
     second$.next(result);
 
-    expect(emitted).toEqual([ActivityApiActions.pageLoaded({ scope: 'task', projectId: 'p1', taskId: 't2', result })]);
+    expect(emitted).toEqual([ActivityApiActions.pageLoaded({ scope: 'task', projectId: 'p1', taskId: 't2', append: false, result })]);
   });
 
   it('reports a failed load with the API error', () => {
@@ -77,12 +77,21 @@ describe('activity effects', () => {
     ]);
   });
 
-  it('asks for the page after the last one loaded', () => {
-    const api = { list: vi.fn(() => of({ ...result, page: 3 })) } as unknown as ActivityApiService;
+  it('asks for the page after the cursor of the last one loaded', () => {
+    const api = { list: vi.fn(() => of(result)) } as unknown as ActivityApiService;
     const actions$ = of(ActivityPageActions.loadMoreClicked({ scope: 'project' })) as Actions;
 
-    run(loadMoreActivity(actions$, storeWith(null, 2), api));
+    const emitted = run(loadMoreActivity(actions$, storeWith(null, 'c2'), api));
 
-    expect(api.list).toHaveBeenCalledWith('p1', null, 3);
+    expect(api.list).toHaveBeenCalledWith('p1', null, 'c2');
+    expect(emitted).toEqual([ActivityApiActions.pageLoaded({ scope: 'project', projectId: 'p1', taskId: null, append: true, result })]);
+  });
+
+  it('does not ask for more when there is no next cursor', () => {
+    const api = { list: vi.fn(() => of(result)) } as unknown as ActivityApiService;
+    const actions$ = of(ActivityPageActions.loadMoreClicked({ scope: 'project' })) as Actions;
+
+    expect(run(loadMoreActivity(actions$, storeWith(null, null), api))).toEqual([]);
+    expect(api.list).not.toHaveBeenCalled();
   });
 });

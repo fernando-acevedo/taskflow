@@ -1,4 +1,4 @@
-import { ShellActions } from '../../../../core/auth/store/auth.actions';
+import { ShellActions } from '@core/auth/store/auth.actions';
 import { LabelsApiActions, LabelsPageActions } from './labels.actions';
 import { initialLabelsState, labelsFeature } from './labels.feature';
 

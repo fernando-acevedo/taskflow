@@ -1,5 +1,5 @@
 import { createActionGroup, emptyProps, props } from '@ngrx/store';
-import { ApiError } from '../../http/api-error';
+import { ApiError } from '@shared/data-access/api-error';
 import { Tenant } from '../tenant.models';
 
 export const TenantActions = createActionGroup({

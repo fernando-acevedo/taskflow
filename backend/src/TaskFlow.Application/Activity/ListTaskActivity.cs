@@ -1,3 +1,4 @@
+using System.Globalization;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using TaskFlow.Application.Abstractions;
@@ -8,13 +9,13 @@ using TaskFlow.Domain.Common;
 
 namespace TaskFlow.Application.Activity;
 
-public sealed record ListTaskActivityQuery(Guid ProjectId, Guid TaskId, int Page = 1, int PageSize = 50);
+public sealed record ListTaskActivityQuery(Guid ProjectId, Guid TaskId, string? Cursor = null, int PageSize = 50);
 
 public sealed class ListTaskActivityValidator : AbstractValidator<ListTaskActivityQuery>
 {
     public ListTaskActivityValidator()
     {
-        RuleFor(query => query.Page).GreaterThanOrEqualTo(1);
+        RuleFor(query => query.Cursor).Must(PageCursor.IsValidSequence).WithMessage("The cursor is not valid.");
         RuleFor(query => query.PageSize).InclusiveBetween(1, 100);
     }
 }
@@ -29,7 +30,7 @@ public sealed class ListTaskActivityHandler(
     IIdentityService identity,
     IValidator<ListTaskActivityQuery> validator)
 {
-    public async Task<Result<PagedResult<ActivityEntryDto>>> HandleAsync(ListTaskActivityQuery query, CancellationToken cancellationToken)
+    public async Task<Result<CursorPage<ActivityEntryDto>>> HandleAsync(ListTaskActivityQuery query, CancellationToken cancellationToken)
     {
         var validation = await validator.ValidateAsync(query, cancellationToken);
         if (!validation.IsValid)
@@ -43,12 +44,21 @@ public sealed class ListTaskActivityHandler(
             return allowed.Error;
         }
 
-        var page = await db.ActivityEntries.AsNoTracking()
-            .Where(entry => entry.ProjectId == query.ProjectId && entry.TaskItemId == query.TaskId)
+        var entries = db.ActivityEntries.AsNoTracking()
+            .Where(entry => entry.ProjectId == query.ProjectId && entry.TaskItemId == query.TaskId);
+
+        if (PageCursor.TryDecode(query.Cursor, out var at, out var key))
+        {
+            var sequence = long.Parse(key, CultureInfo.InvariantCulture);
+            entries = entries.Where(entry => entry.OccurredAt < at || (entry.OccurredAt == at && entry.Sequence < sequence));
+        }
+
+        var rows = await entries
             .OrderByDescending(entry => entry.OccurredAt)
             .ThenByDescending(entry => entry.Sequence)
-            .ToPagedResultAsync(query.Page, query.PageSize, cancellationToken);
+            .Take(query.PageSize + 1)
+            .ToListAsync(cancellationToken);
 
-        return await page.ToPageAsync(identity, cancellationToken);
+        return await rows.ToPageAsync(query.PageSize, identity, cancellationToken);
     }
 }

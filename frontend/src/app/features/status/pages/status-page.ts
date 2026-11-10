@@ -7,7 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { TranslocoDirective } from '@jsverse/transloco';
 import { Store } from '@ngrx/store';
-import { LanguageService } from '../../../core/i18n/language.service';
+import { LanguageService } from '@core/i18n/language.service';
 import { environment } from '../../../../environments/environment';
 import { StatusPageActions } from '../data-access/store/status.actions';
 import { statusFeature } from '../data-access/store/status.feature';

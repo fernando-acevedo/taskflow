@@ -1,5 +1,5 @@
 import { FormGroup } from '@angular/forms';
-import { ApiError } from '../../core/http/api-error';
+import { ApiError } from '@shared/data-access/api-error';
 
 /**
  * Shows the API's validation messages under the matching fields (`ApiError.fields` is keyed by camelCase

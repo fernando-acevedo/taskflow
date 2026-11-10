@@ -1,7 +1,7 @@
 import { createFeature, createReducer, on } from '@ngrx/store';
-import { AuthApiActions, ShellActions } from '../../../../core/auth/store/auth.actions';
-import { TenantActions } from '../../../../core/tenant/store/tenant.actions';
-import { ApiError } from '../../../../core/http/api-error';
+import { AuthApiActions, ShellActions } from '@core/auth/store/auth.actions';
+import { TenantActions } from '@core/tenant/store/tenant.actions';
+import { ApiError } from '@shared/data-access/api-error';
 import { MyDashboard } from '../dashboard-api.service';
 import { DashboardApiActions, DashboardPageActions } from './dashboard.actions';
 

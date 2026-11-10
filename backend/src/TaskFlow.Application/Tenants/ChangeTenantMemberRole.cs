@@ -27,6 +27,7 @@ public sealed class ChangeTenantMemberRoleHandler(
     IValidator<ChangeTenantMemberRoleCommand> validator,
     ITenantAccessCache accessCache,
     IDemoMode demo,
+    IRealtimeRevoker realtime,
     ITransactionRunner transactions)
 {
     public async Task<Result> HandleAsync(ChangeTenantMemberRoleCommand command, CancellationToken cancellationToken)
@@ -52,6 +53,7 @@ public sealed class ChangeTenantMemberRoleHandler(
         if (result.IsSuccess)
         {
             await accessCache.ForgetAsync(command.UserId, cancellationToken);
+            await realtime.TenantAccessChangedAsync(tenantId, command.UserId, cancellationToken);
         }
 
         return result;

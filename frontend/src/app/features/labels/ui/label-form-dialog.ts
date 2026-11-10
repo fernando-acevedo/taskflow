@@ -9,13 +9,14 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { Observable } from 'rxjs';
 import { TranslocoDirective, TranslocoService } from '@jsverse/transloco';
-import { isStale } from '../../../core/http/api-error';
-import { applyApiFieldErrors } from '../../../shared/data-access/api-field-errors';
-import { SaveFn } from '../../../shared/data-access/submission';
-import { StaleNotice } from '../../../shared/ui/stale-notice';
+import { isStale } from '@shared/data-access/api-error';
+import { applyApiFieldErrors } from '@shared/data-access/api-field-errors';
+import { SaveFn } from '@shared/data-access/submission';
+import { StaleNotice } from '@shared/ui/stale-notice';
 import { Label, LabelInput } from '../data-access/labels-api.service';
 import { LabelChip } from './label-chip';
 import { LABEL_COLORS, LABEL_COLOR_NAMES, textColorFor } from './label-colors';
+import { confirmCloseWhenModified } from '@shared/ui/unsaved-changes';
 
 export interface LabelFormData {
   readonly label: Label | null;
@@ -154,6 +155,10 @@ export class LabelFormDialog {
     name: [this.data.label?.name ?? '', [Validators.required, Validators.maxLength(40)]],
     color: [this.data.label?.color ?? LABEL_COLORS[5]],
   });
+
+  constructor() {
+    confirmCloseWhenModified(this.dialogRef, () => this.form.dirty);
+  }
 
   protected submit(): void {
     const { name, color } = this.form.getRawValue();

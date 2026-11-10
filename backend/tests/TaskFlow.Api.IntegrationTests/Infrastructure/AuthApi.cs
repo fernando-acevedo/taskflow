@@ -145,6 +145,8 @@ public sealed record CreatedUserResponse(UserResponse User, bool InvitationSent)
 
 public sealed record PagedResponse<T>(IReadOnlyList<T> Items, int Page, int PageSize, int TotalCount);
 
+public sealed record CursorResponse<T>(IReadOnlyList<T> Items, string? NextCursor);
+
 /// <summary>A ProblemDetails body. Only <c>status</c> is always sent; the rest depends on the kind of error.</summary>
 public sealed record ProblemResponse(
     int Status,

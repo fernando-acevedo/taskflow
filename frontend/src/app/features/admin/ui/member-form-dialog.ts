@@ -8,11 +8,12 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { TranslocoDirective } from '@jsverse/transloco';
-import { applyApiFieldErrors } from '../../../shared/data-access/api-field-errors';
-import { SaveFn } from '../../../shared/data-access/submission';
-import { TenantRole } from '../../../core/tenant/tenant.models';
+import { applyApiFieldErrors } from '@shared/data-access/api-field-errors';
+import { SaveFn } from '@shared/data-access/submission';
+import { TenantRole } from '@core/tenant/tenant.models';
 import { NewMemberInput } from '../data-access/tenant-members-api.service';
 import { assignableRoles } from './member-permissions';
+import { confirmCloseWhenModified } from '@shared/ui/unsaved-changes';
 
 /**
  * Adds a person to the tenant (creating their account when needed; the API emails a link to choose a password).
@@ -113,6 +114,10 @@ export class MemberFormDialog {
     displayName: ['', [Validators.minLength(2), Validators.maxLength(100)]],
     role: ['Member' as TenantRole, [Validators.required]],
   });
+
+  constructor() {
+    confirmCloseWhenModified(this.dialogRef, () => this.form.dirty);
+  }
 
   protected submit(): void {
     if (this.form.invalid) {

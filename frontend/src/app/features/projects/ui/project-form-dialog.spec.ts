@@ -4,6 +4,7 @@ import { TranslocoTestingModule } from '@jsverse/transloco';
 import { of } from 'rxjs';
 import { Project } from '../data-access/projects-api.service';
 import { ProjectFormData, ProjectFormDialog } from './project-form-dialog';
+import { fakeDialogRef } from '@shared/testing/fake-dialog-ref';
 
 const stale = { code: 'Concurrency.Stale', fields: {} };
 
@@ -19,7 +20,7 @@ describe('ProjectFormDialog when someone else changed the project (stale)', () =
         TranslocoTestingModule.forRoot({ langs: { en: {} }, translocoConfig: { availableLangs: ['en'], defaultLang: 'en' } }),
       ],
       providers: [
-        { provide: MatDialogRef, useValue: { close: vi.fn() } },
+        { provide: MatDialogRef, useValue: fakeDialogRef() },
         { provide: MAT_DIALOG_DATA, useValue: { project: aProject(), clients: [{ id: 'c1', name: 'Acme' }], save: vi.fn(), ...data } },
       ],
     });

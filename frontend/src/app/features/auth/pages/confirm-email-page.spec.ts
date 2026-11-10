@@ -3,8 +3,8 @@ import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
-import { ConfirmEmailPageActions } from '../../../core/auth/store/auth.actions';
-import { authFeature } from '../../../core/auth/store/auth.feature';
+import { ConfirmEmailPageActions } from '@core/auth/store/auth.actions';
+import { authFeature } from '@core/auth/store/auth.feature';
 import { ConfirmEmailPage } from './confirm-email-page';
 
 describe('ConfirmEmailPage', () => {

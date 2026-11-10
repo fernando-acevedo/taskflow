@@ -1,7 +1,7 @@
 import { Action } from '@ngrx/store';
 import { Subject } from 'rxjs';
-import { ShellActions } from '../../../../core/auth/store/auth.actions';
-import { TenantActions } from '../../../../core/tenant/store/tenant.actions';
+import { ShellActions } from '@core/auth/store/auth.actions';
+import { TenantActions } from '@core/tenant/store/tenant.actions';
 import { DashboardApiService, MyDashboard } from '../dashboard-api.service';
 import { DashboardApiActions, DashboardPageActions } from './dashboard.actions';
 import { loadMyDashboard } from './my-dashboard.effects';

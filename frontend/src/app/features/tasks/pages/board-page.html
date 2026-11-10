@@ -4,6 +4,10 @@
       <button mat-button type="button" (click)="retry()">{{ t('retry') }}</button>
     </app-empty-state>
   } @else {
+    @if (refreshing()) {
+      <span class="refreshing" role="status">{{ t('refreshing') }}</span>
+    }
+
     @if (canEdit()) {
       <div class="toolbar">
         <button mat-flat-button type="button" (click)="editor.open()">
@@ -14,7 +18,7 @@
       </div>
     }
 
-    <div class="board" cdkDropListGroup [attr.aria-busy]="loading() || moving()">
+    <div class="board" cdkDropListGroup [attr.aria-busy]="loading() || refreshing() || moving()">
       @for (status of statuses; track status) {
         @let column = columns()[status];
         <section class="column" [attr.data-status]="status" [attr.aria-labelledby]="'column-' + status">

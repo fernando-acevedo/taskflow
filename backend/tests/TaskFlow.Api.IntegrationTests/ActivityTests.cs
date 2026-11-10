@@ -26,7 +26,7 @@ public sealed class ActivityTests(SqlServerApiFactory factory)
 
         var page = await owner.GetJsonAsync<PageResponse>(ProjectUrl(project.Id));
 
-        page.TotalCount.ShouldBe(2);
+        page.Items.Count.ShouldBe(2);
         page.Items.Select(entry => entry.Type).ShouldBe(["TaskMoved", "TaskCreated"]);
         var moved = page.Items[0];
         moved.TaskId.ShouldBe(task.Id);
@@ -41,26 +41,62 @@ public sealed class ActivityTests(SqlServerApiFactory factory)
     }
 
     [Fact]
-    public async Task EntriesArePagedNewestFirst()
+    public async Task EntriesArePagedByCursorWithoutRepeatsOrGapsWhenNewOnesArrive()
     {
         var (ownerClient, _) = await factory.CreateUserClientAsync();
         using var owner = ownerClient;
         var project = await factory.CreateProjectAsync(owner);
-        foreach (var title in new[] { "One", "Two", "Three" })
+        foreach (var title in new[] { "One", "Two", "Three", "Four", "Five" })
         {
             await owner.CreateTaskAsync(project.Id, new { title });
             factory.Time.Advance(TimeSpan.FromMinutes(1));
         }
 
-        var first = await owner.GetJsonAsync<PageResponse>(ProjectUrl(project.Id, "?page=1&pageSize=2"));
-        var second = await owner.GetJsonAsync<PageResponse>(ProjectUrl(project.Id, "?page=2&pageSize=2"));
-        using var invalid = await owner.GetAsync(new Uri(ProjectUrl(project.Id, "?pageSize=0"), UriKind.Relative), Ct);
+        var first = await owner.GetJsonAsync<PageResponse>(ProjectUrl(project.Id, "?pageSize=2"));
+        // A new entry between requests must not shift the next page.
+        await owner.CreateTaskAsync(project.Id, new { title = "Late" });
+        var second = await owner.GetJsonAsync<PageResponse>(ProjectUrl(project.Id, $"?pageSize=2&cursor={first.NextCursor}"));
+        var third = await owner.GetJsonAsync<PageResponse>(ProjectUrl(project.Id, $"?pageSize=2&cursor={second.NextCursor}"));
 
-        first.TotalCount.ShouldBe(3);
-        first.Items.Select(entry => entry.Changes.GetProperty("taskTitle").GetString()).ShouldBe(["Three", "Two"]);
-        second.Items.Select(entry => entry.Changes.GetProperty("taskTitle").GetString()).ShouldBe(["One"]);
-        (second.Page, second.PageSize).ShouldBe((2, 2));
-        invalid.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        static string?[] Titles(PageResponse page) => [.. page.Items.Select(entry => entry.Changes.GetProperty("taskTitle").GetString())];
+        Titles(first).ShouldBe(["Five", "Four"]);
+        first.NextCursor.ShouldNotBeNull();
+        Titles(second).ShouldBe(["Three", "Two"]);
+        second.NextCursor.ShouldNotBeNull();
+        Titles(third).ShouldBe(["One"]);
+        third.NextCursor.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task AnExactMultipleOfThePageSizeEndsWithoutANextCursor()
+    {
+        var (ownerClient, _) = await factory.CreateUserClientAsync();
+        using var owner = ownerClient;
+        var project = await factory.CreateProjectAsync(owner);
+        await owner.CreateTaskAsync(project.Id, new { title = "One" });
+        await owner.CreateTaskAsync(project.Id, new { title = "Two" });
+
+        var page = await owner.GetJsonAsync<PageResponse>(ProjectUrl(project.Id, "?pageSize=2"));
+
+        page.Items.Count.ShouldBe(2);
+        page.NextCursor.ShouldBeNull();
+    }
+
+    [Theory]
+    [InlineData("garbage!")]
+    [InlineData("MTIzNA")]
+    [InlineData("YWJjfGRlZg")]
+    public async Task AnInvalidCursorOrPageSizeIsABadRequest(string cursor)
+    {
+        var (ownerClient, _) = await factory.CreateUserClientAsync();
+        using var owner = ownerClient;
+        var project = await factory.CreateProjectAsync(owner);
+
+        using var projectFeed = await owner.GetAsync(new Uri(ProjectUrl(project.Id, $"?cursor={cursor}"), UriKind.Relative), Ct);
+        using var invalidSize = await owner.GetAsync(new Uri(ProjectUrl(project.Id, "?pageSize=0"), UriKind.Relative), Ct);
+
+        projectFeed.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        invalidSize.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
 
     [Fact]
@@ -143,7 +179,7 @@ public sealed class ActivityTests(SqlServerApiFactory factory)
         projectFeed.Items.Select(entry => entry.Type).ShouldBe(["TaskDeleted", "TaskCreated"]);
         projectFeed.Items.ShouldAllBe(entry => entry.TaskId == task.Id);
         projectFeed.Items[0].Changes.GetProperty("taskTitle").GetString().ShouldBe("Temporary");
-        taskFeed.TotalCount.ShouldBe(2);
+        taskFeed.Items.Count.ShouldBe(2);
     }
 
     [Fact]
@@ -284,7 +320,7 @@ public sealed class ActivityTests(SqlServerApiFactory factory)
 
         var feed = await owner.GetJsonAsync<PageResponse>(TaskUrl(project.Id, foreign.Id));
 
-        feed.TotalCount.ShouldBe(0);
+        feed.Items.Count.ShouldBe(0);
         feed.Items.ShouldBeEmpty();
     }
 
@@ -329,5 +365,5 @@ public sealed class ActivityTests(SqlServerApiFactory factory)
         DateTimeOffset OccurredAt,
         JsonElement Changes);
 
-    private sealed record PageResponse(List<EntryResponse> Items, int Page, int PageSize, int TotalCount);
+    private sealed record PageResponse(List<EntryResponse> Items, string? NextCursor);
 }

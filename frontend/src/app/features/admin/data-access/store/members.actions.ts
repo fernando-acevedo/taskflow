@@ -1,7 +1,7 @@
 import { createActionGroup, emptyProps, props } from '@ngrx/store';
-import { ApiError } from '../../../../core/http/api-error';
-import { TenantRole } from '../../../../core/tenant/tenant.models';
-import { Submission } from '../../../../shared/data-access/submission';
+import { ApiError } from '@shared/data-access/api-error';
+import { TenantRole } from '@core/tenant/tenant.models';
+import { Submission } from '@shared/data-access/submission';
 import { NewMemberInput, SupportAccess, TenantMember } from '../tenant-members-api.service';
 
 export const MembersPageActions = createActionGroup({

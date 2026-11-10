@@ -1,5 +1,5 @@
 import { createActionGroup, emptyProps, props } from '@ngrx/store';
-import { ApiError } from '../../../../core/http/api-error';
+import { ApiError } from '@shared/data-access/api-error';
 import { MyDashboard, ProjectDashboard } from '../dashboard-api.service';
 
 export const DashboardPageActions = createActionGroup({

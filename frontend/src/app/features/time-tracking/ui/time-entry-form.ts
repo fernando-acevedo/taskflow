@@ -5,10 +5,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { TranslocoDirective } from '@jsverse/transloco';
-import { applyApiFieldErrors } from '../../../shared/data-access/api-field-errors';
-import { SaveFn } from '../../../shared/data-access/submission';
-import { MAX_ENTRY_MINUTES, parseDuration, toClockText } from '../../../shared/ui/duration';
-import { localToday } from '../../../shared/ui/local-today';
+import { applyApiFieldErrors } from '@shared/data-access/api-field-errors';
+import { SaveFn } from '@shared/data-access/submission';
+import { MAX_ENTRY_MINUTES, parseDuration, toClockText } from '@shared/ui/duration';
+import { localToday } from '@shared/ui/local-today';
 import { NOTE_MAX_LENGTH, TimeEntry, TimeEntryInput } from '../data-access/time-tracking-api.service';
 
 /**

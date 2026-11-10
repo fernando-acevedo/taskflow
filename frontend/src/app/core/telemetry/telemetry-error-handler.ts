@@ -1,4 +1,4 @@
-import { ErrorHandler, Injectable, InjectionToken, inject } from '@angular/core';
+import { ErrorHandler, Injectable, InjectionToken, Injector, inject } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { environment } from '../../../environments/environment';
 import { authFeature } from '../auth/store/auth.feature';
@@ -117,7 +117,9 @@ function toError(error: unknown): Error {
 export class TelemetryErrorHandler implements ErrorHandler {
   private readonly connectionString = inject(APP_INSIGHTS_CONNECTION_STRING);
   private readonly createClient = inject(APP_INSIGHTS_CLIENT_FACTORY);
-  private readonly store = inject(Store);
+  // Looked up when an error is reported, not injected: with the NgRx devtools on, the Store depends on this
+  // ErrorHandler, so injecting the Store here would be a circular dependency.
+  private readonly injector = inject(Injector);
   private client: Promise<TelemetryClient> | null = null;
 
   handleError(error: unknown): void {
@@ -127,8 +129,9 @@ export class TelemetryErrorHandler implements ErrorHandler {
       return;
     }
 
-    const userId = this.store.selectSignal(authFeature.selectUser)()?.id;
-    const tenantId = this.store.selectSignal(tenantFeature.selectCurrentId)();
+    const store = this.injector.get(Store);
+    const userId = store.selectSignal(authFeature.selectUser)()?.id;
+    const tenantId = store.selectSignal(tenantFeature.selectCurrentId)();
     this.client ??= this.createClient(this.connectionString);
     this.client
       .then((client) => {

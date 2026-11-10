@@ -8,12 +8,12 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslocoDirective } from '@jsverse/transloco';
 import { Store } from '@ngrx/store';
-import { readEmailedLink } from '../../../core/auth/emailed-link';
-import { newPasswordGroup } from '../../../core/auth/password-rules';
-import { InvitationPageActions } from '../../../core/auth/store/auth.actions';
-import { authFeature } from '../../../core/auth/store/auth.feature';
-import { ErrorTextPipe } from '../../../core/i18n/error-text.pipe';
-import { NewPasswordFields } from '../../../shared/ui/new-password-fields';
+import { readEmailedLink } from '@core/auth/emailed-link';
+import { newPasswordGroup } from '@shared/ui/password-rules';
+import { InvitationPageActions } from '@core/auth/store/auth.actions';
+import { authFeature } from '@core/auth/store/auth.feature';
+import { ErrorTextPipe } from '@core/i18n/error-text.pipe';
+import { NewPasswordFields } from '@shared/ui/new-password-fields';
 
 /** Where the invitation email links to: the invited user chooses their password, then is signed in. */
 @Component({

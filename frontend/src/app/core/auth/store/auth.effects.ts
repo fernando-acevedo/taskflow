@@ -3,7 +3,7 @@ import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { Observable, catchError, exhaustMap, map, of, switchMap, tap } from 'rxjs';
-import { toApiError } from '../../http/api-error';
+import { toApiError } from '@shared/data-access/api-error';
 import { AuthApiService } from '../auth-api.service';
 import { toFormErrors, toLoginError } from '../auth-errors';
 import { Credentials, User } from '../auth.models';

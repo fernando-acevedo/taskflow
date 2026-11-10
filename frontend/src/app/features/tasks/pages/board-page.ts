@@ -8,9 +8,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TranslocoDirective } from '@jsverse/transloco';
 import { Store } from '@ngrx/store';
 import { map, of } from 'rxjs';
-import { Notifier } from '../../../core/notifications/notifier';
-import { EmptyState } from '../../../shared/ui/empty-state';
-import { projectsFeature } from '../../projects/data-access/store/projects.feature';
+import { Notifier } from '@core/notifications/notifier';
+import { EmptyState } from '@shared/ui/empty-state';
+import { projectsFeature } from '@features/projects';
 import { TASK_STATUSES, Task, TaskStatus } from '../data-access/tasks-api.service';
 import { TasksPageActions } from '../data-access/store/tasks.actions';
 import { tasksFeature } from '../data-access/store/tasks.feature';
@@ -49,6 +49,7 @@ export class BoardPage {
   protected readonly statuses = TASK_STATUSES;
   protected readonly columns = this.store.selectSignal(tasksFeature.selectColumns);
   protected readonly loading = this.store.selectSignal(tasksFeature.selectLoading);
+  protected readonly refreshing = this.store.selectSignal(tasksFeature.selectRefreshing);
   protected readonly loadError = this.store.selectSignal(tasksFeature.selectLoadError);
   protected readonly moving = this.store.selectSignal(tasksFeature.selectMoving);
   protected readonly canEdit = this.store.selectSignal(projectsFeature.selectCanEditTasks);
@@ -77,6 +78,7 @@ export class BoardPage {
         this.routeProjectId() !== null &&
         this.projectId() === this.routeProjectId() &&
         !this.loading() &&
+        !this.refreshing() &&
         this.loadError() === null;
       if (!taskId) {
         // The parameter is gone (we removed it): the same link can open its task again.

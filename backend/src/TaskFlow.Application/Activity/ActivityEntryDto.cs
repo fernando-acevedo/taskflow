@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using TaskFlow.Application.Common;
@@ -29,17 +30,20 @@ internal static class ActivityMapping
     // Entries store user ids; the names are read now so that a renamed user shows under the current name.
     private static readonly string[] UserIdKeys = ["memberId", "assigneeId", "previousAssigneeId"];
 
-    public static async Task<PagedResult<ActivityEntryDto>> ToPageAsync(
-        this PagedResult<ActivityEntry> page,
+    public static async Task<CursorPage<ActivityEntryDto>> ToPageAsync(
+        this IReadOnlyList<ActivityEntry> entries,
+        int pageSize,
         IIdentityService identity,
         CancellationToken cancellationToken)
     {
-        var parsed = page.Items.Select(entry => (Entry: entry, Changes: Parse(entry.Changes))).ToList();
+        var hasMore = entries.Count > pageSize;
+        var page = hasMore ? entries.Take(pageSize).ToList() : entries.ToList();
+        var parsed = page.Select(entry => (Entry: entry, Changes: Parse(entry.Changes))).ToList();
         var userIds = parsed
             .SelectMany(row => UserIdKeys.Select(key => UserId(row.Changes, key)))
             .Where(id => id is not null)
             .Select(id => id!.Value)
-            .Concat(page.Items.Select(entry => entry.ActorId))
+            .Concat(page.Select(entry => entry.ActorId))
             .Distinct()
             .ToList();
         var names = (await identity.FindByIdsAsync(userIds, cancellationToken)).ToDictionary(user => user.Id, user => user.DisplayName);
@@ -65,7 +69,10 @@ internal static class ActivityMapping
                 row.Entry.ApiKeyId is not null);
         }).ToList();
 
-        return new PagedResult<ActivityEntryDto>(items, page.Page, page.PageSize, page.TotalCount);
+        var last = page.Count > 0 ? page[^1] : null;
+        return new CursorPage<ActivityEntryDto>(
+            items,
+            hasMore && last is not null ? PageCursor.Encode(last.OccurredAt, last.Sequence.ToString(CultureInfo.InvariantCulture)) : null);
     }
 
     private static JsonObject Parse(string json) => JsonNode.Parse(json) as JsonObject ?? [];
