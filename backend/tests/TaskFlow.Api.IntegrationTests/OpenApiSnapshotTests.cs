@@ -32,7 +32,22 @@ public sealed class OpenApiSnapshotTests(NoDatabaseApiFactory factory) : IClassF
         var expected = (await File.ReadAllTextAsync(path, Ct)).Replace("\r\n", "\n", StringComparison.Ordinal);
         (actual == expected).ShouldBeTrue(
             $"The OpenAPI contract changed. If that is intended, run the tests with {UpdateVariable}=1 "
-            + $"(for example: {UpdateVariable}=1 dotnet test --filter OpenApiSnapshotTests) and commit {path}.");
+            + $"(for example: {UpdateVariable}=1 dotnet test --filter OpenApiSnapshotTests) and commit {path}.\n"
+            + FirstDifference(expected, actual));
+    }
+
+    private static string FirstDifference(string expected, string actual)
+    {
+        var expectedLines = expected.Split('\n');
+        var actualLines = actual.Split('\n');
+        var line = 0;
+        while (line < expectedLines.Length && line < actualLines.Length && expectedLines[line] == actualLines[line])
+        {
+            line++;
+        }
+
+        string Around(string[] lines) => string.Join('\n', lines.Skip(Math.Max(0, line - 3)).Take(7));
+        return $"First difference at line {line + 1}.\nExpected:\n{Around(expectedLines)}\nActual:\n{Around(actualLines)}";
     }
 
     [Fact]
