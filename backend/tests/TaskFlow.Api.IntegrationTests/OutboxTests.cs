@@ -75,7 +75,9 @@ public sealed class OutboxTests(SqlServerApiFactory factory)
         var sender = new ScriptedSender(factory.Emails) { FailFor = to };
         var dispatcher = NewDispatcher(sender, new OutboxOptions { MaxAttempts = 5, BaseDelay = TimeSpan.FromSeconds(10) });
 
-        (await dispatcher.ProcessPendingAsync(Ct)).ShouldBe(0);
+        // Assert on this test's own row, not on the batch count: the tests share the database and the frozen clock,
+        // so rows left waiting by other tests can fall due here when the clock moves.
+        await dispatcher.ProcessPendingAsync(Ct);
 
         var afterFailure = await ReadAsync(id);
         afterFailure.Attempts.ShouldBe(1);
@@ -91,7 +93,7 @@ public sealed class OutboxTests(SqlServerApiFactory factory)
 
         factory.Time.Advance(TimeSpan.FromSeconds(30));
         sender.FailFor = null;
-        (await dispatcher.ProcessPendingAsync(Ct)).ShouldBe(1);
+        await dispatcher.ProcessPendingAsync(Ct);
 
         var delivered = await ReadAsync(id);
         delivered.ProcessedAt.ShouldNotBeNull();
@@ -270,7 +272,7 @@ public sealed class OutboxTests(SqlServerApiFactory factory)
         var sender = new ScriptedSender(factory.Emails) { Delay = TimeSpan.FromSeconds(30) };
         var dispatcher = NewDispatcher(sender, new OutboxOptions { SendTimeout = TimeSpan.FromMilliseconds(200), MaxAttempts = 5 });
 
-        (await dispatcher.ProcessPendingAsync(Ct)).ShouldBe(0);
+        await dispatcher.ProcessPendingAsync(Ct);
 
         var timedOut = await ReadAsync(id);
         timedOut.ProcessedAt.ShouldBeNull();
