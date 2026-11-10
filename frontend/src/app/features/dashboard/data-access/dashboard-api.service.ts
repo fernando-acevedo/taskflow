@@ -2,8 +2,8 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { localToday } from '../../../shared/ui/local-today';
-import { TaskPriority, TaskStatus } from '../../tasks/data-access/tasks-api.service';
+import { localToday } from '@shared/ui/local-today';
+import { TaskPriority, TaskStatus } from '@features/tasks';
 
 export interface MyTask {
   readonly id: string;

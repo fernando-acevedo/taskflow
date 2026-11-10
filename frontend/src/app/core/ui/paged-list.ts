@@ -4,9 +4,9 @@ import { MatCardModule } from '@angular/material/card';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { TranslocoDirective } from '@jsverse/transloco';
-import { ApiError } from '../../core/http/api-error';
-import { Notifier } from '../../core/notifications/notifier';
-import { EmptyState } from './empty-state';
+import { ApiError } from '@shared/data-access/api-error';
+import { Notifier } from '@core/notifications/notifier';
+import { EmptyState } from '@shared/ui/empty-state';
 
 /**
  * The card of a paged list page: progress bar, then the load error with a retry button, the empty state

@@ -36,6 +36,7 @@ public sealed class TaskSyncHandlerTests
         _project = Project.Create(Client.Create("Acme", null, null, Now), "Website", null, OwnerId, Now).Value;
         _existing = TaskItem.Create(_project, "Old title", null, TaskPriority.Low, null, null, OwnerId, 0, Now).Value;
         _existing.SetPlanning(_project, "T-1", null, false, null, Now);
+        _existing.TakeDomainEvents(); // as if loaded from the database
         _taskSet = FakeDbSet.Of(_existing);
         _taskSet.When(set => set.Add(Arg.Any<TaskItem>())).Do(call => _added.Add(call.Arg<TaskItem>()));
         _labelSet.When(set => set.Add(Arg.Any<Label>())).Do(call => _addedLabels.Add(call.Arg<Label>()));
@@ -111,6 +112,7 @@ public sealed class TaskSyncHandlerTests
         result.Value.Applied.ShouldBeTrue();
         _existing.Status.ShouldBe(TaskItemStatus.Done);
         _existing.CompletedAt.ShouldBe(Now);
+        await EventPipeline.BeforeCommitAsync(_db, _user, _existing);
         _activitySet.Received().Add(Arg.Is<ActivityEntry>(entry => entry.Type == ActivityType.TaskMoved && entry.TaskItemId == _existing.Id));
     }
 
@@ -244,6 +246,7 @@ public sealed class TaskSyncHandlerTests
         var result = await Sync(Item("T-2"));
 
         result.Value.Applied.ShouldBeTrue();
+        await EventPipeline.BeforeCommitAsync(_db, _user, _added.ToArray());
         _activitySet.Received().Add(Arg.Is<ActivityEntry>(entry => entry.ApiKeyId == keyId));
     }
 

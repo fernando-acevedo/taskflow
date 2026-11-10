@@ -29,7 +29,7 @@ describe('NotificationBell', () => {
   let store: MockStore;
   let router: Router;
 
-  function render(count: number, items: AppNotification[]): HTMLElement {
+  function render(count: number, items: AppNotification[], hasMore = false): HTMLElement {
     TestBed.configureTestingModule({
       imports: [
         NotificationBell,
@@ -41,6 +41,7 @@ describe('NotificationBell', () => {
           selectors: [
             { selector: notificationsFeature.selectUnreadCount, value: count },
             { selector: notificationsFeature.selectItems, value: items },
+            { selector: notificationsFeature.selectHasMore, value: hasMore },
             { selector: notificationsFeature.selectLoading, value: false },
             { selector: notificationsFeature.selectLoadError, value: null },
           ],
@@ -90,6 +91,18 @@ describe('NotificationBell', () => {
       expect.objectContaining({ type: NotificationBellActions.notificationClicked.type, id: 'n1' }),
     );
     expect(router.navigate).toHaveBeenCalledWith(['/projects', 'p1', 'board'], { queryParams: { task: 't1' } });
+  });
+
+  it('offers "load more" only while there is a next page, and asks for it', () => {
+    openMenu(render(1, [unread]));
+    expect(document.querySelector('.mat-mdc-menu-panel .more button')).toBeNull();
+    TestBed.resetTestingModule();
+    document.body.replaceChildren();
+
+    openMenu(render(1, [unread], true));
+    document.querySelector<HTMLButtonElement>('.mat-mdc-menu-panel .more button')?.click();
+
+    expect(store.dispatch).toHaveBeenCalledWith(NotificationBellActions.loadMoreClicked());
   });
 
   it('marks all as read from the menu header', () => {

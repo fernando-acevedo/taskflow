@@ -1,9 +1,9 @@
 import { EntityState, createEntityAdapter } from '@ngrx/entity';
 import { getRouterSelectors } from '@ngrx/router-store';
 import { createFeature, createReducer, createSelector, on } from '@ngrx/store';
-import { AuthApiActions, ShellActions } from '../../../../core/auth/store/auth.actions';
-import { TenantActions } from '../../../../core/tenant/store/tenant.actions';
-import { ApiError } from '../../../../core/http/api-error';
+import { AuthApiActions, ShellActions } from '@core/auth/store/auth.actions';
+import { TenantActions } from '@core/tenant/store/tenant.actions';
+import { ApiError } from '@shared/data-access/api-error';
 import { TimeEntry, TimeSummary } from '../time-tracking-api.service';
 import { parseTimeFilters } from './time-filters';
 import { TimeEntriesApiActions, TimeEntriesPageActions, TimeReportApiActions, TimeReportPageActions } from './time-tracking.actions';

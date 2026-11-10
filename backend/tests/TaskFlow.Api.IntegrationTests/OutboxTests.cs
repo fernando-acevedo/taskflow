@@ -145,8 +145,9 @@ public sealed class OutboxTests(SqlServerApiFactory factory)
 
         var counts = await Task.WhenAll(first.ProcessPendingAsync(Ct), second.ProcessPendingAsync(Ct));
 
+        // How the batches split between the two workers depends on timing (on a fast runner one can take them all);
+        // what must hold is that every message goes out exactly once.
         counts.Sum().ShouldBe(recipients.Count);
-        counts.ShouldAllBe(count => count > 0);
         foreach (var to in recipients)
         {
             sender.Attempts(to).ShouldBe(1, $"{to} must be sent once");

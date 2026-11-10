@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
+using TaskFlow.Api.Realtime;
 using TaskFlow.Application.Users;
 using TaskFlow.Domain.Common;
 using TaskFlow.Domain.Tenancy;
@@ -30,7 +31,10 @@ internal sealed class TenantResolutionMiddleware(RequestDelegate next)
         if (context.User.Identity?.IsAuthenticated == true
             && Guid.TryParse(context.User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
         {
-            var header = context.Request.Headers[HeaderName].ToString();
+            // WebSockets cannot send headers, so a hub connection names its tenant in the query string (ADR 0023).
+            var header = context.Request.Path.StartsWithSegments(ProjectsHub.Path, StringComparison.OrdinalIgnoreCase)
+                ? context.Request.Query["tenant"].ToString()
+                : context.Request.Headers[HeaderName].ToString();
             if (context.User.FindFirstValue(ApiKeyDefaults.TenantClaim) is { } keyTenant)
             {
                 // An API key is bound to its tenant; X-Tenant is ignored (ADR 0016).
@@ -59,6 +63,11 @@ internal sealed class TenantResolutionMiddleware(RequestDelegate next)
                     return;
                 }
             }
+        }
+
+        if (tenant.TenantId is { } resolved)
+        {
+            context.Items[ProjectsHub.TenantItem] = new HubTenant(resolved, tenant.Role);
         }
 
         await next(context);

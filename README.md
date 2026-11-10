@@ -151,6 +151,8 @@ templates and deployed by GitHub Actions. Setup, costs and teardown are in [infr
 
 ## Architecture decisions
 
+A k6 load smoke (not run in CI) lives in [tests/load](tests/load/README.md).
+
 The ADRs are indexed, with their status and decision, in [docs/adr/README.md](docs/adr/README.md).
 
 ## Roadmap

@@ -2,13 +2,14 @@ import { inject } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
 import { EMPTY, catchError, concatMap, filter, map, of, switchMap, tap, withLatestFrom } from 'rxjs';
-import { ApiError, isStale, toApiError } from '../../../../core/http/api-error';
-import { Notifier } from '../../../../core/notifications/notifier';
-import { LabelsApiActions } from '../../../labels/data-access/store/labels.actions';
+import { ApiError, isStale, toApiError } from '@shared/data-access/api-error';
+import { Notifier } from '@core/notifications/notifier';
+import { RealtimeActions } from '@core/realtime/realtime.actions';
+import { LabelsApiActions } from '@features/labels';
 import { TasksApiService } from '../tasks-api.service';
 import { TasksApiActions, TasksPageActions } from './tasks.actions';
 import { tasksFeature } from './tasks.feature';
-import { untilTenantChanges } from '../../../../shared/data-access/until-tenant-changes';
+import { untilTenantChanges } from '@core/tenant/until-tenant-changes';
 
 export const loadTasks = createEffect(
   (actions$ = inject(Actions), store = inject(Store), api = inject(TasksApiService)) =>
@@ -17,11 +18,16 @@ export const loadTasks = createEffect(
       // carries the neighbors' new positions and versions. A stale move does (see `reloadAfterStaleMove`).
       ofType(
         TasksPageActions.opened,
+        RealtimeActions.resyncRequested,
         LabelsApiActions.labelSaved,
         LabelsApiActions.labelDeleted,
       ),
       withLatestFrom(store.select(tasksFeature.selectProjectId)),
-      map(([action, current]) => (action.type === TasksPageActions.opened.type ? action.projectId : current)),
+      map(([action, current]) =>
+        action.type === TasksPageActions.opened.type || action.type === RealtimeActions.resyncRequested.type
+          ? action.projectId
+          : current,
+      ),
       filter((projectId): projectId is string => projectId !== null),
       switchMap((projectId) =>
         api.list(projectId).pipe(
@@ -118,6 +124,26 @@ export const moveTask = createEffect(
     ),
   { functional: true },
 );
+
+/**
+ * Somebody else's change was held back during an own move (`resyncAfterMove`): once the move has settled,
+ * reload. (The reducer leaves the flag set until a load completes.)
+ */
+export const reloadAfterMove = createEffect(
+  (actions$ = inject(Actions), store = inject(Store)) =>
+    actions$.pipe(
+      ofType(TasksApiActions.taskMoved, TasksApiActions.taskMoveFailed),
+      withLatestFrom(store.select(tasksFeature.selectResyncAfterMove), store.select(tasksFeature.selectProjectId)),
+      filter(([action, pending, projectId]) => pending && projectId !== null && !isStaleMove(action)),
+      map(([, , projectId]) => RealtimeActions.resyncRequested({ projectId: projectId! })),
+    ),
+  { functional: true },
+);
+
+/** A stale move already reloads by itself (`reloadAfterStaleMove`). */
+function isStaleMove(action: { type: string; error?: ApiError }): boolean {
+  return action.type === TasksApiActions.taskMoveFailed.type && action.error !== undefined && isStale(action.error);
+}
 
 /** Another user changed the task: the reducer rolls the optimistic move back, and the board reloads. */
 export const reloadAfterStaleMove = createEffect(

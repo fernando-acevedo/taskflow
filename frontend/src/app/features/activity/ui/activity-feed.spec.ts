@@ -1,7 +1,7 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { TranslocoTestingModule } from '@jsverse/transloco';
-import { LanguageService } from '../../../core/i18n/language.service';
+import { LanguageService } from '@core/i18n/language.service';
 import { ActivityEntry } from '../data-access/activity-api.service';
 import { anEntry } from '../data-access/store/testing';
 import { ActivityFeed } from './activity-feed';

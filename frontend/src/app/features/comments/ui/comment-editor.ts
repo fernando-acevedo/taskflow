@@ -12,14 +12,16 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { TranslocoDirective } from '@jsverse/transloco';
 import { Observable } from 'rxjs';
-import { isStale } from '../../../core/http/api-error';
-import { applyApiFieldErrors } from '../../../shared/data-access/api-field-errors';
-import { SaveFn } from '../../../shared/data-access/submission';
-import { StaleNotice } from '../../../shared/ui/stale-notice';
+import { isStale } from '@shared/data-access/api-error';
+import { applyApiFieldErrors } from '@shared/data-access/api-field-errors';
+import { SaveFn } from '@shared/data-access/submission';
+import { StaleNotice } from '@shared/ui/stale-notice';
+import { confirmDiscard } from '@shared/ui/unsaved-changes';
 import { COMMENT_MAX_LENGTH, CommentInput } from '../data-access/comments-api.service';
 import { ActiveMention, Mentionable, activeMention, insertMention, mentionedIds, suggest } from './mentions';
 
@@ -81,7 +83,7 @@ import { ActiveMention, Mentionable, activeMention, insertMention, mentionedIds,
 
         <div class="actions">
           @if (cancellable()) {
-            <button mat-button type="button" [disabled]="saving()" (click)="cancelled.emit()">{{ t('cancel') }}</button>
+            <button mat-button type="button" [disabled]="saving()" (click)="cancel()">{{ t('cancel') }}</button>
           }
           <button mat-flat-button type="submit" [disabled]="saving()">{{ t(submitLabel()) }}</button>
         </div>
@@ -151,6 +153,7 @@ export class CommentEditor implements OnInit {
   );
 
   private readonly destroyRef = inject(DestroyRef);
+  private readonly dialog = inject(MatDialog);
   private readonly fb = inject(NonNullableFormBuilder);
   protected readonly form = this.fb.group({
     body: ['', [Validators.required, Validators.maxLength(COMMENT_MAX_LENGTH), notBlank]],
@@ -217,6 +220,21 @@ export class CommentEditor implements OnInit {
     this.close();
     box.focus();
     box.setSelectionRange(result.caret, result.caret);
+  }
+
+  /** Cancelling a text that was changed asks first, so a long comment isn't lost to a stray click. */
+  protected cancel(): void {
+    if (!this.form.dirty) {
+      this.cancelled.emit();
+      return;
+    }
+    confirmDiscard(this.dialog)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((discard) => {
+        if (discard) {
+          this.cancelled.emit();
+        }
+      });
   }
 
   protected submit(): void {

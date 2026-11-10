@@ -1,0 +1,106 @@
+name: E2E
+
+# Playwright against the real stack (SQL Server, the API in Release, the Angular dev server). It is the slowest
+# check, so it runs on pull requests that touch the app and on demand, not on every push to main.
+on:
+  pull_request:
+    paths: ['backend/**', 'frontend/**', '.github/workflows/e2e.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  API_URL: http://localhost:5090
+  BASE_URL: http://localhost:4200
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: Y
+          MSSQL_SA_PASSWORD: E2e-Passw0rd!
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'E2e-Passw0rd!' -C -Q 'SELECT 1' -b -o /dev/null"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 24
+          --health-start-period 20s
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: backend/global.json
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Publish the API
+        run: dotnet publish backend/src/TaskFlow.Api --configuration Release --output "$RUNNER_TEMP/api"
+
+      # Development gives the seeded admin (admin@taskflow.local); the rate limits are lifted because the tests
+      # sign in many times from one address.
+      - name: Start the API
+        working-directory: ${{ runner.temp }}/api
+        env:
+          ASPNETCORE_ENVIRONMENT: Development
+          ASPNETCORE_URLS: http://localhost:5090
+          ConnectionStrings__TaskFlow: Server=localhost,1433;Database=TaskFlowE2E;User Id=sa;Password=E2e-Passw0rd!;TrustServerCertificate=True
+          Database__MigrateOnStartup: 'true'
+          Database__SeedOnStartup: 'true'
+          Cors__AllowedOrigins__0: http://localhost:4200
+          RateLimiting__Auth__PermitLimit: '100000'
+          RateLimiting__User__TokenLimit: '100000'
+          RateLimiting__User__TokensPerPeriod: '100000'
+        run: |
+          nohup dotnet TaskFlow.Api.dll > "$RUNNER_TEMP/api.log" 2>&1 &
+          for i in $(seq 1 60); do
+            curl -fsS http://localhost:5090/health > /dev/null && exit 0
+            sleep 2
+          done
+          cat "$RUNNER_TEMP/api.log"
+          exit 1
+
+      - name: Install
+        working-directory: frontend
+        run: npm ci
+
+      - name: Install Chromium
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      # Playwright starts the frontend itself (scripts/e2e-serve.mjs, pointed at API_URL) and waits for BASE_URL.
+      - name: E2E tests
+        working-directory: frontend
+        run: npm run e2e
+
+      - name: Upload the Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            frontend/playwright-report
+            frontend/test-results
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: API log
+        if: failure()
+        run: tail -n 200 "$RUNNER_TEMP/api.log"

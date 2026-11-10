@@ -2,8 +2,9 @@ import { TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 import { of } from 'rxjs';
-import { expectNoAxeViolations } from '../../../shared/testing/axe';
+import { expectNoAxeViolations } from '@shared/testing/axe';
 import { ApiKeyFormDialog } from './api-key-form-dialog';
+import { fakeDialogRef } from '@shared/testing/fake-dialog-ref';
 
 describe('ApiKeyFormDialog', () => {
   function render(save = vi.fn(() => of(null))) {
@@ -14,7 +15,7 @@ describe('ApiKeyFormDialog', () => {
         TranslocoTestingModule.forRoot({ langs: { en: {} }, translocoConfig: { availableLangs: ['en'], defaultLang: 'en' } }),
       ],
       providers: [
-        { provide: MatDialogRef, useValue: { close } },
+        { provide: MatDialogRef, useValue: fakeDialogRef(close) },
         { provide: MAT_DIALOG_DATA, useValue: { save } },
       ],
     });

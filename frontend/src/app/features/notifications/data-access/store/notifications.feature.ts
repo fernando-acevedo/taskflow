@@ -1,7 +1,7 @@
-import { createFeature, createReducer, on } from '@ngrx/store';
-import { AuthApiActions, ShellActions } from '../../../../core/auth/store/auth.actions';
-import { TenantActions } from '../../../../core/tenant/store/tenant.actions';
-import { ApiError } from '../../../../core/http/api-error';
+import { createFeature, createReducer, createSelector, on } from '@ngrx/store';
+import { AuthApiActions, ShellActions } from '@core/auth/store/auth.actions';
+import { TenantActions } from '@core/tenant/store/tenant.actions';
+import { ApiError } from '@shared/data-access/api-error';
 import { AppNotification, NotificationPreferences } from '../notifications-api.service';
 import {
   NotificationBellActions,
@@ -12,6 +12,8 @@ import {
 export interface NotificationsState {
   unreadCount: number;
   items: readonly AppNotification[];
+  /** Cursor of the next page; null when the last one is loaded. */
+  nextCursor: string | null;
   loading: boolean;
   loadError: ApiError | null;
   preferences: NotificationPreferences | null;
@@ -23,6 +25,7 @@ export interface NotificationsState {
 export const initialNotificationsState: NotificationsState = {
   unreadCount: 0,
   items: [],
+  nextCursor: null,
   loading: false,
   loadError: null,
   preferences: null,
@@ -51,11 +54,16 @@ export const notificationsFeature = createFeature({
       loading: true,
       loadError: null,
     })),
-    on(NotificationsApiActions.notificationsLoaded, (state, { items }): NotificationsState => ({
-      ...state,
-      items,
-      loading: false,
-    })),
+    on(NotificationBellActions.loadMoreClicked, (state): NotificationsState => ({ ...state, loading: true, loadError: null })),
+    on(NotificationsApiActions.notificationsLoaded, (state, { items, nextCursor, append }): NotificationsState => {
+      const seen = new Set(state.items.map((item) => item.id));
+      return {
+        ...state,
+        items: append ? [...state.items, ...items.filter((item) => !seen.has(item.id))] : items,
+        nextCursor,
+        loading: false,
+      };
+    }),
     on(NotificationsApiActions.notificationsLoadFailed, (state, { error }): NotificationsState => ({
       ...state,
       loading: false,
@@ -101,4 +109,7 @@ export const notificationsFeature = createFeature({
     })),
     on(NotificationsApiActions.preferencesSaveFailed, (state): NotificationsState => ({ ...state, preferencesSaving: false })),
   ),
+  extraSelectors: ({ selectNextCursor }) => ({
+    selectHasMore: createSelector(selectNextCursor, (cursor) => cursor !== null),
+  }),
 });

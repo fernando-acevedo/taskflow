@@ -2,14 +2,14 @@ import { inject } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
 import { catchError, concatMap, from, map, of, switchMap, tap, withLatestFrom } from 'rxjs';
-import { toApiError } from '../../../../core/http/api-error';
-import { Notifier } from '../../../../core/notifications/notifier';
-import { readBlobError } from '../../../../shared/data-access/blob-error';
-import { downloadBlob } from '../../../../shared/data-access/download';
+import { toApiError } from '@shared/data-access/api-error';
+import { Notifier } from '@core/notifications/notifier';
+import { readBlobError } from '@shared/data-access/blob-error';
+import { downloadBlob } from '@shared/data-access/download';
 import { TimeTrackingApiService } from '../time-tracking-api.service';
 import { TimeEntriesApiActions, TimeEntriesPageActions, TimeReportApiActions, TimeReportPageActions } from './time-tracking.actions';
 import { timeTrackingFeature } from './time-tracking.feature';
-import { untilTenantChanges } from '../../../../shared/data-access/until-tenant-changes';
+import { untilTenantChanges } from '@core/tenant/until-tenant-changes';
 
 export const loadTaskTime = createEffect(
   (actions$ = inject(Actions), api = inject(TimeTrackingApiService)) =>

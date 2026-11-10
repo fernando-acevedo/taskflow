@@ -12,15 +12,15 @@ public sealed class NotificationsController : ApiControllerBase
 {
     /// <summary>A page of notifications, newest first.</summary>
     [HttpGet]
-    [ProducesResponseType<PagedResult<NotificationDto>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<CursorPage<NotificationDto>>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<PagedResult<NotificationDto>>> List(
+    public async Task<ActionResult<CursorPage<NotificationDto>>> List(
         [FromServices] ListNotificationsHandler handler,
         CancellationToken cancellationToken,
         [FromQuery] bool unreadOnly = false,
-        [FromQuery] int page = 1,
+        [FromQuery] string? cursor = null,
         [FromQuery] int pageSize = 20) =>
-        OkOrProblem(await handler.HandleAsync(new ListNotificationsQuery(unreadOnly, page, pageSize), cancellationToken));
+        OkOrProblem(await handler.HandleAsync(new ListNotificationsQuery(unreadOnly, cursor, pageSize), cancellationToken));
 
     [HttpGet("unread-count")]
     [ProducesResponseType<UnreadCountDto>(StatusCodes.Status200OK)]

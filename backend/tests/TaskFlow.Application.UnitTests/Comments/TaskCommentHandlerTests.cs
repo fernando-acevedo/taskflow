@@ -1,9 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using NSubstitute;
 using TaskFlow.Application.Abstractions;
-using TaskFlow.Application.Activity;
 using TaskFlow.Application.Comments;
-using TaskFlow.Application.Notifications;
 using TaskFlow.Application.Projects;
 using TaskFlow.Application.Users;
 using TaskFlow.Domain.Activity;
@@ -26,6 +24,7 @@ public sealed class TaskCommentHandlerTests
     private readonly DbSet<TaskComment> _commentSet;
     private readonly DbSet<ActivityEntry> _activitySet = FakeDbSet.Of<ActivityEntry>();
     private readonly List<TaskComment> _removed = [];
+    private readonly List<TaskComment> _created = [];
     private readonly Project _project;
     private readonly TaskItem _task;
 
@@ -37,6 +36,7 @@ public sealed class TaskCommentHandlerTests
         var projects = FakeDbSet.Of(_project);
         var tasks = FakeDbSet.Of(_task);
         _commentSet = FakeDbSet.Of<TaskComment>();
+        _commentSet.When(set => set.Add(Arg.Any<TaskComment>())).Do(call => _created.Add(call.Arg<TaskComment>()));
         _db.Projects.Returns(projects);
         _db.Tasks.Returns(tasks);
         _db.TaskComments.Returns(_commentSet);
@@ -57,6 +57,7 @@ public sealed class TaskCommentHandlerTests
         result.Value.Body.ShouldBe("Hello");
         result.Value.AuthorId.ShouldBe(OwnerId);
         _commentSet.Received(1).Add(Arg.Is<TaskComment>(comment => comment.AuthorId == OwnerId));
+        await EventPipeline.BeforeCommitAsync(_db, _currentUser, _created.ToArray());
         _activitySet.Received(1).Add(Arg.Is<ActivityEntry>(entry =>
             entry.Type == ActivityType.CommentAdded && entry.TaskItemId == _task.Id && entry.ActorId == OwnerId && entry.Changes.Contains("Design")));
         await _db.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
@@ -157,12 +158,8 @@ public sealed class TaskCommentHandlerTests
 
     private CreateTaskCommentHandler CreateHandler() =>
         new(
-            _db, new ProjectAccess(_db, _currentUser), _currentUser, _identity, new CreateTaskCommentValidator(), Activity(), Notifier(), TimeProvider.System);
+            _db, new ProjectAccess(_db, _currentUser), _currentUser, _identity, new CreateTaskCommentValidator(), TimeProvider.System);
 
     private DeleteTaskCommentHandler DeleteHandler() =>
-        new(_db, new ProjectAccess(_db, _currentUser), _currentUser, Activity());
-
-    private ActivityLog Activity() => new(_db, _currentUser, TimeProvider.System);
-
-    private Notifier Notifier() => new(_db, _currentUser, _identity, Substitute.For<INotificationEmailSender>(), TimeProvider.System);
+        new(_db, new ProjectAccess(_db, _currentUser), _currentUser);
 }

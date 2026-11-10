@@ -3,7 +3,8 @@
     "title": "TaskFlow",
     "tagline": "Project management for digital agencies",
     "language": "Language",
-    "skipToContent": "Skip to main content"
+    "skipToContent": "Skip to main content",
+    "offline": "You are offline. Changes can't be saved until the connection returns."
   },
   "theme": {
     "label": "Theme",
@@ -101,6 +102,8 @@
   },
   "profile": {
     "title": "Your profile",
+    "sectionLoadFailed": "This section could not be loaded.",
+    "sectionRetry": "Try again",
     "email": "Email",
     "role": "Role",
     "roles": {
@@ -205,6 +208,7 @@
     "markAllRead": "Mark all as read",
     "empty": "You are all caught up.",
     "loading": "Loading...",
+    "loadMore": "Load more",
     "unread": "unread",
     "messages": {
       "TaskAssigned": "{{ actor }} assigned you \"{{ task }}\"",
@@ -227,6 +231,12 @@
   "common": {
     "cancel": "Cancel",
     "dismiss": "Dismiss",
+    "unsaved": {
+      "title": "Discard changes?",
+      "message": "You have unsaved changes. If you leave now, they will be lost.",
+      "discard": "Discard",
+      "loadFailed": "Could not check for unsaved changes. Leaving the page."
+    },
     "gone": "It no longer exists (someone else deleted or archived it).",
     "supportCode": "Support code: {{code}}",
     "retry": "Try again",
@@ -454,6 +464,13 @@
     "back": "All projects",
     "readOnlyAdmin": "You are viewing this project as an admin. Only its members can change it.",
     "readOnlyArchived": "This project is archived, so it is read-only.",
+    "realtime": {
+      "live": "Live",
+      "reconnecting": "Reconnecting…",
+      "connecting": "Connecting…",
+      "disconnected": "Disconnected",
+      "restored": "Connection restored"
+    },
     "tabs": {
       "label": "Project sections",
       "board": "Board",
@@ -498,6 +515,7 @@
     "retry": "Try again",
     "loading": "Loading…",
     "dragHint": "Drag cards between columns, or use a card’s move button, to update their status.",
+    "refreshing": "Updating…",
     "moveTo": "Move “{{ title }}”",
     "moveUp": "Move up",
     "moveDown": "Move down",

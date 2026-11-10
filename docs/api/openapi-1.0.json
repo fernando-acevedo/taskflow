@@ -612,6 +612,48 @@
         ],
         "type": "object"
       },
+      "CursorPageOfActivityEntryDto": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ActivityEntryDto"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "CursorPageOfNotificationDto": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/NotificationDto"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "DemoAccountResponse": {
         "properties": {
           "email": {
@@ -1051,69 +1093,11 @@
         ],
         "type": "string"
       },
-      "PagedResultOfActivityEntryDto": {
-        "properties": {
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/ActivityEntryDto"
-            },
-            "type": "array"
-          },
-          "page": {
-            "format": "int32",
-            "type": "integer"
-          },
-          "pageSize": {
-            "format": "int32",
-            "type": "integer"
-          },
-          "totalCount": {
-            "format": "int32",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "items",
-          "page",
-          "pageSize",
-          "totalCount"
-        ],
-        "type": "object"
-      },
       "PagedResultOfClientDto": {
         "properties": {
           "items": {
             "items": {
               "$ref": "#/components/schemas/ClientDto"
-            },
-            "type": "array"
-          },
-          "page": {
-            "format": "int32",
-            "type": "integer"
-          },
-          "pageSize": {
-            "format": "int32",
-            "type": "integer"
-          },
-          "totalCount": {
-            "format": "int32",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "items",
-          "page",
-          "pageSize",
-          "totalCount"
-        ],
-        "type": "object"
-      },
-      "PagedResultOfNotificationDto": {
-        "properties": {
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/NotificationDto"
             },
             "type": "array"
           },
@@ -4554,11 +4538,9 @@
           },
           {
             "in": "query",
-            "name": "page",
+            "name": "cursor",
             "schema": {
-              "default": 1,
-              "format": "int32",
-              "type": "integer"
+              "type": "string"
             }
           },
           {
@@ -4598,7 +4580,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PagedResultOfNotificationDto"
+                  "$ref": "#/components/schemas/CursorPageOfNotificationDto"
                 }
               }
             },
@@ -5407,11 +5389,9 @@
           },
           {
             "in": "query",
-            "name": "page",
+            "name": "cursor",
             "schema": {
-              "default": 1,
-              "format": "int32",
-              "type": "integer"
+              "type": "string"
             }
           },
           {
@@ -5451,7 +5431,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PagedResultOfActivityEntryDto"
+                  "$ref": "#/components/schemas/CursorPageOfActivityEntryDto"
                 }
               }
             },
@@ -7553,11 +7533,9 @@
           },
           {
             "in": "query",
-            "name": "page",
+            "name": "cursor",
             "schema": {
-              "default": 1,
-              "format": "int32",
-              "type": "integer"
+              "type": "string"
             }
           },
           {
@@ -7597,7 +7575,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PagedResultOfActivityEntryDto"
+                  "$ref": "#/components/schemas/CursorPageOfActivityEntryDto"
                 }
               }
             },

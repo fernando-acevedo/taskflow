@@ -1,8 +1,8 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { TranslocoTestingModule } from '@jsverse/transloco';
-import { DemoAccount, DemoService, DemoStatus } from '../../../core/demo/demo.service';
-import { LanguageService } from '../../../core/i18n/language.service';
+import { DemoAccount, DemoService, DemoStatus } from '@core/demo/demo.service';
+import { LanguageService } from '@core/i18n/language.service';
 import { DemoPanel } from './demo-panel';
 
 const enabled: DemoStatus = {

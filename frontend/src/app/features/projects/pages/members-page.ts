@@ -12,10 +12,11 @@ import { MatSelectModule } from '@angular/material/select';
 import { TranslocoDirective } from '@jsverse/transloco';
 import { Store } from '@ngrx/store';
 import { filter } from 'rxjs';
-import { authFeature } from '../../../core/auth/store/auth.feature';
-import { applyApiFieldErrors } from '../../../shared/data-access/api-field-errors';
-import { Submissions, nextSubmissionId } from '../../../shared/data-access/submission';
-import { confirm } from '../../../shared/ui/confirm-dialog';
+import { authFeature } from '@core/auth/store/auth.feature';
+import { applyApiFieldErrors } from '@shared/data-access/api-field-errors';
+import { Submissions, nextSubmissionId } from '@shared/data-access/submission';
+import { confirm } from '@shared/ui/confirm-dialog';
+import { HasUnsavedChanges, warnBeforeUnload } from '@shared/ui/unsaved-changes';
 import { ProjectMember, ProjectRole } from '../data-access/projects-api.service';
 import { ProjectPageActions } from '../data-access/store/projects.actions';
 import { projectsFeature } from '../data-access/store/projects.feature';
@@ -59,7 +60,7 @@ import { projectsFeature } from '../data-access/store/projects.feature';
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class MembersPage {
+export class MembersPage implements HasUnsavedChanges {
   private readonly store = inject(Store);
   private readonly submissions = inject(Submissions);
   private readonly dialog = inject(MatDialog);
@@ -76,6 +77,14 @@ export class MembersPage {
     email: ['', [Validators.required, Validators.email]],
     role: this.fb.control<ProjectRole>('Member'),
   });
+
+  constructor() {
+    warnBeforeUnload(() => this.hasUnsavedChanges());
+  }
+
+  hasUnsavedChanges(): boolean {
+    return this.form.dirty;
+  }
 
   /** The email stays in the field until the member is added, so a typo can be corrected. */
   protected add(): void {

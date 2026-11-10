@@ -6,13 +6,13 @@ using TaskFlow.Domain.Common;
 
 namespace TaskFlow.Application.Notifications;
 
-public sealed record ListNotificationsQuery(bool UnreadOnly = false, int Page = 1, int PageSize = 20);
+public sealed record ListNotificationsQuery(bool UnreadOnly = false, string? Cursor = null, int PageSize = 20);
 
 public sealed class ListNotificationsValidator : AbstractValidator<ListNotificationsQuery>
 {
     public ListNotificationsValidator()
     {
-        RuleFor(query => query.Page).GreaterThanOrEqualTo(1);
+        RuleFor(query => query.Cursor).Must(PageCursor.IsValidId).WithMessage("The cursor is not valid.");
         RuleFor(query => query.PageSize).InclusiveBetween(1, 100);
     }
 }
@@ -23,7 +23,7 @@ public sealed class ListNotificationsHandler(
     ICurrentUser currentUser,
     IValidator<ListNotificationsQuery> validator)
 {
-    public async Task<Result<PagedResult<NotificationDto>>> HandleAsync(ListNotificationsQuery query, CancellationToken cancellationToken)
+    public async Task<Result<CursorPage<NotificationDto>>> HandleAsync(ListNotificationsQuery query, CancellationToken cancellationToken)
     {
         var validation = await validator.ValidateAsync(query, cancellationToken);
         if (!validation.IsValid)
@@ -39,11 +39,24 @@ public sealed class ListNotificationsHandler(
             notifications = notifications.Where(notification => notification.ReadAt == null);
         }
 
-        var page = await notifications.AsNoTracking()
+        if (PageCursor.TryDecode(query.Cursor, out var at, out var key))
+        {
+            var id = Guid.Parse(key);
+            notifications = notifications.Where(notification =>
+                notification.CreatedAt < at || (notification.CreatedAt == at && notification.Id.CompareTo(id) < 0));
+        }
+
+        var rows = await notifications.AsNoTracking()
             .OrderByDescending(notification => notification.CreatedAt)
             .ThenByDescending(notification => notification.Id)
-            .ToPagedResultAsync(query.Page, query.PageSize, cancellationToken);
+            .Take(query.PageSize + 1)
+            .ToListAsync(cancellationToken);
 
-        return new PagedResult<NotificationDto>([.. page.Items.Select(NotificationDto.From)], page.Page, page.PageSize, page.TotalCount);
+        var hasMore = rows.Count > query.PageSize;
+        var items = hasMore ? rows.Take(query.PageSize).ToList() : rows;
+        var last = items.Count > 0 ? items[^1] : null;
+        return new CursorPage<NotificationDto>(
+            [.. items.Select(NotificationDto.From)],
+            hasMore && last is not null ? PageCursor.Encode(last.CreatedAt, last.Id.ToString()) : null);
     }
 }

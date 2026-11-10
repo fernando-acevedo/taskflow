@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { TranslocoService } from '@jsverse/transloco';
-import { ApiError } from '../http/api-error';
+import { ApiError } from '@shared/data-access/api-error';
 import { translateOr } from '../i18n/error-text.pipe';
 
 /** Short messages at the bottom of the screen, for results that don't belong in a form. */

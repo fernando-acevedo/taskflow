@@ -22,6 +22,7 @@ public sealed class TenantMemberHandlerTests
     private readonly IInvitationSender _invitations = Substitute.For<IInvitationSender>();
     private readonly ITenantAccessCache _cache = Substitute.For<ITenantAccessCache>();
     private readonly IDemoMode _demo = Substitute.For<IDemoMode>();
+    private readonly IRealtimeRevoker _realtime = Substitute.For<IRealtimeRevoker>();
     private readonly ICurrentUser _currentUser = Substitute.For<ICurrentUser>();
     private readonly ITransactionRunner _transactions = Substitute.For<ITransactionRunner>();
     private readonly List<TenantMembership> _memberships = [];
@@ -70,9 +71,9 @@ public sealed class TenantMemberHandlerTests
         new(_db, _currentUser, new InviteTenantMemberValidator(), Inviter(), _demo);
 
     private ChangeTenantMemberRoleHandler ChangeHandler() =>
-        new(_db, _identity, _currentUser, new ChangeTenantMemberRoleValidator(), _cache, _demo, _transactions);
+        new(_db, _identity, _currentUser, new ChangeTenantMemberRoleValidator(), _cache, _demo, _realtime, _transactions);
 
-    private RemoveTenantMemberHandler RemoveHandler() => new(_db, _identity, _currentUser, _cache, _demo, _transactions, TimeProvider.System);
+    private RemoveTenantMemberHandler RemoveHandler() => new(_db, _identity, _currentUser, _cache, _demo, _realtime, _transactions, TimeProvider.System);
 
     private static UserDto User(Guid id, string email, bool pending = false) =>
         new(id, email, "Someone", true, [], Now, pending);

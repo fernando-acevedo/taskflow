@@ -6,7 +6,7 @@ import { EMPTY, Subject, concatMap, map, catchError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { AuthApiActions } from '../auth/store/auth.actions';
 import { authFeature } from '../auth/store/auth.feature';
-import { toApiError } from '../http/api-error';
+import { toApiError } from '@shared/data-access/api-error';
 import { Notifier } from '../notifications/notifier';
 import { THEME_STORAGE_KEY, ThemePreference, isThemePreference, readSavedTheme } from './theme';
 

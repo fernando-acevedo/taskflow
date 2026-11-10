@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
-import { expectNoAxeViolations } from '../../shared/testing/axe';
+import { expectNoAxeViolations } from '@shared/testing/axe';
 import { TenantActions } from './store/tenant.actions';
 import { tenantFeature } from './store/tenant.feature';
 import { TenantSwitcher } from './tenant-switcher';

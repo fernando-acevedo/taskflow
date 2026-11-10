@@ -7,15 +7,16 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { TranslocoDirective } from '@jsverse/transloco';
 import { Store } from '@ngrx/store';
-import { ShellActions } from './core/auth/store/auth.actions';
-import { authFeature } from './core/auth/store/auth.feature';
-import { TenantSwitcher } from './core/tenant/tenant-switcher';
-import { tenantFeature } from './core/tenant/store/tenant.feature';
-import { DemoService } from './core/demo/demo.service';
-import { LanguageService } from './core/i18n/language.service';
-import { SUPPORTED_LANGUAGES } from './core/i18n/languages';
-import { ThemeMenu } from './core/theme/theme-menu';
-import { NotificationBell } from './features/notifications/ui/notification-bell';
+import { ShellActions } from '@core/auth/store/auth.actions';
+import { authFeature } from '@core/auth/store/auth.feature';
+import { TenantSwitcher } from '@core/tenant/tenant-switcher';
+import { tenantFeature } from '@core/tenant/store/tenant.feature';
+import { DemoService } from '@core/demo/demo.service';
+import { LanguageService } from '@core/i18n/language.service';
+import { SUPPORTED_LANGUAGES } from '@core/i18n/languages';
+import { ThemeMenu } from '@core/theme/theme-menu';
+import { OfflineBanner } from '@core/network/offline-banner';
+import { NotificationBell } from '@features/notifications';
 
 const languageNames = new Map<string, string>(
   SUPPORTED_LANGUAGES.map((language) => {
@@ -33,6 +34,7 @@ const languageNames = new Map<string, string>(
     MatMenuModule,
     MatToolbarModule,
     NotificationBell,
+    OfflineBanner,
     ThemeMenu,
     RouterLink,
     RouterLinkActive,

@@ -1,6 +1,6 @@
 import { Action, Store } from '@ngrx/store';
 import { Observable, Subject, of } from 'rxjs';
-import { TenantActions } from '../../../../core/tenant/store/tenant.actions';
+import { TenantActions } from '@core/tenant/store/tenant.actions';
 import { ClientsApiService } from '../clients-api.service';
 import { ClientsApiActions, ClientsPageActions } from './clients.actions';
 import { loadClients } from './clients.effects';

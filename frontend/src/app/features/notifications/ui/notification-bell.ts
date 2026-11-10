@@ -6,10 +6,10 @@ import { MatMenuModule } from '@angular/material/menu';
 import { Router } from '@angular/router';
 import { TranslocoDirective } from '@jsverse/transloco';
 import { Store } from '@ngrx/store';
-import { LanguageService } from '../../../core/i18n/language.service';
-import { Notifier } from '../../../core/notifications/notifier';
-import { EmptyState } from '../../../shared/ui/empty-state';
-import { relativeTime } from '../../../shared/ui/relative-time';
+import { LanguageService } from '@core/i18n/language.service';
+import { Notifier } from '@core/notifications/notifier';
+import { EmptyState } from '@shared/ui/empty-state';
+import { relativeTime } from '@shared/ui/relative-time';
 import { AppNotification } from '../data-access/notifications-api.service';
 import { NotificationBellActions } from '../data-access/store/notifications.actions';
 import { notificationsFeature } from '../data-access/store/notifications.feature';
@@ -61,6 +61,13 @@ import { notificationsFeature } from '../data-access/store/notifications.feature
               </span>
             </button>
           }
+          @if (hasMore()) {
+            <div class="more" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" role="presentation">
+              <button mat-button type="button" [disabled]="loading()" (click)="loadMore()">
+                {{ t(loading() ? 'loading' : 'loadMore') }}
+              </button>
+            </div>
+          }
         }
       </mat-menu>
     </ng-container>
@@ -77,6 +84,11 @@ import { notificationsFeature } from '../data-access/store/notifications.feature
         margin: 0;
         font: var(--mat-sys-title-small);
       }
+    }
+    .more {
+      display: flex;
+      justify-content: center;
+      padding: 4px 0;
     }
     .status {
       margin: 0;
@@ -127,6 +139,7 @@ export class NotificationBell {
   protected readonly count = this.store.selectSignal(notificationsFeature.selectUnreadCount);
   protected readonly items = this.store.selectSignal(notificationsFeature.selectItems);
   protected readonly loading = this.store.selectSignal(notificationsFeature.selectLoading);
+  protected readonly hasMore = this.store.selectSignal(notificationsFeature.selectHasMore);
   protected readonly loadError = this.store.selectSignal(notificationsFeature.selectLoadError);
 
   private readonly now = signal(Date.now());
@@ -134,6 +147,10 @@ export class NotificationBell {
   protected opened(): void {
     this.now.set(Date.now());
     this.store.dispatch(NotificationBellActions.opened());
+  }
+
+  protected loadMore(): void {
+    this.store.dispatch(NotificationBellActions.loadMoreClicked());
   }
 
   protected markAll(): void {

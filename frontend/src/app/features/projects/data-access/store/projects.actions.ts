@@ -1,6 +1,6 @@
 import { createActionGroup, emptyProps, props } from '@ngrx/store';
-import { ApiError, PagedResult } from '../../../../core/http/api-error';
-import { Submission } from '../../../../shared/data-access/submission';
+import { ApiError, PagedResult } from '@shared/data-access/api-error';
+import { Submission } from '@shared/data-access/submission';
 import { ClientOption, Project, ProjectInput, ProjectMember, ProjectQuery, ProjectRole } from '../projects-api.service';
 
 export const ProjectsPageActions = createActionGroup({

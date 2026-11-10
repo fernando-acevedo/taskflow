@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { Actions } from '@ngrx/effects';
 import { Action, Store } from '@ngrx/store';
 import { Observable, filter, map, take } from 'rxjs';
-import { ApiError } from '../../core/http/api-error';
+import { ApiError } from '@shared/data-access/api-error';
 
 /**
  * Tags a form submission so the form can wait for its own outcome: effects copy `submissionId` from the

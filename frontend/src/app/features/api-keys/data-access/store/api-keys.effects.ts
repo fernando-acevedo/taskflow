@@ -1,9 +1,9 @@
 import { inject } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { catchError, concatMap, map, of, switchMap, tap } from 'rxjs';
-import { toApiError } from '../../../../core/http/api-error';
-import { Notifier } from '../../../../core/notifications/notifier';
-import { untilTenantChanges } from '../../../../shared/data-access/until-tenant-changes';
+import { toApiError } from '@shared/data-access/api-error';
+import { Notifier } from '@core/notifications/notifier';
+import { untilTenantChanges } from '@core/tenant/until-tenant-changes';
 import { ApiKeysApiService } from '../api-keys-api.service';
 import { ApiKeysApiActions, ApiKeysPageActions } from './api-keys.actions';
 

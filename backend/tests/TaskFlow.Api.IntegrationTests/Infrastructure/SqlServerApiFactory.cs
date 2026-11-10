@@ -100,6 +100,7 @@ public sealed class SqlServerApiFactory : WebApplicationFactory<Program>, IAsync
     {
         builder.UseEnvironment("Testing");
         builder.UseSetting("ConnectionStrings:TaskFlow", _connectionString);
+        builder.UseSetting("Cors:AllowedOrigins:0", "http://localhost:4200");
         builder.UseSetting("Database:MigrateOnStartup", "true");
         builder.UseSetting("Database:SeedOnStartup", "true");
         builder.UseSetting("Seed:Admin:Email", AdminEmail);
@@ -115,6 +116,11 @@ public sealed class SqlServerApiFactory : WebApplicationFactory<Program>, IAsync
         {
             services.AddSingleton<IEmailSender>(Emails);
             services.AddSingleton<TimeProvider>(Time);
+
+            // Tokens are stamped with the frozen clock, but a hub connection compares their expiry with the real one
+            // (CloseOnAuthenticationExpiration): a short lifetime would close the connections of the real-time tests at once.
+            services.Configure<Microsoft.AspNetCore.Authentication.BearerToken.BearerTokenOptions>(
+                Microsoft.AspNetCore.Identity.IdentityConstants.BearerScheme, options => options.BearerTokenExpiration = TimeSpan.FromDays(30));
         });
     }
 

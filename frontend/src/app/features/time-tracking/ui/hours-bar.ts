@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoDirective } from '@jsverse/transloco';
-import { formatMinutes } from '../../../shared/ui/duration';
+import { formatMinutes } from '@shared/ui/duration';
 
 /**
  * Logged time against the estimate in one horizontal bar. The numbers are always text next to it: "2 h of 4 h",

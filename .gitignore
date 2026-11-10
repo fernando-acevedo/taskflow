@@ -23,3 +23,4 @@ Thumbs.db
 
 # Panel Gantt: updates written locally by .claude/hooks/gantt-sync.js
 docs/gantt-updates.js
+/.e2e-api

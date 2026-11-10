@@ -63,7 +63,14 @@
 
     <app-theme-preference />
 
-    <app-notification-preferences />
+    @if (preferencesFailed()) {
+      <p class="section-error" role="status">
+        {{ t('profile.sectionLoadFailed') }}
+        <button mat-button type="button" (click)="loadPreferences()">{{ t('profile.sectionRetry') }}</button>
+      </p>
+    } @else {
+      <ng-container *ngComponentOutlet="preferencesCard()" />
+    }
 
     <app-api-keys-card />
   }

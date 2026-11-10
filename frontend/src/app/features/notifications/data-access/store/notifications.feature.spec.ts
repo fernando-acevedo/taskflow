@@ -1,4 +1,4 @@
-import { AuthApiActions, ShellActions } from '../../../../core/auth/store/auth.actions';
+import { AuthApiActions, ShellActions } from '@core/auth/store/auth.actions';
 import { AppNotification } from '../notifications-api.service';
 import { NotificationBellActions, NotificationsApiActions } from './notifications.actions';
 import { initialNotificationsState, notificationsFeature } from './notifications.feature';
@@ -22,8 +22,35 @@ describe('notificationsFeature', () => {
     reducer(initialNotificationsState, NotificationsApiActions.unreadCountLoaded({ count: 2 })),
     NotificationsApiActions.notificationsLoaded({
       items: [aNotification('a'), aNotification('b'), aNotification('c', '2026-11-05T11:00:00Z')],
+      nextCursor: 'c1',
+      append: false,
     }),
   );
+
+  it('appends the next page, drops what it already has and keeps the new cursor', () => {
+    const more = reducer(loaded, NotificationBellActions.loadMoreClicked());
+    expect(more.loading).toBe(true);
+
+    const state = reducer(
+      more,
+      NotificationsApiActions.notificationsLoaded({ items: [aNotification('c'), aNotification('d')], nextCursor: null, append: true }),
+    );
+
+    expect(state.items.map((item) => item.id)).toEqual(['a', 'b', 'c', 'd']);
+    expect(state.nextCursor).toBeNull();
+    expect(state.loading).toBe(false);
+    expect(notificationsFeature.selectHasMore.projector(state.nextCursor)).toBe(false);
+    expect(notificationsFeature.selectHasMore.projector(loaded.nextCursor)).toBe(true);
+  });
+
+  it('starts over from the first page when the bell is reopened', () => {
+    const state = reducer(
+      reducer(loaded, NotificationBellActions.opened()),
+      NotificationsApiActions.notificationsLoaded({ items: [aNotification('z')], nextCursor: null, append: false }),
+    );
+
+    expect(state.items.map((item) => item.id)).toEqual(['z']);
+  });
 
   it('shows a clicked notification as read at once and lowers the count', () => {
     const state = reducer(loaded, NotificationBellActions.notificationClicked({ id: 'a', at: '2026-11-06T09:00:00Z' }));

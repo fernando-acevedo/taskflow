@@ -73,3 +73,8 @@ mat-form-field {
   color: var(--mat-sys-on-primary-container);
   font: var(--mat-sys-label-small);
 }
+
+.section-error {
+  margin: 0 0 16px;
+  color: var(--mat-sys-on-surface-variant);
+}

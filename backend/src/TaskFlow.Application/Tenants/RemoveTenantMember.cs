@@ -22,6 +22,7 @@ public sealed class RemoveTenantMemberHandler(
     ICurrentUser currentUser,
     ITenantAccessCache accessCache,
     IDemoMode demo,
+    IRealtimeRevoker realtime,
     ITransactionRunner transactions,
     TimeProvider time)
 {
@@ -37,6 +38,7 @@ public sealed class RemoveTenantMemberHandler(
         if (result.IsSuccess)
         {
             await accessCache.ForgetAsync(command.UserId, cancellationToken);
+            await realtime.TenantAccessChangedAsync(tenantId, command.UserId, cancellationToken);
         }
 
         return result;

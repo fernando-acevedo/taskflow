@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { LabelSummary } from '../../labels/data-access/labels-api.service';
+import { LabelSummary } from '@features/labels';
 
 export const TASK_STATUSES = ['ToDo', 'InProgress', 'Review', 'Done'] as const;
 export type TaskStatus = (typeof TASK_STATUSES)[number];

@@ -1,13 +1,9 @@
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using TaskFlow.Application.Abstractions;
-using TaskFlow.Application.Activity;
 using TaskFlow.Application.Common;
-using TaskFlow.Application.Notifications;
 using TaskFlow.Application.Projects;
-using TaskFlow.Domain.Activity;
 using TaskFlow.Domain.Common;
-using TaskFlow.Domain.Notifications;
 using TaskFlow.Domain.Tasks;
 
 namespace TaskFlow.Application.Tasks;
@@ -42,8 +38,6 @@ public sealed class CreateTaskHandler(
     ICurrentUser currentUser,
     IValidator<CreateTaskCommand> validator,
     GetTaskHandler getTask,
-    ActivityLog activity,
-    Notifier notifier,
     TimeProvider time)
 {
     public async Task<Result<TaskDto>> HandleAsync(CreateTaskCommand command, CancellationToken cancellationToken)
@@ -97,17 +91,6 @@ public sealed class CreateTaskHandler(
         }
 
         var task = created.Value;
-        activity.Record(
-            command.ProjectId,
-            ActivityType.TaskCreated,
-            new { taskTitle = task.Title, status = task.Status, priority = task.Priority, assigneeId = task.AssigneeId },
-            task.Id);
-        if (task.AssigneeId is { } assigneeId)
-        {
-            await notifier.NotifyAsync(
-                NotificationType.TaskAssigned, assigneeId, command.ProjectId, allowed.Value.Name, task.Id, task.Title, null, cancellationToken);
-        }
-
         db.Tasks.Add(task);
         await db.SaveChangesAsync(cancellationToken);
 

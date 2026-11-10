@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, effect, inject } from '@angular/core';
+import { NgComponentOutlet } from '@angular/common';
+import { ChangeDetectionStrategy, Component, InjectionToken, Type, effect, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -7,13 +8,20 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { TranslocoDirective } from '@jsverse/transloco';
 import { Store } from '@ngrx/store';
-import { ProfilePageActions } from '../../../core/auth/store/auth.actions';
-import { tenantFeature } from '../../../core/tenant/store/tenant.feature';
-import { authFeature } from '../../../core/auth/store/auth.feature';
-import { ErrorTextPipe } from '../../../core/i18n/error-text.pipe';
-import { ThemePreferenceCard } from '../../../core/theme/theme-preference-card';
-import { ApiKeysCard } from '../../api-keys/ui/api-keys-card';
-import { NotificationPreferencesCard } from '../../notifications/ui/notification-preferences';
+import { ProfilePageActions } from '@core/auth/store/auth.actions';
+import { tenantFeature } from '@core/tenant/store/tenant.feature';
+import { authFeature } from '@core/auth/store/auth.feature';
+import { ErrorTextPipe } from '@core/i18n/error-text.pipe';
+import { ThemePreferenceCard } from '@core/theme/theme-preference-card';
+import { HasUnsavedChanges, warnBeforeUnload } from '@shared/ui/unsaved-changes';
+import { ApiKeysCard } from '@features/api-keys';
+import { loadNotificationPreferencesCard } from '@features/notifications';
+
+/** How the notification preferences card is loaded; a test replaces it. */
+export const PREFERENCES_CARD_LOADER = new InjectionToken<() => Promise<Type<unknown>>>('PREFERENCES_CARD_LOADER', {
+  providedIn: 'root',
+  factory: () => loadNotificationPreferencesCard,
+});
 
 @Component({
   selector: 'app-profile-page',
@@ -27,15 +35,20 @@ import { NotificationPreferencesCard } from '../../notifications/ui/notification
     TranslocoDirective,
     ErrorTextPipe,
     ApiKeysCard,
-    NotificationPreferencesCard,
+    NgComponentOutlet,
     ThemePreferenceCard,
   ],
   templateUrl: './profile-page.html',
   styleUrl: './profile-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ProfilePage {
+export class ProfilePage implements HasUnsavedChanges {
   private readonly store = inject(Store);
+  private readonly loadCard = inject(PREFERENCES_CARD_LOADER);
+  /** The notification preferences card, loaded on demand (see the notifications barrel). */
+  protected readonly preferencesCard = signal<Type<unknown> | null>(null);
+  /** The chunk with the card failed to download: the rest of the page still works, and the user can retry. */
+  protected readonly preferencesFailed = signal(false);
   protected readonly user = this.store.selectSignal(authFeature.selectUser);
   protected readonly isAdmin = this.store.selectSignal(authFeature.selectIsAdmin);
   protected readonly tenantRole = this.store.selectSignal(tenantFeature.selectRole);
@@ -49,6 +62,8 @@ export class ProfilePage {
   });
 
   constructor() {
+    warnBeforeUnload(() => this.hasUnsavedChanges());
+    this.loadPreferences();
     this.store.dispatch(ProfilePageActions.opened());
 
     // Keep the field in sync with the saved name (initial load and after a save).
@@ -59,6 +74,18 @@ export class ProfilePage {
         this.form.markAsPristine();
       }
     });
+  }
+
+  protected loadPreferences(): void {
+    this.preferencesFailed.set(false);
+    this.loadCard().then(
+      (card) => this.preferencesCard.set(card),
+      () => this.preferencesFailed.set(true),
+    );
+  }
+
+  hasUnsavedChanges(): boolean {
+    return this.form.dirty;
   }
 
   protected submit(): void {

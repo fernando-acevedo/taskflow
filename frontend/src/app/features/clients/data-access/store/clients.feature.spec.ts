@@ -1,5 +1,5 @@
-import { ShellActions } from '../../../../core/auth/store/auth.actions';
-import { TenantActions } from '../../../../core/tenant/store/tenant.actions';
+import { ShellActions } from '@core/auth/store/auth.actions';
+import { TenantActions } from '@core/tenant/store/tenant.actions';
 import { ClientsPageActions } from './clients.actions';
 import { clientsFeature, initialClientsState } from './clients.feature';
 

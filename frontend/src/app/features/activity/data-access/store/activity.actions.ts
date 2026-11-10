@@ -1,5 +1,5 @@
 import { createActionGroup, props } from '@ngrx/store';
-import { ApiError } from '../../../../core/http/api-error';
+import { ApiError } from '@shared/data-access/api-error';
 import { ActivityPage } from '../activity-api.service';
 
 /** The project feed and a task's history are kept apart, so one never replaces the other. */
@@ -17,7 +17,8 @@ export const ActivityPageActions = createActionGroup({
 export const ActivityApiActions = createActionGroup({
   source: 'Activity API',
   events: {
-    'Page Loaded': props<{ scope: ActivityScope; projectId: string; taskId: string | null; result: ActivityPage }>(),
+    /** `append` is false for a first page (it replaces what is shown) and true for "load more". */
+    'Page Loaded': props<{ scope: ActivityScope; projectId: string; taskId: string | null; append: boolean; result: ActivityPage }>(),
     'Load Failed': props<{ scope: ActivityScope; projectId: string; taskId: string | null; error: ApiError }>(),
   },
 });

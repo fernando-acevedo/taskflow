@@ -2,7 +2,6 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { PagedResult } from '../../../core/http/api-error';
 
 export const NOTIFICATION_TYPES = ['TaskAssigned', 'Mentioned', 'CommentOnYourTask', 'TaskDueSoon'] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
@@ -36,6 +35,12 @@ export interface NotificationPreferences {
   readonly emailDailyDigest: boolean;
 }
 
+/** One page of the list, newest first; `nextCursor` is null on the last one (ADR 0025). */
+export interface NotificationsPage {
+  readonly items: readonly AppNotification[];
+  readonly nextCursor: string | null;
+}
+
 export const NOTIFICATIONS_PAGE_SIZE = 20;
 
 /** How often the unread count is polled while signed in (ADR 0010). */
@@ -46,9 +51,13 @@ export class NotificationsApiService {
   private readonly http = inject(HttpClient);
   private readonly url = `${environment.apiUrl}/api/notifications`;
 
-  list(pageSize = NOTIFICATIONS_PAGE_SIZE): Observable<PagedResult<AppNotification>> {
-    const params = new HttpParams().set('page', 1).set('pageSize', pageSize);
-    return this.http.get<PagedResult<AppNotification>>(this.url, { params });
+  /** From the start, or after `cursor`. */
+  list(cursor: string | null = null, pageSize = NOTIFICATIONS_PAGE_SIZE): Observable<NotificationsPage> {
+    let params = new HttpParams().set('pageSize', pageSize);
+    if (cursor !== null) {
+      params = params.set('cursor', cursor);
+    }
+    return this.http.get<NotificationsPage>(this.url, { params });
   }
 
   unreadCount(): Observable<{ count: number }> {

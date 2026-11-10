@@ -2,8 +2,8 @@ import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoDirective } from '@jsverse/transloco';
-import { LanguageService } from '../../../core/i18n/language.service';
-import { LabelChip } from '../../labels/ui/label-chip';
+import { LanguageService } from '@core/i18n/language.service';
+import { LabelChip } from '@features/labels';
 import { Task } from '../data-access/tasks-api.service';
 
 /** A task as shown on the board: title, priority, assignee and due date. Presentational only. */

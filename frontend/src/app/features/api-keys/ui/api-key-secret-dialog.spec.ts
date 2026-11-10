@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { TranslocoTestingModule } from '@jsverse/transloco';
-import { expectNoAxeViolations } from '../../../shared/testing/axe';
+import { expectNoAxeViolations } from '@shared/testing/axe';
 import { ApiKeySecretDialog } from './api-key-secret-dialog';
 
 describe('ApiKeySecretDialog', () => {

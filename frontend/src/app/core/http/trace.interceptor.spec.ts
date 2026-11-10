@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { catchError } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { sentTraceId } from './trace';
+import { sentTraceId } from '@shared/data-access/trace';
 import { traceparentInterceptor } from './trace.interceptor';
 
 const api = `${environment.apiUrl}/api`;

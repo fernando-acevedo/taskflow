@@ -1,13 +1,14 @@
 import { inject } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
-import { catchError, concatMap, map, of, switchMap, tap, withLatestFrom } from 'rxjs';
-import { isStale, toApiError } from '../../../../core/http/api-error';
-import { Notifier } from '../../../../core/notifications/notifier';
+import { EMPTY, catchError, concatMap, filter, map, of, switchMap, tap, withLatestFrom } from 'rxjs';
+import { isStale, toApiError } from '@shared/data-access/api-error';
+import { RealtimeActions } from '@core/realtime/realtime.actions';
+import { Notifier } from '@core/notifications/notifier';
 import { CommentsApiService } from '../comments-api.service';
 import { CommentsApiActions, CommentsPageActions } from './comments.actions';
 import { commentsFeature } from './comments.feature';
-import { untilTenantChanges } from '../../../../shared/data-access/until-tenant-changes';
+import { untilTenantChanges } from '@core/tenant/until-tenant-changes';
 
 export const loadComments = createEffect(
   (actions$ = inject(Actions), api = inject(CommentsApiService)) =>
@@ -18,6 +19,33 @@ export const loadComments = createEffect(
           untilTenantChanges(actions$),
           map((comments) => CommentsApiActions.commentsLoaded({ taskId, comments })),
           catchError((error: unknown) => of(CommentsApiActions.commentsLoadFailed({ error: toApiError(error) }))),
+        ),
+      ),
+    ),
+  { functional: true },
+);
+
+/**
+ * Somebody else commented, edited or deleted a comment (ADR 0023), or events may have been missed: reload the
+ * thread if it is the one open. The merged list replaces the old one, so an inline edit in progress keeps its own draft.
+ */
+export const reloadOpenThread = createEffect(
+  (actions$ = inject(Actions), store = inject(Store), api = inject(CommentsApiService)) =>
+    actions$.pipe(
+      ofType(RealtimeActions.commentsChanged, RealtimeActions.resyncRequested),
+      withLatestFrom(store.select(commentsFeature.selectCommentsState)),
+      filter(
+        ([action, state]) =>
+          state.taskId !== null &&
+          state.projectId === action.projectId &&
+          (action.type === RealtimeActions.resyncRequested.type || action.taskId === state.taskId),
+      ),
+      switchMap(([, state]) =>
+        api.list(state.projectId!, state.taskId!).pipe(
+          untilTenantChanges(actions$),
+          map((comments) => CommentsApiActions.commentsRefreshed({ taskId: state.taskId!, comments })),
+          // Best effort: the thread keeps what it had.
+          catchError(() => EMPTY),
         ),
       ),
     ),

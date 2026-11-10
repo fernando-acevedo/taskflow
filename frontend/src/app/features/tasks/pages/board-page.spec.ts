@@ -2,14 +2,14 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 import { BehaviorSubject, of } from 'rxjs';
-import { Notifier } from '../../../core/notifications/notifier';
+import { Notifier } from '@core/notifications/notifier';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
-import { projectsFeature } from '../../projects/data-access/store/projects.feature';
+import { projectsFeature } from '@features/projects';
 import { groupByStatus } from '../data-access/store/board';
 import { TasksPageActions } from '../data-access/store/tasks.actions';
 import { tasksFeature } from '../data-access/store/tasks.feature';
 import { aTask } from '../data-access/store/testing';
-import { expectNoAxeViolations } from '../../../shared/testing/axe';
+import { expectNoAxeViolations } from '@shared/testing/axe';
 import { TaskEditor } from '../ui/task-editor';
 import { BoardPage } from './board-page';
 
@@ -47,6 +47,7 @@ describe('BoardPage', () => {
           selectors: [
             { selector: tasksFeature.selectColumns, value: groupByStatus(tasks) },
             { selector: tasksFeature.selectLoading, value: options.loading ?? false },
+            { selector: tasksFeature.selectRefreshing, value: false },
             { selector: tasksFeature.selectLoadError, value: null },
             { selector: tasksFeature.selectMoving, value: false },
             { selector: tasksFeature.selectProjectId, value: options.projectId ?? 'p1' },

@@ -20,22 +20,24 @@ export interface ActivityEntry {
   readonly viaApiKey: boolean;
 }
 
+/** One page of a feed; `nextCursor` is null on the last one (ADR 0025). */
 export interface ActivityPage {
   readonly items: readonly ActivityEntry[];
-  readonly page: number;
-  readonly pageSize: number;
-  readonly totalCount: number;
+  readonly nextCursor: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
 export class ActivityApiService {
   private readonly http = inject(HttpClient);
 
-  /** Newest first. With a task id, only that task's history. */
-  list(projectId: string, taskId: string | null, page: number): Observable<ActivityPage> {
+  /** Newest first, from the start or after `cursor`. With a task id, only that task's history. */
+  list(projectId: string, taskId: string | null, cursor: string | null): Observable<ActivityPage> {
     const base = `${environment.apiUrl}/api/projects/${projectId}`;
     const url = taskId === null ? `${base}/activity` : `${base}/tasks/${taskId}/activity`;
-    const params = new HttpParams().set('page', page).set('pageSize', ACTIVITY_PAGE_SIZE);
+    let params = new HttpParams().set('pageSize', ACTIVITY_PAGE_SIZE);
+    if (cursor !== null) {
+      params = params.set('cursor', cursor);
+    }
     return this.http.get<ActivityPage>(url, { params });
   }
 }

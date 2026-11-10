@@ -1,5 +1,7 @@
 using System.Globalization;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Asp.Versioning;
@@ -10,6 +12,7 @@ using Serilog;
 using TaskFlow.Api.ErrorHandling;
 using TaskFlow.Api.Health;
 using TaskFlow.Api.Identity;
+using TaskFlow.Api.Realtime;
 using TaskFlow.Api.Security;
 using TaskFlow.Api.Telemetry;
 using TaskFlow.Application;
@@ -35,6 +38,34 @@ builder.Services
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUser, HttpContextCurrentUser>();
+builder.Services.AddScoped<HubCaller>();
+builder.Services.AddSingleton<HubConnections>();
+builder.Services.AddScoped<IRealtimeRevoker, RealtimeRevoker>();
+builder.Services.AddScoped<ClientOrigin>();
+builder.Services.AddScoped<IClientOrigin>(provider => provider.GetRequiredService<ClientOrigin>());
+builder.Services.AddDomainEventHandlers(typeof(Program).Assembly);
+
+// Real-time updates (ADR 0023). With Azure:SignalR:ConnectionString the connections live in Azure SignalR Service and any number of
+// instances can serve them; without it they live in this instance's memory.
+var signalR = builder.Services.AddSignalR()
+    .AddJsonProtocol(options => options.PayloadSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+if (builder.Configuration["Azure:SignalR:ConnectionString"] is { Length: > 0 } signalRConnectionString)
+{
+    signalR.AddAzureSignalR(signalRConnectionString);
+}
+
+// WebSockets cannot send an Authorization header, so the hub takes the token from the access_token query parameter. Only for the hub's own path.
+builder.Services.Configure<BearerTokenOptions>(IdentityConstants.BearerScheme, options =>
+    options.Events.OnMessageReceived = context =>
+    {
+        if (context.HttpContext.Request.Path.StartsWithSegments(ProjectsHub.Path, StringComparison.OrdinalIgnoreCase)
+            && context.HttpContext.Request.Query["access_token"].ToString() is { Length: > 0 } token)
+        {
+            context.Token = token;
+        }
+
+        return Task.CompletedTask;
+    });
 builder.Services.AddAuthorization(options =>
     options.AddPolicy(AuthPolicies.TenantAdmin, policy => policy
         .RequireAuthenticatedUser()
@@ -102,11 +133,13 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 });
 
 const string FrontendCorsPolicy = "Frontend";
-var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+var allowedOrigins = CorsOrigins.Validate(builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>());
 builder.Services.AddCors(options => options.AddPolicy(FrontendCorsPolicy, policy => policy
     .WithOrigins(allowedOrigins)
     .AllowAnyHeader()
     .AllowAnyMethod()
+    // The SignalR browser client sends its negotiate request with credentials; the origins are an explicit list, never a wildcard.
+    .AllowCredentials()
     .WithExposedHeaders("ETag", "api-supported-versions", "Retry-After")));
 
 var app = builder.Build();
@@ -139,9 +172,12 @@ app.UseRateLimiter();
 app.UseMiddleware<SessionValidationMiddleware>();
 app.UseMiddleware<TenantResolutionMiddleware>();
 app.UseMiddleware<ApiKeyScopeMiddleware>();
+app.UseMiddleware<ClientOriginMiddleware>();
 app.UseAuthorization();
 
 app.MapControllers();
+// The connection closes when its bearer token expires (the client reconnects with a renewed one): a token is not valid forever on an open socket.
+app.MapHub<ProjectsHub>(ProjectsHub.Path, options => options.CloseOnAuthenticationExpiration = true);
 // Self-registration can be turned off (the public demo turns it off: Auth__AllowSelfRegistration=false) (admins still invite people); the rest of the Identity endpoints stay.
 var allowSelfRegistration = app.Configuration.GetValue("Auth:AllowSelfRegistration", true);
 app.MapGroup("/api/auth")

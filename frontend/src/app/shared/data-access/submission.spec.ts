@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { Actions } from '@ngrx/effects';
 import { Action, Store, createAction, props } from '@ngrx/store';
 import { Subject } from 'rxjs';
-import { ApiError } from '../../core/http/api-error';
+import { ApiError } from '@shared/data-access/api-error';
 import { Submissions } from './submission';
 
 const submitted = createAction('[Test] Submitted', props<{ submissionId: number }>());

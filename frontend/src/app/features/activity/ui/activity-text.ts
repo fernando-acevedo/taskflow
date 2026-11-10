@@ -1,4 +1,4 @@
-import { formatMinutes } from '../../../shared/ui/duration';
+import { formatMinutes } from '@shared/ui/duration';
 import { ActivityEntry } from '../data-access/activity-api.service';
 
 export type Translate = (key: string, params?: Record<string, unknown>) => string;

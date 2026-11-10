@@ -7,7 +7,7 @@
 //                      whatever the line endings of the checkout or the transformations the build applies.
 //   __TELEMETRY_ORIGIN__ the Application Insights ingestion origin of `appInsightsConnectionString`; removed when it is empty.
 //   __API_ORIGIN__     the origin of `apiUrl` in src/environments/environment.ts (the deploy workflow writes it
-//                      from vars.API_URL before building). Empty `apiUrl` leaves only 'self'.
+//                      from vars.API_URL before building), plus its ws:/wss: twin for the SignalR hub. Empty `apiUrl` leaves only 'self'.
 //
 // Usage: node scripts/apply-csp.mjs [--check]
 //   (default) rewrites dist/frontend/browser/staticwebapp.config.json with the placeholders resolved.
@@ -42,6 +42,15 @@ export function apiOrigin(environmentSource) {
   return url === '' ? '' : new URL(url).origin;
 }
 
+/** The WebSocket origin of the API (`wss://host` for https, `ws://host` for http): the hub's transport (ADR 0023). */
+export function websocketOrigin(origin) {
+  if (origin === '') {
+    return '';
+  }
+  const url = new URL(origin);
+  return `${url.protocol === 'https:' ? 'wss:' : 'ws:'}//${url.host}`;
+}
+
 export function telemetryOrigin(environmentSource) {
   const connection = /appInsightsConnectionString:\s*'([^']*)'/.exec(environmentSource)?.[1] ?? '';
   if (connection === '') {
@@ -68,7 +77,7 @@ function expectedPolicy(template) {
   const telemetry = telemetryOrigin(environmentSource);
   return template
     .replace('__SCRIPT_HASHES__', hashes.join(' '))
-    .replace(/ ?__API_ORIGIN__/, origin ? ` ${origin}` : '')
+    .replace(/ ?__API_ORIGIN__/, origin ? ` ${origin} ${websocketOrigin(origin)}` : '')
     .replace(/ ?__TELEMETRY_ORIGIN__/, telemetry ? ` ${telemetry}` : '');
 }
 
@@ -88,6 +97,9 @@ function main() {
       ...missing.map((hash) => `inline script hash ${hash} is not in the CSP`),
       ...(policy.includes('__') ? ['the CSP still has a placeholder'] : []),
       ...(origin && !connectSources(policy).includes(origin) ? [`connect-src lacks the API origin ${origin}`] : []),
+      ...(origin && !connectSources(policy).includes(websocketOrigin(origin))
+        ? [`connect-src lacks the API's WebSocket origin ${websocketOrigin(origin)} (the realtime hub needs it)`]
+        : []),
     ...(telemetry && !connectSources(policy).includes(telemetry)
       ? [`connect-src lacks the telemetry origin ${telemetry} (appInsightsConnectionString is set)`]
       : []),

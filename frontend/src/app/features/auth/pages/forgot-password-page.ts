@@ -8,9 +8,9 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { RouterLink } from '@angular/router';
 import { TranslocoDirective } from '@jsverse/transloco';
 import { Store } from '@ngrx/store';
-import { ForgotPasswordPageActions } from '../../../core/auth/store/auth.actions';
-import { authFeature } from '../../../core/auth/store/auth.feature';
-import { ErrorTextPipe } from '../../../core/i18n/error-text.pipe';
+import { ForgotPasswordPageActions } from '@core/auth/store/auth.actions';
+import { authFeature } from '@core/auth/store/auth.feature';
+import { ErrorTextPipe } from '@core/i18n/error-text.pipe';
 
 /** Asks for the email to send a reset link to. The answer is the same whether or not the account exists. */
 @Component({

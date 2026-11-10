@@ -8,11 +8,12 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { Observable } from 'rxjs';
 import { TranslocoDirective } from '@jsverse/transloco';
-import { isStale } from '../../../core/http/api-error';
-import { applyApiFieldErrors } from '../../../shared/data-access/api-field-errors';
-import { SaveFn } from '../../../shared/data-access/submission';
-import { StaleNotice } from '../../../shared/ui/stale-notice';
+import { isStale } from '@shared/data-access/api-error';
+import { applyApiFieldErrors } from '@shared/data-access/api-field-errors';
+import { SaveFn } from '@shared/data-access/submission';
+import { StaleNotice } from '@shared/ui/stale-notice';
 import { Client, ClientInput } from '../data-access/clients-api.service';
+import { confirmCloseWhenModified } from '@shared/ui/unsaved-changes';
 
 export interface ClientFormData {
   readonly client: Client | null;
@@ -99,6 +100,10 @@ export class ClientFormDialog {
     contactEmail: [this.client?.contactEmail ?? '', [Validators.email, Validators.maxLength(256)]],
     notes: [this.client?.notes ?? '', [Validators.maxLength(2000)]],
   });
+
+  constructor() {
+    confirmCloseWhenModified(this.dialogRef, () => this.form.dirty);
+  }
 
   protected submit(): void {
     if (this.form.invalid) {

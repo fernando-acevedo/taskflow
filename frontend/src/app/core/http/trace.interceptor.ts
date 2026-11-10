@@ -1,7 +1,7 @@
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { catchError, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { TRACE_ID, formatTraceparent, newSpanId, newTraceId, rememberTraceId } from './trace';
+import { TRACE_ID, formatTraceparent, newSpanId, newTraceId, rememberTraceId } from '@shared/data-access/trace';
 
 const apiPrefix = `${environment.apiUrl}/api/`;
 

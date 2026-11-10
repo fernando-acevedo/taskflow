@@ -11,29 +11,29 @@ namespace TaskFlow.Api.Controllers;
 public sealed class ActivityController : ApiControllerBase
 {
     [HttpGet("activity")]
-    [ProducesResponseType<PagedResult<ActivityEntryDto>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<CursorPage<ActivityEntryDto>>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<PagedResult<ActivityEntryDto>>> ListProject(
+    public async Task<ActionResult<CursorPage<ActivityEntryDto>>> ListProject(
         Guid projectId,
         [FromServices] ListProjectActivityHandler handler,
         CancellationToken cancellationToken,
-        [FromQuery] int page = 1,
+        [FromQuery] string? cursor = null,
         [FromQuery] int pageSize = 50) =>
-        OkOrProblem(await handler.HandleAsync(new ListProjectActivityQuery(projectId, page, pageSize), cancellationToken));
+        OkOrProblem(await handler.HandleAsync(new ListProjectActivityQuery(projectId, cursor, pageSize), cancellationToken));
 
     [HttpGet("tasks/{taskId:guid}/activity")]
-    [ProducesResponseType<PagedResult<ActivityEntryDto>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<CursorPage<ActivityEntryDto>>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<PagedResult<ActivityEntryDto>>> ListTask(
+    public async Task<ActionResult<CursorPage<ActivityEntryDto>>> ListTask(
         Guid projectId,
         Guid taskId,
         [FromServices] ListTaskActivityHandler handler,
         CancellationToken cancellationToken,
-        [FromQuery] int page = 1,
+        [FromQuery] string? cursor = null,
         [FromQuery] int pageSize = 50) =>
-        OkOrProblem(await handler.HandleAsync(new ListTaskActivityQuery(projectId, taskId, page, pageSize), cancellationToken));
+        OkOrProblem(await handler.HandleAsync(new ListTaskActivityQuery(projectId, taskId, cursor, pageSize), cancellationToken));
 }

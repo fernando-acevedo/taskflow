@@ -112,7 +112,7 @@ The OpenAPI contract is a snapshot test (`OpenApiSnapshotTests` vs `docs/api/ope
   `token-refresher` (refreshes once on a 401, shared by concurrent requests), token storage (access token in
   memory, refresh token in `localStorage`), guards, and `restoreSession`, an app initializer that restores the
   session before the first navigation. `i18n/` contains the Transloco setup and an interceptor that sends
-  `Accept-Language`. `http/api-error.ts` turns a failed call into an `ApiError` whose `code` is the API's error
+  `Accept-Language`. `shared/data-access/api-error.ts` turns a failed call into an `ApiError` whose `code` is the API's error
   code; `notifications/notifier.ts` shows it as a snackbar translated from `apiErrors.<code>`.
 - `src/app/features/<feature>/` is split into `data-access/` (API service + NgRx `store/` with
   `*.actions.ts`, `*.effects.ts` (functional effects), `*.feature.ts` (`createFeature`)), `ui/` and `pages/`.
@@ -123,8 +123,9 @@ The OpenAPI contract is a snapshot test (`OpenApiSnapshotTests` vs `docs/api/ope
   a `SaveFn` that tags the submitted action with a `submissionId` (`shared/data-access/submission.ts`), effects
   copy it onto their success/failure action, and `Submissions.dispatchAndWait` returns that outcome;
   `applyApiFieldErrors` shows validation messages under the fields. `src/app/shared/ui/` holds reusable
-  presentational pieces (confirm dialog, empty state, `PagedList`, `SearchField`, `NewPasswordFields`); list-page
+  presentational pieces (confirm dialog, empty state, `PagedList` (in `core/ui/`), `SearchField`, `NewPasswordFields`); list-page
   layout classes (`.page-header`, `.filters`, `.rows`, `.chip`) are global in `styles.scss`.
+- Imports use the aliases `@core/*`, `@shared/*`, `@features/*` (relative only inside the same feature/folder). `eslint-plugin-boundaries` enforces the layering: `shared` imports neither `core` nor features, `core` imports no feature, and a feature imports another only through its public API `features/<x>/index.ts` (`*.routes.ts` files, which wire pages and state with `loadChildren`, are the documented exception and may import deep). New cross-feature needs go through that `index.ts`.
 - TypeScript runs in `strict` mode with `strictTemplates`, and ESLint uses the type-checked typescript-eslint
   configs. Redux DevTools is registered only in development, with passwords and tokens masked.
 - Projects and tasks share one route (`features/projects/projects.routes.ts`): `ProjectPage` loads the project,

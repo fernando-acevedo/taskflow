@@ -20,7 +20,7 @@ public sealed class AuthFlowTests(SqlServerApiFactory factory)
 
         var tokens = await client.LoginForTokensAsync(email);
         tokens.TokenType.ShouldBe("Bearer");
-        tokens.ExpiresIn.ShouldBe(3600);
+        tokens.ExpiresIn.ShouldBeGreaterThan(0); // the test host lengthens the lifetime (see SqlServerApiFactory); the default is one hour
 
         client.UseToken(tokens);
         var me = await client.GetJsonAsync<UserResponse>("/api/users/me");

@@ -3,9 +3,9 @@ import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
-import { ResetPasswordPageActions } from '../../../core/auth/store/auth.actions';
-import { authFeature } from '../../../core/auth/store/auth.feature';
-import { expectNoAxeViolations } from '../../../shared/testing/axe';
+import { ResetPasswordPageActions } from '@core/auth/store/auth.actions';
+import { authFeature } from '@core/auth/store/auth.feature';
+import { expectNoAxeViolations } from '@shared/testing/axe';
 import { ResetPasswordPage } from './reset-password-page';
 
 describe('ResetPasswordPage', () => {

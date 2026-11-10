@@ -9,11 +9,12 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
 import { Observable } from 'rxjs';
 import { TranslocoDirective } from '@jsverse/transloco';
-import { applyApiFieldErrors } from '../../../shared/data-access/api-field-errors';
-import { isStale } from '../../../core/http/api-error';
-import { StaleNotice } from '../../../shared/ui/stale-notice';
-import { SaveFn } from '../../../shared/data-access/submission';
+import { applyApiFieldErrors } from '@shared/data-access/api-field-errors';
+import { isStale } from '@shared/data-access/api-error';
+import { StaleNotice } from '@shared/ui/stale-notice';
+import { SaveFn } from '@shared/data-access/submission';
 import { ClientOption, Project, ProjectInput } from '../data-access/projects-api.service';
+import { confirmCloseWhenModified } from '@shared/ui/unsaved-changes';
 
 export interface ProjectFormData {
   readonly project: Project | null;
@@ -114,6 +115,10 @@ export class ProjectFormDialog {
     name: [this.data.project?.name ?? '', [Validators.required, Validators.minLength(3), Validators.maxLength(100)]],
     description: [this.data.project?.description ?? '', Validators.maxLength(2000)],
   });
+
+  constructor() {
+    confirmCloseWhenModified(this.dialogRef, () => this.form.dirty);
+  }
 
   protected submit(): void {
     if (this.form.invalid) {

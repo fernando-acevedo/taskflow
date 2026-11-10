@@ -2,8 +2,8 @@ import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { TranslocoDirective } from '@jsverse/transloco';
-import { DemoAccount, DemoService } from '../../../core/demo/demo.service';
-import { LanguageService } from '../../../core/i18n/language.service';
+import { DemoAccount, DemoService } from '@core/demo/demo.service';
+import { LanguageService } from '@core/i18n/language.service';
 
 /** Lists the public demo's accounts on the login page; renders nothing when the demo is off. */
 @Component({

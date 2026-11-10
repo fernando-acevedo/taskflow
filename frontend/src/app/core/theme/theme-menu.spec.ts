@@ -3,7 +3,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 import { provideMockStore } from '@ngrx/store/testing';
-import { expectNoAxeViolations } from '../../shared/testing/axe';
+import { expectNoAxeViolations } from '@shared/testing/axe';
 import { authFeature } from '../auth/store/auth.feature';
 import { ThemeMenu } from './theme-menu';
 import { ThemeService } from './theme.service';

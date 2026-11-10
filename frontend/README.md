@@ -37,3 +37,43 @@ When the backend contract changes:
 2. `npm run api:types` regenerates `schema.d.ts`; fix whatever the compiler reports.
 
 `npm run api:check` (run in CI before lint) fails when `schema.d.ts` differs from the contract.
+
+## End-to-end tests (Playwright)
+
+`e2e/*.e2e.ts` drive a real browser against a real API: sign in/out, create and edit a project and a task, move a
+card (drag and "Move to" menu) and reload, an edit conflict from two sessions, real-time updates between two
+sessions, and the unsaved-changes prompt. Each test creates its own client, project and tasks through the API; the
+only thing taken from the seed is the admin (`admin@taskflow.local` / `Admin12345`, override with
+`E2E_ADMIN_EMAIL` / `E2E_ADMIN_PASSWORD`). Chromium only. CI runs them in `.github/workflows/e2e.yml`.
+
+Variables: `API_URL` (default `http://localhost:5090`), `BASE_URL` (the frontend, default `http://localhost:4200`),
+`PW_CHANNEL` (e.g. `chrome` to use an installed browser instead of Playwright's Chromium).
+
+Playwright starts the frontend itself with `scripts/e2e-serve.mjs` (`ng serve --configuration e2e`). Angular bakes
+the API address in at build time, so that script writes the git-ignored `src/environments/environment.e2e.ts`
+from `API_URL`. A server already answering on `BASE_URL` is reused; `E2E_NO_SERVER=1` never starts one.
+
+Locally, against an API on another port and its own database, so the development data and the API on :5080
+stay untouched (bash; LocalDB shown, any SQL Server connection string works):
+
+```bash
+# once: npx playwright install chromium   (or set PW_CHANNEL=chrome)
+cd backend
+dotnet publish src/TaskFlow.Api -c Release -o ../.e2e-api      # a copy, so a running API's files aren't locked
+cd ../.e2e-api
+ASPNETCORE_ENVIRONMENT=Development ASPNETCORE_URLS=http://localhost:5090 \
+  "ConnectionStrings__TaskFlow=Server=(localdb)\MSSQLLocalDB;Database=TaskFlowE2E;Trusted_Connection=True;TrustServerCertificate=True" \
+  Cors__AllowedOrigins__0=http://localhost:4290 \
+  RateLimiting__Auth__PermitLimit=100000 RateLimiting__User__TokenLimit=100000 RateLimiting__User__TokensPerPeriod=100000 \
+  dotnet TaskFlow.Api.dll          # migrates and seeds TaskFlowE2E on startup in Development
+
+# in another terminal
+cd frontend
+BASE_URL=http://localhost:4290 API_URL=http://localhost:5090 npm run e2e
+npx playwright show-report                                     # HTML report; traces are kept on the first retry
+```
+
+`env` assignments before a command don't work in PowerShell: set `$env:NAME = '...'` first. The API's CORS list
+must contain the `BASE_URL` origin. Without a running API, `npx playwright test --list` still lists the tests.
+Run `npm run e2e -- --headed --workers=1` to watch one at a time. The tests only add data, so the database can
+be dropped whenever.

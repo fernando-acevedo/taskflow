@@ -1,8 +1,8 @@
 import { ofType } from '@ngrx/effects';
 import { Action } from '@ngrx/store';
 import { MonoTypeOperatorFunction, Observable, takeUntil } from 'rxjs';
-import { AuthApiActions, ShellActions } from '../../core/auth/store/auth.actions';
-import { TenantActions } from '../../core/tenant/store/tenant.actions';
+import { AuthApiActions, ShellActions } from '@core/auth/store/auth.actions';
+import { TenantActions } from '@core/tenant/store/tenant.actions';
 
 /**
  * Drops the answer to a read that is still in flight when the workspace changes or the session ends, so data

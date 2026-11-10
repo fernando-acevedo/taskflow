@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using TaskFlow.Application.Abstractions;
 using TaskFlow.Application.Demo;
@@ -33,9 +34,12 @@ public static class DependencyInjection
         services.AddScoped<TenantContext>();
         services.AddScoped<ITenantContext>(provider => provider.GetRequiredService<TenantContext>());
         services.AddSingleton<Tenancy.TenantScope>();
+        services.TryAddScoped<DomainEventDispatcher>();
+        services.AddScoped<DomainEventInterceptor>();
         services.AddDbContext<AppDbContext>((provider, options) => options
             .UseSqlServer(connectionString, sql => sql.EnableRetryOnFailure())
             .AddInterceptors(
+                provider.GetRequiredService<DomainEventInterceptor>(),
                 new CreationTimeInterceptor(provider.GetRequiredService<TimeProvider>()),
                 new TenantSaveInterceptor(provider.GetRequiredService<ITenantContext>())));
         services.AddSingleton<IUniqueViolationDetector, Persistence.SqlServerUniqueViolationDetector>();

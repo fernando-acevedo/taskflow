@@ -8,10 +8,11 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
 import { TranslocoDirective } from '@jsverse/transloco';
-import { applyApiFieldErrors } from '../../../shared/data-access/api-field-errors';
-import { SaveFn } from '../../../shared/data-access/submission';
-import { localToday } from '../../../shared/ui/local-today';
+import { applyApiFieldErrors } from '@shared/data-access/api-field-errors';
+import { SaveFn } from '@shared/data-access/submission';
+import { localToday } from '@shared/ui/local-today';
 import { API_KEY_SCOPES, ApiKeyScope, NewApiKeyInput } from '../data-access/api-keys-api.service';
+import { confirmCloseWhenModified } from '@shared/ui/unsaved-changes';
 
 export interface ApiKeyFormData {
   readonly save: SaveFn<NewApiKeyInput>;
@@ -105,6 +106,10 @@ export class ApiKeyFormDialog {
     scope: new FormControl<ApiKeyScope>('Read', { nonNullable: true }),
     expiresAt: [''],
   });
+
+  constructor() {
+    confirmCloseWhenModified(this.dialogRef, () => this.form.dirty);
+  }
 
   protected submit(): void {
     const { name, scope, expiresAt } = this.form.getRawValue();

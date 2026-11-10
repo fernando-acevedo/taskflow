@@ -1,19 +1,13 @@
 import { Routes } from '@angular/router';
 import { provideEffects } from '@ngrx/effects';
 import { provideState } from '@ngrx/store';
-import * as projectDashboardEffects from '../dashboard/data-access/store/project-dashboard.effects';
-import { projectDashboardFeature } from '../dashboard/data-access/store/project-dashboard.feature';
-import * as activityEffects from '../activity/data-access/store/activity.effects';
-import { activityFeature } from '../activity/data-access/store/activity.feature';
-import * as commentsEffects from '../comments/data-access/store/comments.effects';
-import { commentsFeature } from '../comments/data-access/store/comments.feature';
-import * as labelsEffects from '../labels/data-access/store/labels.effects';
-import { labelsFeature } from '../labels/data-access/store/labels.feature';
-import * as tasksEffects from '../tasks/data-access/store/tasks.effects';
-import { tasksFeature } from '../tasks/data-access/store/tasks.feature';
-import * as timeTrackingEffects from '../time-tracking/data-access/store/time-tracking.effects';
-import { timeTrackingFeature } from '../time-tracking/data-access/store/time-tracking.feature';
-import { TaskEditor } from '../tasks/ui/task-editor';
+import { lazyUnsavedChangesGuard } from '@core/navigation/lazy-unsaved-changes-guard';
+import { activityEffects, activityFeature, loadActivityPage } from '@features/activity';
+import { commentsEffects, commentsFeature } from '@features/comments';
+import { projectDashboardEffects, projectDashboardFeature, loadProjectOverviewPage } from '@features/dashboard';
+import { labelsEffects, labelsFeature } from '@features/labels';
+import { TaskEditor, loadBoardPage, loadTaskListPage, tasksEffects, tasksFeature } from '@features/tasks';
+import { loadTimeReportPage, timeTrackingEffects, timeTrackingFeature } from '@features/time-tracking';
 import * as projectsEffects from './data-access/store/projects.effects';
 import { projectsFeature } from './data-access/store/projects.feature';
 
@@ -45,16 +39,16 @@ export const projectsRoutes: Routes = [
         loadComponent: () => import('./pages/project-page').then((m) => m.ProjectPage),
         children: [
           { path: '', pathMatch: 'full', redirectTo: 'board' },
-          { path: 'board', title: 'project.tabs.board', loadComponent: () => import('../tasks/pages/board-page').then((m) => m.BoardPage) },
-          { path: 'list', title: 'project.tabs.list', loadComponent: () => import('../tasks/pages/task-list-page').then((m) => m.TaskListPage) },
+          { path: 'board', title: 'project.tabs.board', loadComponent: () => loadBoardPage() },
+          { path: 'list', title: 'project.tabs.list', loadComponent: () => loadTaskListPage() },
           {
             path: 'overview',
             title: 'project.tabs.overview',
-            loadComponent: () => import('../dashboard/pages/project-overview-page').then((m) => m.ProjectOverviewPage),
+            loadComponent: () => loadProjectOverviewPage(),
           },
-          { path: 'hours', title: 'project.tabs.hours', loadComponent: () => import('../time-tracking/pages/time-report-page').then((m) => m.TimeReportPage) },
-          { path: 'activity', title: 'project.tabs.activity', loadComponent: () => import('../activity/pages/activity-page').then((m) => m.ActivityPage) },
-          { path: 'members', title: 'project.tabs.members', loadComponent: () => import('./pages/members-page').then((m) => m.MembersPage) },
+          { path: 'hours', title: 'project.tabs.hours', loadComponent: () => loadTimeReportPage() },
+          { path: 'activity', title: 'project.tabs.activity', loadComponent: () => loadActivityPage() },
+          { path: 'members', title: 'project.tabs.members', canDeactivate: [lazyUnsavedChangesGuard], loadComponent: () => import('./pages/members-page').then((m) => m.MembersPage) },
           { path: 'settings', title: 'project.tabs.settings', loadComponent: () => import('./pages/settings-page').then((m) => m.SettingsPage) },
         ],
       },

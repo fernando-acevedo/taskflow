@@ -8,11 +8,11 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { RouterLink } from '@angular/router';
 import { TranslocoDirective } from '@jsverse/transloco';
 import { Store } from '@ngrx/store';
-import { newPasswordGroup } from '../../../core/auth/password-rules';
-import { RegisterPageActions } from '../../../core/auth/store/auth.actions';
-import { authFeature } from '../../../core/auth/store/auth.feature';
-import { ErrorTextPipe } from '../../../core/i18n/error-text.pipe';
-import { NewPasswordFields } from '../../../shared/ui/new-password-fields';
+import { newPasswordGroup } from '@shared/ui/password-rules';
+import { RegisterPageActions } from '@core/auth/store/auth.actions';
+import { authFeature } from '@core/auth/store/auth.feature';
+import { ErrorTextPipe } from '@core/i18n/error-text.pipe';
+import { NewPasswordFields } from '@shared/ui/new-password-fields';
 
 @Component({
   selector: 'app-register-page',

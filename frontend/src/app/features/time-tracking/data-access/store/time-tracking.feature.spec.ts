@@ -1,4 +1,4 @@
-import { AuthApiActions, ShellActions } from '../../../../core/auth/store/auth.actions';
+import { AuthApiActions, ShellActions } from '@core/auth/store/auth.actions';
 import { parseTimeFilters, toTimeQueryParams } from './time-filters';
 import { TimeEntriesApiActions, TimeEntriesPageActions, TimeReportApiActions, TimeReportPageActions } from './time-tracking.actions';
 import { initialTimeTrackingState, timeTrackingFeature } from './time-tracking.feature';

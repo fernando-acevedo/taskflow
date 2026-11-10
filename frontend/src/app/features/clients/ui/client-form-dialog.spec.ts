@@ -3,9 +3,10 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 import { of } from 'rxjs';
 import en from '../../../../../public/i18n/en.json';
-import { expectNoAxeViolations } from '../../../shared/testing/axe';
+import { expectNoAxeViolations } from '@shared/testing/axe';
 import { Client } from '../data-access/clients-api.service';
 import { ClientFormData, ClientFormDialog } from './client-form-dialog';
+import { fakeDialogRef } from '@shared/testing/fake-dialog-ref';
 
 const stale = { code: 'Concurrency.Stale', fields: {} };
 
@@ -34,7 +35,7 @@ describe('ClientFormDialog when someone else changed the client (stale)', () => 
         TranslocoTestingModule.forRoot({ langs: { en }, translocoConfig: { availableLangs: ['en'], defaultLang: 'en' } }),
       ],
       providers: [
-        { provide: MatDialogRef, useValue: { close } },
+        { provide: MatDialogRef, useValue: fakeDialogRef(close) },
         { provide: MAT_DIALOG_DATA, useValue: { client: aClient(), save: vi.fn(), ...data } },
       ],
     });

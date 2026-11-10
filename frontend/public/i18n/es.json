@@ -3,7 +3,8 @@
     "title": "TaskFlow",
     "tagline": "Gestión de proyectos para agencias digitales",
     "language": "Idioma",
-    "skipToContent": "Saltar al contenido principal"
+    "skipToContent": "Saltar al contenido principal",
+    "offline": "Sin conexión. No se pueden guardar cambios hasta que vuelva la conexión."
   },
   "theme": {
     "label": "Tema",
@@ -101,6 +102,8 @@
   },
   "profile": {
     "title": "Tu perfil",
+    "sectionLoadFailed": "No se pudo cargar esta sección.",
+    "sectionRetry": "Reintentar",
     "email": "Email",
     "role": "Rol",
     "roles": {
@@ -205,6 +208,7 @@
     "markAllRead": "Marcar todas como leídas",
     "empty": "No tienes nada pendiente.",
     "loading": "Cargando...",
+    "loadMore": "Cargar más",
     "unread": "sin leer",
     "messages": {
       "TaskAssigned": "{{ actor }} te asignó \"{{ task }}\"",
@@ -227,6 +231,12 @@
   "common": {
     "cancel": "Cancelar",
     "dismiss": "Cerrar",
+    "unsaved": {
+      "title": "¿Descartar los cambios?",
+      "message": "Tienes cambios sin guardar. Si sales ahora, se perderán.",
+      "discard": "Descartar",
+      "loadFailed": "No se pudo comprobar si hay cambios sin guardar. Saliendo de la página."
+    },
     "gone": "Ya no existe (otra persona lo borró o archivó).",
     "supportCode": "Código de soporte: {{code}}",
     "retry": "Reintentar",
@@ -454,6 +464,13 @@
     "back": "Todos los proyectos",
     "readOnlyAdmin": "Estás viendo este proyecto como admin. Solo sus miembros pueden modificarlo.",
     "readOnlyArchived": "Este proyecto está archivado, así que es de solo lectura.",
+    "realtime": {
+      "live": "En vivo",
+      "reconnecting": "Reconectando…",
+      "connecting": "Conectando…",
+      "disconnected": "Desconectado",
+      "restored": "Conexión recuperada"
+    },
     "tabs": {
       "label": "Secciones del proyecto",
       "board": "Tablero",
@@ -498,6 +515,7 @@
     "retry": "Reintentar",
     "loading": "Cargando…",
     "dragHint": "Arrastra las tarjetas entre columnas, o usa el botón de mover de cada tarjeta, para cambiar su estado.",
+    "refreshing": "Actualizando…",
     "moveTo": "Mover “{{ title }}”",
     "moveUp": "Subir",
     "moveDown": "Bajar",

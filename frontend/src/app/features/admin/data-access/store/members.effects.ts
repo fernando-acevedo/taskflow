@@ -1,11 +1,11 @@
 import { inject } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { catchError, concatMap, map, of, switchMap, tap } from 'rxjs';
-import { toApiError } from '../../../../core/http/api-error';
-import { Notifier } from '../../../../core/notifications/notifier';
+import { toApiError } from '@shared/data-access/api-error';
+import { Notifier } from '@core/notifications/notifier';
 import { TenantMembersApiService } from '../tenant-members-api.service';
 import { MembersApiActions, MembersPageActions } from './members.actions';
-import { untilTenantChanges } from '../../../../shared/data-access/until-tenant-changes';
+import { untilTenantChanges } from '@core/tenant/until-tenant-changes';
 
 export const loadMembers = createEffect(
   (actions$ = inject(Actions), api = inject(TenantMembersApiService)) =>

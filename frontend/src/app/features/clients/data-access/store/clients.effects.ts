@@ -2,12 +2,12 @@ import { inject } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
 import { Observable, catchError, concatMap, filter, map, of, switchMap, tap, withLatestFrom } from 'rxjs';
-import { isStale, toApiError } from '../../../../core/http/api-error';
-import { Notifier } from '../../../../core/notifications/notifier';
+import { isStale, toApiError } from '@shared/data-access/api-error';
+import { Notifier } from '@core/notifications/notifier';
 import { ClientsApiService } from '../clients-api.service';
 import { ClientsApiActions, ClientsPageActions } from './clients.actions';
 import { clientsFeature } from './clients.feature';
-import { untilTenantChanges } from '../../../../shared/data-access/until-tenant-changes';
+import { untilTenantChanges } from '@core/tenant/until-tenant-changes';
 
 export const loadClients = createEffect(
   (actions$ = inject(Actions), store = inject(Store), api = inject(ClientsApiService)) =>

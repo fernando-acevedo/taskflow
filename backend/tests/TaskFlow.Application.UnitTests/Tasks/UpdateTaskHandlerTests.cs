@@ -1,8 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using NSubstitute;
 using TaskFlow.Application.Abstractions;
-using TaskFlow.Application.Activity;
-using TaskFlow.Application.Notifications;
 using TaskFlow.Application.Projects;
 using TaskFlow.Application.Tasks;
 using TaskFlow.Application.Users;
@@ -32,6 +30,7 @@ public sealed class UpdateTaskHandlerTests
         _project = Project.Create(Client.Create("Acme", null, null, Now), "Website", null, OwnerId, Now).Value;
         _task = TaskItem.Create(_project, "Logo", null, TaskPriority.Low, null, null, OwnerId, 0, Now).Value;
         typeof(TaskItem).GetProperty(nameof(TaskItem.RowVersion))!.SetValue(_task, new byte[] { 1 });
+        _task.TakeDomainEvents(); // as if loaded from the database
         var projectsSet = FakeDbSet.Of(_project);
         _db.Projects.Returns(projectsSet);
         var tasksSet = FakeDbSet.Of(_task);
@@ -46,14 +45,11 @@ public sealed class UpdateTaskHandlerTests
     {
         var time = new FixedTime(Now);
         var access = new ProjectAccess(_db, _user);
-        var notifier = new Notifier(_db, _user, Substitute.For<IIdentityService>(), Substitute.For<INotificationEmailSender>(), time);
         return new UpdateTaskHandler(
             _db,
             access,
             new UpdateTaskValidator(),
             new GetTaskHandler(_db, access, time),
-            new ActivityLog(_db, _user, time),
-            notifier,
             time);
     }
 
@@ -71,6 +67,7 @@ public sealed class UpdateTaskHandlerTests
         _task.IsBlocked.ShouldBeTrue();
         _task.StatusNote.ShouldBe("waiting");
         result.Value.IsBlocked.ShouldBeTrue();
+        await EventPipeline.BeforeCommitAsync(_db, _user, _task);
         _activitySet.Received().Add(Arg.Is<ActivityEntry>(entry => entry.Type == ActivityType.TaskUpdated && entry.Changes.Contains("isBlocked")));
     }
 

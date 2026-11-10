@@ -8,9 +8,9 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { RouterLink } from '@angular/router';
 import { TranslocoDirective } from '@jsverse/transloco';
 import { Store } from '@ngrx/store';
-import { LoginPageActions } from '../../../core/auth/store/auth.actions';
-import { authFeature } from '../../../core/auth/store/auth.feature';
-import { DemoAccount } from '../../../core/demo/demo.service';
+import { LoginPageActions } from '@core/auth/store/auth.actions';
+import { authFeature } from '@core/auth/store/auth.feature';
+import { DemoAccount } from '@core/demo/demo.service';
 import { DemoPanel } from './demo-panel';
 
 @Component({

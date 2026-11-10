@@ -6,7 +6,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { TranslocoDirective } from '@jsverse/transloco';
 import { Store } from '@ngrx/store';
-import { Notifier } from '../../../core/notifications/notifier';
+import { Notifier } from '@core/notifications/notifier';
 import { NotificationPreferencesActions } from '../data-access/store/notifications.actions';
 import { notificationsFeature } from '../data-access/store/notifications.feature';
 

@@ -5,7 +5,7 @@ import { TenantMembersApiService } from '../tenant-members-api.service';
 import { MembersApiActions, MembersPageActions } from './members.actions';
 import { changeRole, setActive } from './members.effects';
 import { initialMembersState, membersFeature } from './members.feature';
-import { TenantActions } from '../../../../core/tenant/store/tenant.actions';
+import { TenantActions } from '@core/tenant/store/tenant.actions';
 
 describe('members effects', () => {
   it('runs every change, one after another, even when the next one comes before the first answer', () => {

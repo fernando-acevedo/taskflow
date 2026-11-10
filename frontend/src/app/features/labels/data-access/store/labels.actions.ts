@@ -1,6 +1,6 @@
 import { createActionGroup, props } from '@ngrx/store';
-import { ApiError } from '../../../../core/http/api-error';
-import { Submission } from '../../../../shared/data-access/submission';
+import { ApiError } from '@shared/data-access/api-error';
+import { Submission } from '@shared/data-access/submission';
 import { Label, LabelInput } from '../labels-api.service';
 
 export const LabelsPageActions = createActionGroup({

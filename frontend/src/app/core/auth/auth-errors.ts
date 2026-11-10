@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { problemBody } from '../http/api-error';
+import { problemBody } from '@shared/data-access/api-error';
 import { LoginErrorCode } from './auth.models';
 
 /** The API rejected the refresh token itself; any other failure (network, 5xx) leaves the session alone. */
