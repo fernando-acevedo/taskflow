@@ -34,6 +34,8 @@ public sealed class NotifierTests
             TenantMembership.Create(Guid.NewGuid(), RemovedId, TenantRole.Member, Now));
         _db.TenantMemberships.Returns(memberships);
         _db.Notifications.Returns(_notifications);
+        var preferenceSet = FakeDbSet.Of<NotificationPreferences>();
+        _db.NotificationPreferences.Returns(preferenceSet);
         _identity.FindByIdAsync(ActorId, Arg.Any<CancellationToken>())
             .Returns(new UserDto(ActorId, "actor@tests.local", "Actor", true, [], Now));
     }
@@ -78,20 +80,18 @@ public sealed class NotifierTests
         preferences.Update(emailOnAssigned: true, emailOnMentioned: false, emailOnCommentOnMyTask: false, emailDailyDigest: false);
         var preferenceSet = FakeDbSet.Of(preferences);
         _db.NotificationPreferences.Returns(preferenceSet);
-        _identity.FindByIdsAsync(Arg.Any<IReadOnlyCollection<Guid>>(), Arg.Any<CancellationToken>())
-            .Returns([new UserDto(OtherId, "other@tests.local", "Other", true, [], Now)]);
+        _identity.FindByIdAsync(OtherId, Arg.Any<CancellationToken>())
+            .Returns(new UserDto(OtherId, "other@tests.local", "Other", true, [], Now));
         var notifier = Notifier();
 
         await notifier.NotifyAsync(
             NotificationType.TaskAssigned, OtherId, _projectId, "Website", _taskId, "Design", null, TestContext.Current.CancellationToken);
         await notifier.NotifyAsync(
             NotificationType.Mentioned, OtherId, _projectId, "Website", _taskId, "Design", null, TestContext.Current.CancellationToken);
-        await notifier.SendEmailsAsync(TestContext.Current.CancellationToken);
 
-        await _emails.Received(1).SendAsync(
+        _emails.Received(1).Enqueue(
             Arg.Any<UserDto>(),
-            Arg.Is<IReadOnlyList<Notification>>(list => list.Count == 1 && list[0].Type == NotificationType.TaskAssigned),
-            Arg.Any<CancellationToken>());
+            Arg.Is<IReadOnlyList<Notification>>(list => list.Count == 1 && list[0].Type == NotificationType.TaskAssigned));
     }
 
     private Notifier Notifier() => new(_db, _currentUser, _identity, _emails, new FixedTime(Now));

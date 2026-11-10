@@ -9,9 +9,11 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
-import { DatePipe } from '@angular/common';
+import { Observable } from 'rxjs';
 import { TranslocoDirective } from '@jsverse/transloco';
 import { LanguageService } from '../../../core/i18n/language.service';
+import { isStale } from '../../../core/http/api-error';
+import { StaleNotice } from '../../../shared/ui/stale-notice';
 import { applyApiFieldErrors } from '../../../shared/data-access/api-field-errors';
 import { SaveFn } from '../../../shared/data-access/submission';
 import { parseDuration, toClockText } from '../../../shared/ui/duration';
@@ -33,6 +35,8 @@ export interface TaskFormData {
   readonly tasks?: readonly Task[];
   readonly readOnly: boolean;
   readonly save: SaveFn<TaskInput>;
+  /** The server's current task (null if it can't be fetched); the store then holds its new row version. */
+  readonly refresh?: () => Observable<Task | null>;
 }
 
 /** The dialog saves by itself and closes without a result; it closes with this when the user asks to delete. */
@@ -48,7 +52,6 @@ const MAX_ESTIMATE_MINUTES = 9999 * 60;
 @Component({
   selector: 'app-task-form-dialog',
   imports: [
-    DatePipe,
     ReactiveFormsModule,
     MatButtonModule,
     MatCheckboxModule,
@@ -60,6 +63,7 @@ const MAX_ESTIMATE_MINUTES = 9999 * 60;
     MatSelectModule,
     TranslocoDirective,
     LabelChip,
+    StaleNotice,
     TaskComments,
     TaskHistory,
     TaskTime,
@@ -109,6 +113,8 @@ export class TaskFormDialog {
   protected readonly data = inject<TaskFormData>(MAT_DIALOG_DATA);
   private readonly destroyRef = inject(DestroyRef);
   protected readonly saving = signal(false);
+  /** Someone else changed the task while this dialog was open. */
+  protected readonly stale = signal(false);
   protected readonly priorities = TASK_PRIORITIES;
   /** New tasks can't be due in the past; existing ones may keep a past date. */
   protected readonly minDate = this.data.task ? null : localToday();
@@ -160,6 +166,7 @@ export class TaskFormDialog {
     }
     const { title, description, priority, assigneeId, labelIds, isBlocked, statusNote } = this.form.getRawValue();
     this.saving.set(true);
+    this.stale.set(false);
     this.data
       .save({
         title: title.trim(),
@@ -176,7 +183,9 @@ export class TaskFormDialog {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((error) => {
         this.saving.set(false);
-        if (error) {
+        if (isStale(error)) {
+          this.stale.set(true);
+        } else if (error) {
           // A description of up to 4000 characters must not be lost to a rejected save.
           applyApiFieldErrors(this.form, error);
           if (error.code === 'Tasks.StartAfterDue') {
@@ -186,6 +195,46 @@ export class TaskFormDialog {
           }
         } else {
           this.dialogRef.close();
+        }
+      });
+  }
+
+  /** Replaces the form with the server's version, losing what was typed. */
+  protected reload(): void {
+    this.fetchLatest((task) => {
+      this.form.reset({
+        title: task.title,
+        description: task.description ?? '',
+        priority: task.priority,
+        assigneeId: task.assigneeId ?? '',
+        startDate: task.startDate ?? '',
+        dueDate: task.dueDate ?? '',
+        isBlocked: task.isBlocked,
+        statusNote: task.statusNote ?? '',
+        labelIds: task.labels.map((label) => label.id),
+        estimatedMinutes: toClockText(task.estimatedMinutes),
+      });
+    });
+  }
+
+  /** Takes the server's row version, then saves the typed values again. */
+  protected overwrite(): void {
+    this.fetchLatest(() => this.submit());
+  }
+
+  private fetchLatest(then: (task: Task) => void): void {
+    const refresh = this.data.refresh;
+    if (!refresh) {
+      return;
+    }
+    this.saving.set(true);
+    refresh()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((task) => {
+        this.saving.set(false);
+        if (task) {
+          this.stale.set(false);
+          then(task);
         }
       });
   }

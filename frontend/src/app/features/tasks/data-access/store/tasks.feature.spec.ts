@@ -46,10 +46,44 @@ describe('tasksFeature', () => {
     const dropped = reducer(loaded(), TasksPageActions.taskDropped({ taskId: 'a', status: 'Done', position: 0 }));
     const fromServer = { ...tasks[0], status: 'Done' as const, position: 0, rowVersion: 'v-new', completedAt: '2026-10-19T13:00:00Z' };
 
-    const state = reducer(dropped, TasksApiActions.taskMoved({ task: fromServer }));
+    const state = reducer(
+      dropped,
+      TasksApiActions.taskMoved({
+        result: { task: fromServer, reordered: [{ id: 'b', status: 'ToDo', position: 0, rowVersion: 'v-b-new' }] },
+      }),
+    );
 
     expect(state.entities['a']).toEqual(fromServer);
+    expect(state.entities['b']).toMatchObject({ position: 0, rowVersion: 'v-b-new' });
     expect(state.moveUndo).toBeNull();
+  });
+
+  it('applies the neighbors renumbered by the API: status, position and version', () => {
+    const dropped = reducer(loaded(), TasksPageActions.taskDropped({ taskId: 'a', status: 'Done', position: 0 }));
+    const moved = { ...tasks[0], status: 'Done' as const, position: 0, rowVersion: 'v-a-new' };
+
+    const state = reducer(
+      dropped,
+      TasksApiActions.taskMoved({
+        result: {
+          task: moved,
+          reordered: [
+            { id: 'c', status: 'Done', position: 1, rowVersion: 'v-c-new' },
+            { id: 'b', status: 'ToDo', position: 0, rowVersion: 'v-b-new' },
+          ],
+        },
+      }),
+    );
+
+    expect(column(state, 'Done')).toEqual(['a', 'c']);
+    expect(state.entities['c']?.rowVersion).toBe('v-c-new');
+    expect(state.entities['b']?.rowVersion).toBe('v-b-new');
+  });
+
+  it('stores the server version of a task that was refreshed after a stale save', () => {
+    const state = reducer(loaded(), TasksApiActions.taskRefreshed({ task: { ...tasks[0], title: 'Fresh', rowVersion: 'v-fresh' } }));
+
+    expect(state.entities['a']).toMatchObject({ title: 'Fresh', rowVersion: 'v-fresh' });
   });
 
   it('ignores tasks that arrive for a project that is no longer open', () => {

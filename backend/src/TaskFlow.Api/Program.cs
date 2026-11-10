@@ -122,7 +122,11 @@ app.MapGroup("/api/auth")
     .AddEndpointFilter<DemoRestrictionsFilter>()
     .AddEndpointFilter<ForgetSessionsOnPasswordReset>()
     .MapIdentityApi<ApplicationUser>();
-app.MapHealthChecks("/health", new HealthCheckOptions { ResponseWriter = HealthResponseWriter.WriteAsync });
+// Liveness answers without touching dependencies; readiness (and /health, kept as its alias) checks the database.
+app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false, ResponseWriter = HealthResponseWriter.WriteAsync });
+var ready = new HealthCheckOptions { Predicate = check => check.Tags.Contains("ready"), ResponseWriter = HealthResponseWriter.WriteAsync };
+app.MapHealthChecks("/health/ready", ready);
+app.MapHealthChecks("/health", ready);
 
 await app.Services.InitializeDatabaseAsync(
     migrate: app.Configuration.GetValue<bool>("Database:MigrateOnStartup"),

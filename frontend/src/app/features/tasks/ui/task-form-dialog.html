@@ -4,6 +4,9 @@
     @if (saving()) {
       <mat-progress-bar mode="indeterminate" />
     }
+    @if (stale()) {
+      <app-stale-notice [message]="t('staleMessage')" [busy]="saving()" (reload)="reload()" (overwrite)="overwrite()" />
+    }
     <form id="task-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
       <mat-form-field appearance="outline">
         <mat-label>{{ t('title') }}</mat-label>

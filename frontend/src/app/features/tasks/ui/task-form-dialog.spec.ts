@@ -130,6 +130,71 @@ describe('TaskFormDialog', () => {
     expect((fixture.nativeElement as HTMLElement).querySelector('mat-error')?.textContent).toContain('Too long.');
   });
 
+  describe('when someone else changed the task (stale)', () => {
+    const stale = { code: 'Concurrency.Stale', fields: {} };
+    const alert = (fixture: ReturnType<typeof render>) => (fixture.nativeElement as HTMLElement).querySelector('[role="alert"]');
+    const button = (fixture: ReturnType<typeof render>, index: number) =>
+      (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>('app-stale-notice button')[index];
+
+    it('stays open with an alert and keeps what was typed', async () => {
+      const save = vi.fn(() => of(stale));
+      const fixture = render({ task: aTask({ id: 'a', title: 'Old' }), save });
+
+      type(fixture, 'title', 'Mine');
+      submit(fixture);
+
+      expect(alert(fixture)).not.toBeNull();
+      expect(field(fixture, 'title').value).toBe('Mine');
+      expect((fixture.nativeElement as HTMLElement).querySelector('mat-error')).toBeNull();
+      await expectNoAxeViolations(fixture);
+    });
+
+    it('Reload replaces the form with the server version', () => {
+      const save = vi.fn(() => of(stale));
+      const refresh = vi.fn(() => of(aTask({ id: 'a', title: 'Theirs', statusNote: 'moved on' })));
+      const fixture = render({ task: aTask({ id: 'a', title: 'Old' }), save, refresh });
+      type(fixture, 'title', 'Mine');
+      submit(fixture);
+
+      button(fixture, 0).click();
+      fixture.detectChanges();
+
+      expect(refresh).toHaveBeenCalledOnce();
+      expect(field(fixture, 'title').value).toBe('Theirs');
+      expect(field(fixture, 'statusNote').value).toBe('moved on');
+      expect(alert(fixture)).toBeNull();
+      expect(save).toHaveBeenCalledOnce();
+    });
+
+    it('Save anyway fetches the server version and saves the typed values again', () => {
+      const save = vi.fn().mockReturnValueOnce(of(stale)).mockReturnValueOnce(of(null));
+      const refresh = vi.fn(() => of(aTask({ id: 'a', title: 'Theirs' })));
+      const fixture = render({ task: aTask({ id: 'a', title: 'Old' }), save, refresh });
+      type(fixture, 'title', 'Mine');
+      submit(fixture);
+
+      button(fixture, 1).click();
+      fixture.detectChanges();
+
+      expect(refresh).toHaveBeenCalledOnce();
+      expect(save).toHaveBeenCalledTimes(2);
+      expect(save).toHaveBeenLastCalledWith(expect.objectContaining({ title: 'Mine' }));
+    });
+
+    it('keeps the alert when the server version cannot be fetched', () => {
+      const save = vi.fn(() => of(stale));
+      const refresh = vi.fn(() => of(null));
+      const fixture = render({ task: aTask({ id: 'a' }), save, refresh });
+      submit(fixture);
+
+      button(fixture, 1).click();
+      fixture.detectChanges();
+
+      expect(alert(fixture)).not.toBeNull();
+      expect(save).toHaveBeenCalledOnce();
+    });
+  });
+
   it('has no accessibility violations when editing, with comments, time and history', async () => {
     await expectNoAxeViolations(render({ task: aTask({ id: 'a', title: 'Write brief' }) }));
   });

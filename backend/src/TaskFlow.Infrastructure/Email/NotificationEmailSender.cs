@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using TaskFlow.Application.Notifications;
 using TaskFlow.Application.Users;
+using TaskFlow.Infrastructure.Email.Outbox;
 using TaskFlow.Domain.Notifications;
 
 namespace TaskFlow.Infrastructure.Email;
@@ -13,21 +14,22 @@ namespace TaskFlow.Infrastructure.Email;
 /// <summary>
 /// Writes the email for one notification, or the list of several (the daily digest), in the language of the
 /// current request (English when there is none, as in the background job). Links point to the task on the
-/// frontend. A failed delivery is logged and swallowed: the change that raised the notification already happened.
+/// frontend. The message goes to the outbox (ADR 0018) with the caller's next save; one that can't be composed is
+/// logged and skipped: the change that raised the notification must still happen.
 /// </summary>
 internal sealed partial class NotificationEmailSender(
-    IEmailSender sender,
+    IEmailOutbox outbox,
     IOptions<EmailOptions> emailOptions,
     ILogger<NotificationEmailSender> logger) : INotificationEmailSender
 {
-    public async Task SendAsync(UserDto recipient, IReadOnlyList<Notification> notifications, CancellationToken cancellationToken)
+    public void Enqueue(UserDto recipient, IReadOnlyList<Notification> notifications)
     {
         try
         {
-            await sender.SendAsync(Compose(recipient, notifications), cancellationToken);
+            outbox.Enqueue("Notification", Compose(recipient, notifications));
         }
-#pragma warning disable CA1031 // Any delivery failure (settings, network, SMTP) must leave the operation that raised it intact.
-        catch (Exception exception) when (exception is not OperationCanceledException)
+#pragma warning disable CA1031 // A message that can't be composed (settings) must leave the operation that raised it intact.
+        catch (Exception exception)
 #pragma warning restore CA1031
         {
             LogSendFailed(logger, exception, recipient.Id);
@@ -94,6 +96,6 @@ internal sealed partial class NotificationEmailSender(
         "Tareas por vencer",
         "Abrir la tarea");
 
-    [LoggerMessage(Level = LogLevel.Error, Message = "Could not send a notification email to user {UserId}")]
+    [LoggerMessage(Level = LogLevel.Error, Message = "Could not queue a notification email to user {UserId}")]
     private static partial void LogSendFailed(ILogger logger, Exception exception, Guid userId);
 }

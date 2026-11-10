@@ -116,7 +116,7 @@ Check the current numbers in the Azure documentation before relying on them.
    - Variables: `AZURE_WEBAPP_NAME` (`webAppName` output) and `API_URL` (`apiUrl` output).
 6. Make sure the GitHub environment `production` exists (see step 3).
 7. Run the **Deploy API** workflow, then **Deploy frontend** (they also run on pushes to `main`). The
-   **Wake demo** workflow calls `/health` daily at 03:07 UTC so the nightly reset happens early.
+   **Wake demo** workflow calls `/health/ready` daily at 03:07 UTC so the nightly reset happens early.
 
 The frontend build writes `API_URL` into `frontend/src/environments/environment.ts` (the production
 environment) and publishes `frontend/dist/frontend/browser`.

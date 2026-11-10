@@ -128,7 +128,7 @@ dotnet user-secrets --project src/TaskFlow.Api set "Email:FromAddress" "you@exam
 
 Useful URLs while the API runs in Development:
 
-- `http://localhost:5080/health`: health report, including the database
+- `http://localhost:5080/health/live` (no dependencies) and `/health/ready` (includes the database; `/health` is an alias of it)
 - `http://localhost:5080/scalar/v1`: interactive API reference
 - `http://localhost:5080/api/system/info`: API info; send `Accept-Language: es` for Spanish
 

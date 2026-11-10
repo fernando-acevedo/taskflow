@@ -97,7 +97,6 @@ public sealed class CreateTaskHandler(
 
         db.Tasks.Add(task);
         await db.SaveChangesAsync(cancellationToken);
-        await notifier.SendEmailsAsync(cancellationToken);
 
         return await getTask.HandleAsync(new GetTaskQuery(command.ProjectId, created.Value.Id), cancellationToken);
     }

@@ -98,6 +98,62 @@ public sealed class TasksTests(SqlServerApiFactory factory)
     }
 
     [Fact]
+    public async Task MoveReturnsTheReorderedNeighborsWithTheirNewRowVersions()
+    {
+        var (ownerClient, _) = await factory.CreateUserClientAsync();
+        using var owner = ownerClient;
+        var project = await factory.CreateProjectAsync(owner);
+        var a = await owner.CreateTaskAsync(project.Id, new { title = "A" });
+        var b = await owner.CreateTaskAsync(project.Id, new { title = "B" });
+        var c = await owner.CreateTaskAsync(project.Id, new { title = "C" });
+
+        var result = await owner.MoveTaskWithResultAsync(project.Id, a, "InProgress", 0);
+
+        result.Task.Id.ShouldBe(a.Id);
+        result.Task.Status.ShouldBe("InProgress");
+        result.Reordered.Select(r => (r.Id, r.Status, r.Position)).ShouldBe([(b.Id, "ToDo", 0), (c.Id, "ToDo", 1)]);
+        var tasks = await owner.GetJsonAsync<List<TaskResponse>>($"/api/projects/{project.Id}/tasks");
+        foreach (var reordered in result.Reordered)
+        {
+            tasks.Single(t => t.Id == reordered.Id).RowVersion.ShouldBe(reordered.RowVersion);
+        }
+    }
+
+    [Fact]
+    public async Task ConcurrentMovesIntoOneColumnLeaveContiguousPositions()
+    {
+        var (ownerClient, _) = await factory.CreateUserClientAsync();
+        using var owner = ownerClient;
+        var project = await factory.CreateProjectAsync(owner);
+        var created = new List<TaskResponse>();
+        for (var i = 0; i < 6; i++)
+        {
+            created.Add(await owner.CreateTaskAsync(project.Id, new { title = $"T{i}" }));
+        }
+
+        var statuses = await Task.WhenAll(created.Select(async task =>
+        {
+            using var client = factory.CreateClient();
+            client.DefaultRequestHeaders.Authorization = owner.DefaultRequestHeaders.Authorization;
+            foreach (var header in owner.DefaultRequestHeaders.Where(h => h.Key != "Authorization"))
+            {
+                client.DefaultRequestHeaders.Add(header.Key, header.Value);
+            }
+
+            using var response = await client.TryMoveTaskAsync(project.Id, task, "InProgress", 0);
+            return response.StatusCode;
+        }));
+
+        statuses.ShouldAllBe(code => code == HttpStatusCode.OK || code == HttpStatusCode.Conflict);
+        statuses.ShouldContain(HttpStatusCode.OK);
+        var tasks = await owner.GetJsonAsync<List<TaskResponse>>($"/api/projects/{project.Id}/tasks");
+        foreach (var column in tasks.GroupBy(t => t.Status))
+        {
+            column.Select(t => t.Position).Order().ShouldBe(Enumerable.Range(0, column.Count()));
+        }
+    }
+
+    [Fact]
     public async Task MoveWithAStaleRowVersionConflicts()
     {
         var (ownerClient, _) = await factory.CreateUserClientAsync();

@@ -90,13 +90,12 @@ public sealed class NotifyDueSoonHandler(
         }
 
         db.Notifications.AddRange(created);
+        await QueueDigestsAsync(created, users, cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
-
-        await SendDigestsAsync(created, users, cancellationToken);
         return created.Count;
     }
 
-    private async Task SendDigestsAsync(
+    private async Task QueueDigestsAsync(
         List<Notification> created, Dictionary<Guid, UserDto> users, CancellationToken cancellationToken)
     {
         var recipientIds = created.Select(notification => notification.UserId).Distinct().ToList();
@@ -107,7 +106,7 @@ public sealed class NotifyDueSoonHandler(
 
         foreach (var userId in subscribed)
         {
-            await emails.SendAsync(users[userId], [.. created.Where(notification => notification.UserId == userId)], cancellationToken);
+            emails.Enqueue(users[userId], [.. created.Where(notification => notification.UserId == userId)]);
         }
     }
 

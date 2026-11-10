@@ -5,7 +5,7 @@ import { Store } from '@ngrx/store';
 import { Observable, catchError, concatMap, filter, forkJoin, map, of, switchMap, tap, withLatestFrom } from 'rxjs';
 import { User } from '../../../../core/auth/auth.models';
 import { authFeature } from '../../../../core/auth/store/auth.feature';
-import { toApiError } from '../../../../core/http/api-error';
+import { isStale, toApiError } from '../../../../core/http/api-error';
 import { Notifier } from '../../../../core/notifications/notifier';
 import { Project, ProjectsApiService } from '../projects-api.service';
 import { ProjectPageActions, ProjectsApiActions, ProjectsPageActions } from './projects.actions';
@@ -143,6 +143,25 @@ export const changeProject = createEffect(
   { functional: true },
 );
 
+/** The edit dialog's "Reload": the server's project, so the next save carries its row version. */
+export const refreshProject = createEffect(
+  (actions$ = inject(Actions), store = inject(Store), api = inject(ProjectsApiService)) =>
+    actions$.pipe(
+      ofType(ProjectPageActions.refreshRequested),
+      withLatestFrom(store.select(projectsFeature.selectCurrent)),
+      filter((pair): pair is [(typeof pair)[0], Project] => pair[1] !== null),
+      concatMap(([{ submissionId }, project]) =>
+        api.get(project.id).pipe(
+          map((fresh) => ProjectsApiActions.projectRefreshed({ project: fresh, submissionId })),
+          catchError((error: unknown) =>
+            of(ProjectsApiActions.projectChangeFailed({ error: toApiError(error), submissionId })),
+          ),
+        ),
+      ),
+    ),
+  { functional: true },
+);
+
 export const leaveProject = createEffect(
   (actions$ = inject(Actions), store = inject(Store), api = inject(ProjectsApiService)) =>
     actions$.pipe(
@@ -174,7 +193,10 @@ export const notify = createEffect(
             void router.navigate(['/projects']);
             break;
           default:
-            notifier.error(action.error);
+            // A stale edit is shown inside the dialog that submitted it, not as a snackbar.
+            if (!(isStale(action.error) && action.submissionId !== undefined)) {
+              notifier.error(action.error);
+            }
         }
       }),
     ),

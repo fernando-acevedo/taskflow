@@ -72,7 +72,13 @@ export const tasksFeature = createFeature({
       const undo = changed.map((task) => state.entities[task.id]).filter((task): task is Task => task !== undefined);
       return adapter.upsertMany(changed, { ...state, moveUndo: undo });
     }),
-    on(TasksApiActions.taskMoved, (state, { task }): TasksState => adapter.upsertOne(task, { ...state, moveUndo: null })),
+    on(TasksApiActions.taskRefreshed, (state, { task }): TasksState => adapter.upsertOne(task, state)),
+    on(TasksApiActions.taskMoved, (state, { result }): TasksState =>
+      adapter.updateMany(
+        result.reordered.map(({ id, ...changes }) => ({ id, changes })),
+        adapter.upsertOne(result.task, { ...state, moveUndo: null }),
+      ),
+    ),
     on(TasksApiActions.taskMoveFailed, (state): TasksState =>
       adapter.upsertMany(state.moveUndo ?? [], { ...state, moveUndo: null }),
     ),

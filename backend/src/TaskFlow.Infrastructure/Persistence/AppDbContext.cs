@@ -60,6 +60,9 @@ public sealed class AppDbContext(
 
     public DbSet<DemoResetLog> DemoResetLogs => Set<DemoResetLog>();
 
+    /// <summary>Emails waiting to be sent (ADR 0018). Not tenant-owned: the worker has no tenant.</summary>
+    public DbSet<Email.Outbox.OutboxMessage> OutboxMessages => Set<Email.Outbox.OutboxMessage>();
+
     /// <summary>
     /// The tenant the query filters compare against; read by EF on every query. <c>null</c> matches no row
     /// (fail closed) and is logged, so an empty result caused by a missing tenant is not a silent bug.

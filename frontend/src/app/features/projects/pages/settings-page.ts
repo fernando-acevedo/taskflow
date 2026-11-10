@@ -6,12 +6,12 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoDirective } from '@jsverse/transloco';
 import { Store } from '@ngrx/store';
-import { filter } from 'rxjs';
+import { Observable, filter, map } from 'rxjs';
 import { LanguageService } from '../../../core/i18n/language.service';
 import { LabelsManager } from '../../labels/ui/labels-manager';
 import { SaveFn, Submissions, nextSubmissionId } from '../../../shared/data-access/submission';
 import { confirm } from '../../../shared/ui/confirm-dialog';
-import { ProjectInput } from '../data-access/projects-api.service';
+import { Project, ProjectInput } from '../data-access/projects-api.service';
 import { ProjectPageActions } from '../data-access/store/projects.actions';
 import { projectsFeature } from '../data-access/store/projects.feature';
 import { ProjectFormData, ProjectFormDialog } from '../ui/project-form-dialog';
@@ -101,8 +101,12 @@ export class SettingsPage {
   protected edit(): void {
     const save: SaveFn<ProjectInput> = (project) =>
       this.submissions.dispatchAndWait(ProjectPageActions.updateSubmitted({ project, submissionId: nextSubmissionId() }));
+    const refresh = (): Observable<Project | null> =>
+      this.submissions
+        .dispatchAndWait(ProjectPageActions.refreshRequested({ submissionId: nextSubmissionId() }))
+        .pipe(map((error) => (error ? null : this.project())));
     this.dialog.open<ProjectFormDialog, ProjectFormData>(ProjectFormDialog, {
-      data: { project: this.project(), clients: this.clients(), save },
+      data: { project: this.project(), clients: this.clients(), save, refresh },
       width: '520px',
     });
   }

@@ -227,7 +227,11 @@
   "common": {
     "cancel": "Cancel",
     "dismiss": "Dismiss",
-    "retry": "Try again"
+    "retry": "Try again",
+    "stale": {
+      "reload": "Reload",
+      "overwrite": "Save anyway"
+    }
   },
   "apiErrors": {
     "Demo": {
@@ -434,6 +438,7 @@
     "archiveTitle": "Archive {{ name }}?",
     "archiveMessage": "The project becomes read-only and moves to the archived list. Owners can restore it.",
     "saved": "Project saved",
+    "staleMessage": "Someone else changed this project while you were editing it.",
     "archived": "Project archived",
     "restored": "Project restored"
   },
@@ -527,6 +532,8 @@
     "showing": "Showing {{ count }} of {{ total }} tasks",
     "created": "Task created",
     "saved": "Task saved",
+    "staleMessage": "Someone else changed this task while you were editing it.",
+    "moveStale": "The task changed elsewhere; the board was updated.",
     "deleted": "Task deleted",
     "deleteTitle": "Delete this task?",
     "deleteMessage": "“{{ title }}” will be deleted permanently.",

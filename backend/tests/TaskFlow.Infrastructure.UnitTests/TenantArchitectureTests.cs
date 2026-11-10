@@ -19,12 +19,14 @@ public sealed partial class TenantArchitectureTests
         ["TenantSupportAccess"] = "audit of super-admin entries; read per tenant by explicit TenantId, written before the tenant is resolved",
         ["NotificationPreferences"] = "per user, not per tenant",
         ["DemoResetLog"] = "global audit of the demo reset",
-        ["ApplicationUser"] = "Identity: users are global",
+        ["OutboxMessage"] = "system queue of emails (ADR 0018); the worker has no tenant and the payload is self-contained",
+        ["ApplicationUser"] ="Identity: users are global",
     };
 
     // Source files allowed to use IgnoreQueryFilters / FromSql* / ExecuteSql*, each with its reason.
     private static readonly Dictionary<string, string> AllowedRawSql = new()
     {
+        ["Email/Outbox/OutboxDispatcher.cs"] = "claims outbox rows (not tenant owned) with UPDLOCK, READPAST so several instances don't send the same email (ADR 0018)",
         ["ApiKeys/ApiKeyAuthentication.cs"] = "finds an API key by the hash of its secret before any tenant is known; the key says which tenant the request is in (ADR 0016)",
     };
 

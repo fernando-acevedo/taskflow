@@ -19,5 +19,7 @@
 | [15](0015-per-user-theme.md) | The color theme is a per-user preference stored on the server | Accepted | System, Light or Dark on the user; the frontend caches it in the browser for the login page. |
 | [16](0016-api-keys.md) | API keys let agents call the API with a limited, revocable credential | Accepted | Hashed `tf_` secrets, Read/Write scopes, never Manage, per-key rate limit, bound to one user and tenant. |
 | [17](0017-task-model-for-the-gantt.md) | Tasks carry the fields the Gantt needs, and agents sync them by external key | Accepted | ExternalKey, StartDate, IsBlocked, StatusNote, dependencies; upsert by key and atomic batch sync. |
+| [18](0018-email-outbox.md) | Emails go through a transactional outbox | Accepted | `OutboxMessages` written with the change, sent by a background worker with backoff, a retry limit and multi-instance claiming. |
+| [19](0019-board-moves-and-health-probes.md) | Serializable board moves, a move response with the reordered tasks, and live/ready health probes | Accepted | `MoveTask` in a serializable transaction; the move answers with `reordered`; `/health/live` and `/health/ready`. |
 
 Add a new ADR when making a decision of comparable weight, and add it to this table.

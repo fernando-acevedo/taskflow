@@ -91,7 +91,6 @@ public sealed class CreateTaskCommentHandler(
 
         db.TaskComments.Add(created.Value);
         await db.SaveChangesAsync(cancellationToken);
-        await notifier.SendEmailsAsync(cancellationToken);
 
         var author = await identity.FindByIdAsync(currentUser.Id, cancellationToken);
         return TaskCommentDto.From(created.Value, author?.DisplayName ?? string.Empty);

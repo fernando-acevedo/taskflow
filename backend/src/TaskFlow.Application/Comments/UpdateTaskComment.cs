@@ -86,7 +86,6 @@ public sealed class UpdateTaskCommentHandler(
         }
 
         await db.SaveChangesAsync(cancellationToken);
-        await notifier.SendEmailsAsync(cancellationToken);
 
         var author = await identity.FindByIdAsync(comment.AuthorId, cancellationToken);
         return TaskCommentDto.From(comment, author?.DisplayName ?? string.Empty);

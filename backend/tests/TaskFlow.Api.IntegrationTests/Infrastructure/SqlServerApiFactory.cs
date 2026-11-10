@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Time.Testing;
 using TaskFlow.Infrastructure.Email;
+using TaskFlow.Infrastructure.Email.Outbox;
 using TaskFlow.Infrastructure.Persistence;
 using Testcontainers.MsSql;
 
@@ -42,6 +43,12 @@ public sealed class SqlServerApiFactory : WebApplicationFactory<Program>, IAsync
     public FakeTimeProvider Time { get; } = new(new DateTimeOffset(DateTime.UtcNow.Date.AddHours(12), TimeSpan.Zero));
 
     public DateOnly Today => DateOnly.FromDateTime(Time.GetUtcNow().UtcDateTime);
+
+    public SqlServerApiFactory() => Emails.Drain = DrainOutboxAsync;
+
+    /// <summary>Sends every due email in the outbox now, as the background worker would (it is off in tests).</summary>
+    public async Task DrainOutboxAsync() =>
+        await Services.GetRequiredService<OutboxDispatcher>().ProcessPendingAsync(CancellationToken.None);
 
     public async ValueTask InitializeAsync()
     {
@@ -100,6 +107,7 @@ public sealed class SqlServerApiFactory : WebApplicationFactory<Program>, IAsync
         builder.UseSetting("RateLimiting:Auth:PermitLimit", "10000");
         builder.UseSetting("Email:FrontendUrl", "http://localhost:4200");
         builder.UseSetting("Notifications:DueSoonEnabled", "false");
+        builder.UseSetting("Outbox:Enabled", "false");
         builder.ConfigureTestServices(services =>
         {
             services.AddSingleton<IEmailSender>(Emails);
