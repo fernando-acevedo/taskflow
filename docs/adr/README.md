@@ -21,5 +21,8 @@
 | [17](0017-task-model-for-the-gantt.md) | Tasks carry the fields the Gantt needs, and agents sync them by external key | Accepted | ExternalKey, StartDate, IsBlocked, StatusNote, dependencies; upsert by key and atomic batch sync. |
 | [18](0018-email-outbox.md) | Emails go through a transactional outbox | Accepted | `OutboxMessages` written with the change, sent by a background worker with backoff, a retry limit and multi-instance claiming. |
 | [19](0019-board-moves-and-health-probes.md) | Serializable board moves, a move response with the reordered tasks, and live/ready health probes | Accepted | `MoveTask` in a serializable transaction; the move answers with `reordered`; `/health/live` and `/health/ready`. |
+| [20](0020-distributed-cache-and-job-locks.md) | Distributed cache with tag invalidation, and database locks for background jobs | Accepted | `HybridCache` with optional Redis L2 and `RemoveByTagAsync`; `sp_getapplock` for jobs; more than one instance needs Redis. |
+| [21](0021-observability.md) | Observability with OpenTelemetry | Accepted | Traces and metrics always on, exported to Azure Monitor or OTLP only when configured; `traceId` in ProblemDetails and logs. |
+| [22](0022-http-contract.md) | HTTP contract: security headers, rate limits, compression, versioning and conditional requests | Accepted | Headers + HSTS, token bucket per user/tenant, Brotli/gzip, `Asp.Versioning` (v1 default), ETag / If-Match (412) / If-None-Match (304). |
 
 Add a new ADR when making a decision of comparable weight, and add it to this table.

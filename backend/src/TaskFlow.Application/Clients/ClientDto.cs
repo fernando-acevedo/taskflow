@@ -11,7 +11,8 @@ public sealed record ClientDto(
     string? Notes,
     bool IsArchived,
     int ActiveProjectCount,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt,
+    byte[] RowVersion);
 
 /// <summary>The editable fields of a client, shared by create and update.</summary>
 public interface IClientFields
@@ -41,5 +42,6 @@ internal static class ClientRules
             client.Notes,
             client.IsArchived,
             projects.Count(project => project.ClientId == client.Id && !project.IsArchived),
-            client.CreatedAt));
+            client.CreatedAt,
+            client.RowVersion));
 }

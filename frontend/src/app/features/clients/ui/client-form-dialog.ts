@@ -6,14 +6,19 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { Observable } from 'rxjs';
 import { TranslocoDirective } from '@jsverse/transloco';
+import { isStale } from '../../../core/http/api-error';
 import { applyApiFieldErrors } from '../../../shared/data-access/api-field-errors';
 import { SaveFn } from '../../../shared/data-access/submission';
+import { StaleNotice } from '../../../shared/ui/stale-notice';
 import { Client, ClientInput } from '../data-access/clients-api.service';
 
 export interface ClientFormData {
   readonly client: Client | null;
   readonly save: SaveFn<ClientInput>;
+  /** The server's current client (null if it can't be fetched); the store then holds its new row version. */
+  readonly refresh?: () => Observable<Client | null>;
 }
 
 /** Creates a client, or edits the one passed as data. Stays open, keeping the values, until the save succeeds. */
@@ -27,6 +32,7 @@ export interface ClientFormData {
     MatInputModule,
     MatProgressBarModule,
     TranslocoDirective,
+    StaleNotice,
   ],
   template: `
     <ng-container *transloco="let t; prefix: 'clients'">
@@ -35,6 +41,9 @@ export interface ClientFormData {
         <mat-dialog-content>
           @if (saving()) {
             <mat-progress-bar mode="indeterminate" />
+          }
+          @if (stale()) {
+            <app-stale-notice [message]="t('staleMessage')" [busy]="saving()" (reload)="reload()" (overwrite)="overwrite()" />
           }
           <mat-form-field appearance="outline">
             <mat-label>{{ t('name') }}</mat-label>
@@ -82,6 +91,8 @@ export class ClientFormDialog {
   private readonly destroyRef = inject(DestroyRef);
   protected readonly client = this.data.client;
   protected readonly saving = signal(false);
+  /** Someone else changed the client while this dialog was open. */
+  protected readonly stale = signal(false);
 
   protected readonly form = inject(NonNullableFormBuilder).group({
     name: [this.client?.name ?? '', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
@@ -96,15 +107,51 @@ export class ClientFormDialog {
     }
     const { name, contactEmail, notes } = this.form.getRawValue();
     this.saving.set(true);
+    this.stale.set(false);
     this.data
       .save({ name: name.trim(), contactEmail: contactEmail.trim() || null, notes: notes.trim() || null })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((error) => {
         this.saving.set(false);
-        if (error) {
+        if (isStale(error)) {
+          this.stale.set(true);
+        } else if (error) {
           applyApiFieldErrors(this.form, error);
         } else {
           this.dialogRef.close(true);
+        }
+      });
+  }
+
+  /** Replaces the form with the server's version, losing what was typed. */
+  protected reload(): void {
+    this.fetchLatest((client) => {
+      this.form.reset({
+        name: client.name,
+        contactEmail: client.contactEmail ?? '',
+        notes: client.notes ?? '',
+      });
+    });
+  }
+
+  /** Takes the server's row version, then saves the typed values again. */
+  protected overwrite(): void {
+    this.fetchLatest(() => this.submit());
+  }
+
+  private fetchLatest(then: (client: Client) => void): void {
+    const refresh = this.data.refresh;
+    if (!refresh) {
+      return;
+    }
+    this.saving.set(true);
+    refresh()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((client) => {
+        this.saving.set(false);
+        if (client) {
+          this.stale.set(false);
+          then(client);
         }
       });
   }

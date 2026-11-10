@@ -7,11 +7,15 @@ using TaskFlow.Domain.Common;
 
 namespace TaskFlow.Application.Clients;
 
-public sealed record UpdateClientCommand(Guid ClientId, string Name, string? ContactEmail, string? Notes) : IClientFields;
+public sealed record UpdateClientCommand(Guid ClientId, string Name, string? ContactEmail, string? Notes, byte[] RowVersion) : IClientFields;
 
 public sealed class UpdateClientValidator : AbstractValidator<UpdateClientCommand>
 {
-    public UpdateClientValidator() => this.AddClientFieldRules();
+    public UpdateClientValidator()
+    {
+        this.AddClientFieldRules();
+        RuleFor(command => command.RowVersion).NotEmpty();
+    }
 }
 
 public sealed class UpdateClientHandler(IAppDbContext db, IValidator<UpdateClientCommand> validator)
@@ -28,6 +32,11 @@ public sealed class UpdateClientHandler(IAppDbContext db, IValidator<UpdateClien
         if (client is null)
         {
             return ClientErrors.NotFound;
+        }
+
+        if (!RowVersions.Matches(client.RowVersion, command.RowVersion))
+        {
+            return CommonErrors.Stale;
         }
 
         var name = command.Name.Trim();

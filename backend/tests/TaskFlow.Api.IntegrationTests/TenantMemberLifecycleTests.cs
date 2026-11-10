@@ -135,7 +135,7 @@ public sealed class TenantMemberLifecycleTests(SqlServerApiFactory factory)
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             var adminId = await db.Users.Where(user => user.Email == SqlServerApiFactory.AdminEmail).Select(user => user.Id).SingleAsync(Ct);
             await db.TenantMemberships.Where(m => m.TenantId == a.TenantId && m.UserId == adminId).ExecuteDeleteAsync(Ct);
-            scope.ServiceProvider.GetRequiredService<TenantAccess>().Forget(adminId, a.TenantId);
+            await scope.ServiceProvider.GetRequiredService<TenantAccess>().ForgetAsync(adminId, Ct);
         }
 
         var entries = await a.Owner.GetJsonAsync<List<SupportEntry>>("/api/tenant/support-access");

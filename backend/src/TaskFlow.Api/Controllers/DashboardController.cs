@@ -1,11 +1,14 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using TaskFlow.Api.Identity;
 using TaskFlow.Application.Dashboard;
 
 namespace TaskFlow.Api.Controllers;
 
 /// <summary>Aggregated metrics, computed in the database.</summary>
 [Authorize]
+[EnableRateLimiting(RateLimitPolicies.Report)]
 [Route("api")]
 public sealed class DashboardController : ApiControllerBase
 {

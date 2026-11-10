@@ -99,12 +99,22 @@ export class SettingsPage {
   private readonly clients = this.store.selectSignal(projectsFeature.selectClientOptions);
 
   protected edit(): void {
+    // The version the dialog opened with; it changes only on Reload or Save anyway (a successful refresh).
+    let rowVersion = this.project()?.rowVersion ?? '';
     const save: SaveFn<ProjectInput> = (project) =>
-      this.submissions.dispatchAndWait(ProjectPageActions.updateSubmitted({ project, submissionId: nextSubmissionId() }));
+      this.submissions.dispatchAndWait(ProjectPageActions.updateSubmitted({ project, rowVersion, submissionId: nextSubmissionId() }));
     const refresh = (): Observable<Project | null> =>
       this.submissions
         .dispatchAndWait(ProjectPageActions.refreshRequested({ submissionId: nextSubmissionId() }))
-        .pipe(map((error) => (error ? null : this.project())));
+        .pipe(
+          map((error) => {
+            const latest = error ? null : this.project();
+            if (latest) {
+              rowVersion = latest.rowVersion;
+            }
+            return latest;
+          }),
+        );
     this.dialog.open<ProjectFormDialog, ProjectFormData>(ProjectFormDialog, {
       data: { project: this.project(), clients: this.clients(), save, refresh },
       width: '520px',

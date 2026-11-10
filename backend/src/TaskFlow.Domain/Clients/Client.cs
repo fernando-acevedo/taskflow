@@ -31,6 +31,9 @@ public sealed class Client : ITenantOwned
 
     public DateTimeOffset CreatedAt { get; private set; }
 
+    /// <summary>Concurrency token: an edit made on an older version is rejected.</summary>
+    public byte[] RowVersion { get; private set; } = [];
+
     public static Client Create(string name, string? contactEmail, string? notes, DateTimeOffset now) =>
         new(Guid.CreateVersion7(now), name, contactEmail, notes, now);
 

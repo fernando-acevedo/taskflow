@@ -15,8 +15,11 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { TranslocoDirective } from '@jsverse/transloco';
+import { Observable } from 'rxjs';
+import { isStale } from '../../../core/http/api-error';
 import { applyApiFieldErrors } from '../../../shared/data-access/api-field-errors';
 import { SaveFn } from '../../../shared/data-access/submission';
+import { StaleNotice } from '../../../shared/ui/stale-notice';
 import { COMMENT_MAX_LENGTH, CommentInput } from '../data-access/comments-api.service';
 import { ActiveMention, Mentionable, activeMention, insertMention, mentionedIds, suggest } from './mentions';
 
@@ -26,10 +29,13 @@ import { ActiveMention, Mentionable, activeMention, insertMention, mentionedIds,
  */
 @Component({
   selector: 'app-comment-editor',
-  imports: [ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, TranslocoDirective],
+  imports: [ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, TranslocoDirective, StaleNotice],
   template: `
     <ng-container *transloco="let t; prefix: 'comments'">
       <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        @if (stale()) {
+          <app-stale-notice [message]="t('staleMessage')" [busy]="saving()" (reload)="reload()" (overwrite)="overwrite()" />
+        }
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>{{ t(label()) }}</mat-label>
           <textarea
@@ -123,12 +129,16 @@ export class CommentEditor implements OnInit {
   readonly label = input('newComment');
   readonly submitLabel = input('post');
   readonly cancellable = input(false);
+  /** When editing: fetches the server's current body (null if it cannot be). The store then holds its row version. */
+  readonly refresh = input<(() => Observable<string | null>) | null>(null);
   readonly saved = output();
   readonly cancelled = output();
 
   protected readonly listId = `comment-mentions-${CommentEditor.nextId++}`;
   protected readonly maxLength = COMMENT_MAX_LENGTH;
   protected readonly saving = signal(false);
+  /** Someone else changed the comment while it was being edited. */
+  protected readonly stale = signal(false);
   private readonly mention = signal<ActiveMention | null>(null);
   private readonly rawHighlighted = signal(0);
   private readonly query = signal('');
@@ -216,16 +226,46 @@ export class CommentEditor implements OnInit {
     }
     const body = this.form.controls.body.value.trim();
     this.saving.set(true);
+    this.stale.set(false);
     this.save()({ body, mentionedUserIds: mentionedIds(body, this.members()) })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((error) => {
         this.saving.set(false);
-        if (error) {
+        if (isStale(error)) {
+          this.stale.set(true);
+        } else if (error) {
           // Up to 4000 characters must not be lost to a rejected save.
           applyApiFieldErrors(this.form, error);
         } else {
           this.form.reset({ body: '' });
           this.saved.emit();
+        }
+      });
+  }
+
+  /** Replaces the text with the server's version, losing what was typed. */
+  protected reload(): void {
+    this.fetchLatest((body) => this.form.reset({ body }));
+  }
+
+  /** Takes the server's row version, then saves the typed text again. */
+  protected overwrite(): void {
+    this.fetchLatest(() => this.submit());
+  }
+
+  private fetchLatest(then: (body: string) => void): void {
+    const refresh = this.refresh();
+    if (!refresh) {
+      return;
+    }
+    this.saving.set(true);
+    refresh()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((body) => {
+        this.saving.set(false);
+        if (body !== null) {
+          this.stale.set(false);
+          then(body);
         }
       });
   }

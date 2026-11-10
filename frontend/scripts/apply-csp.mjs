@@ -5,6 +5,7 @@
 //                      anti-flash theme script from src/index.html, and the one the build adds to load the
 //                      critical-CSS stylesheet). Hashing the built file, not src/index.html, keeps the hash right
 //                      whatever the line endings of the checkout or the transformations the build applies.
+//   __TELEMETRY_ORIGIN__ the Application Insights ingestion origin of `appInsightsConnectionString`; removed when it is empty.
 //   __API_ORIGIN__     the origin of `apiUrl` in src/environments/environment.ts (the deploy workflow writes it
 //                      from vars.API_URL before building). Empty `apiUrl` leaves only 'self'.
 //
@@ -14,7 +15,7 @@
 import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const distDir = join(root, 'dist', 'frontend', 'browser');
@@ -41,6 +42,21 @@ export function apiOrigin(environmentSource) {
   return url === '' ? '' : new URL(url).origin;
 }
 
+export function telemetryOrigin(environmentSource) {
+  const connection = /appInsightsConnectionString:\s*'([^']*)'/.exec(environmentSource)?.[1] ?? '';
+  if (connection === '') {
+    return '';
+  }
+  const endpoint = /IngestionEndpoint=([^;]+)/i.exec(connection)?.[1] ?? 'https://dc.services.visualstudio.com';
+  return new URL(endpoint).origin;
+}
+
+/** The sources of the policy's connect-src directive. */
+export function connectSources(policy) {
+  const directive = policy.split(';').map((part) => part.trim()).find((part) => part.startsWith('connect-src'));
+  return directive ? directive.split(/\s+/).slice(1) : [];
+}
+
 function expectedPolicy(template) {
   const html = readFileSync(join(distDir, 'index.html'), 'utf8');
   const hashes = inlineScriptHashes(html);
@@ -48,34 +64,49 @@ function expectedPolicy(template) {
     throw new Error('No inline script found in the built index.html; the CSP placeholders would be wrong.');
   }
   const origin = apiOrigin(readFileSync(join(root, 'src', 'environments', 'environment.ts'), 'utf8'));
-  return template.replace('__SCRIPT_HASHES__', hashes.join(' ')).replace(/ ?__API_ORIGIN__/, origin ? ` ${origin}` : '');
+  const environmentSource = readFileSync(join(root, 'src', 'environments', 'environment.ts'), 'utf8');
+  const telemetry = telemetryOrigin(environmentSource);
+  return template
+    .replace('__SCRIPT_HASHES__', hashes.join(' '))
+    .replace(/ ?__API_ORIGIN__/, origin ? ` ${origin}` : '')
+    .replace(/ ?__TELEMETRY_ORIGIN__/, telemetry ? ` ${telemetry}` : '');
 }
 
-const check = process.argv.includes('--check');
-const current = readFileSync(configPath, 'utf8');
+function main() {
+  const check = process.argv.includes('--check');
+  const current = readFileSync(configPath, 'utf8');
 
-if (check) {
-  // The template is the file as it was before the rewrite: rebuild it from the resolved policy.
-  const policy = JSON.parse(current).globalHeaders['Content-Security-Policy'];
-  const html = readFileSync(join(distDir, 'index.html'), 'utf8');
-  const missing = inlineScriptHashes(html).filter((hash) => !policy.includes(hash));
-  const origin = apiOrigin(readFileSync(join(root, 'src', 'environments', 'environment.ts'), 'utf8'));
-  const problems = [
-    ...inlineEventHandlers(html).map((name) => `index.html has an inline ${name}= attribute, which the CSP blocks`),
-    ...missing.map((hash) => `inline script hash ${hash} is not in the CSP`),
-    ...(policy.includes('__') ? ['the CSP still has a placeholder'] : []),
-    ...(origin && !policy.includes(origin) ? [`connect-src lacks the API origin ${origin}`] : []),
-  ];
-  if (problems.length > 0) {
-    console.error(`CSP check failed:\n- ${problems.join('\n- ')}`);
-    process.exit(1);
-  }
-  console.log('CSP matches the built index.html.');
-} else {
-  if (!current.includes('__SCRIPT_HASHES__')) {
-    console.log('staticwebapp.config.json has no placeholders; nothing to do.');
+  if (check) {
+    // The template is the file as it was before the rewrite: rebuild it from the resolved policy.
+    const policy = JSON.parse(current).globalHeaders['Content-Security-Policy'];
+    const html = readFileSync(join(distDir, 'index.html'), 'utf8');
+    const missing = inlineScriptHashes(html).filter((hash) => !policy.includes(hash));
+    const origin = apiOrigin(readFileSync(join(root, 'src', 'environments', 'environment.ts'), 'utf8'));
+    const telemetry = telemetryOrigin(readFileSync(join(root, 'src', 'environments', 'environment.ts'), 'utf8'));
+    const problems = [
+      ...inlineEventHandlers(html).map((name) => `index.html has an inline ${name}= attribute, which the CSP blocks`),
+      ...missing.map((hash) => `inline script hash ${hash} is not in the CSP`),
+      ...(policy.includes('__') ? ['the CSP still has a placeholder'] : []),
+      ...(origin && !connectSources(policy).includes(origin) ? [`connect-src lacks the API origin ${origin}`] : []),
+    ...(telemetry && !connectSources(policy).includes(telemetry)
+      ? [`connect-src lacks the telemetry origin ${telemetry} (appInsightsConnectionString is set)`]
+      : []),
+    ];
+    if (problems.length > 0) {
+      console.error(`CSP check failed:\n- ${problems.join('\n- ')}`);
+      process.exit(1);
+    }
+    console.log('CSP matches the built index.html.');
   } else {
-    writeFileSync(configPath, expectedPolicy(current));
-    console.log('CSP written to dist/frontend/browser/staticwebapp.config.json.');
+    if (!current.includes('__SCRIPT_HASHES__')) {
+      console.log('staticwebapp.config.json has no placeholders; nothing to do.');
+    } else {
+      writeFileSync(configPath, expectedPolicy(current));
+      console.log('CSP written to dist/frontend/browser/staticwebapp.config.json.');
+    }
   }
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main();
 }

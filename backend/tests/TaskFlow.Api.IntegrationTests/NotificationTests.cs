@@ -67,7 +67,7 @@ public sealed class NotificationTests(SqlServerApiFactory factory)
 
         using var edit = await team.Owner.PutAsJsonAsync(
             $"/api/projects/{team.Project.Id}/tasks/{task.Id}/comments/{comment.Id}",
-            new { body = "Look at this again", mentionedUserIds = new[] { team.MemberId, team.ThirdId } },
+            new { body = "Look at this again", mentionedUserIds = new[] { team.MemberId, team.ThirdId }, rowVersion = comment.RowVersion },
             Ct);
         edit.EnsureSuccessStatusCode();
 
@@ -321,7 +321,7 @@ public sealed class NotificationTests(SqlServerApiFactory factory)
         Guid MemberId,
         Guid ThirdId);
 
-    private sealed record CommentResponse(Guid Id);
+    private sealed record CommentResponse(Guid Id, byte[] RowVersion);
 
     private sealed record UnreadCountResponse(int Count);
 

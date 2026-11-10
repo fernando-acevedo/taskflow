@@ -19,6 +19,8 @@ jobs:
     environment: production
     env:
       API_URL: ${{ vars.API_URL }}
+      # Optional, not a secret: leave the variable unset to keep error reporting off.
+      APPINSIGHTS_CONNECTION_STRING: ${{ vars.APPINSIGHTS_CONNECTION_STRING }}
     steps:
       - uses: actions/checkout@v5
 
@@ -38,7 +40,7 @@ jobs:
         working-directory: frontend
         run: |
           if [ -z "$API_URL" ]; then echo "vars.API_URL is empty"; exit 1; fi
-          printf "export const environment = {\n  production: true,\n  apiUrl: '%s',\n};\n" "${API_URL%/}" > src/environments/environment.ts
+          printf "export const environment = {\n  production: true,\n  apiUrl: '%s',\n  appInsightsConnectionString: '%s',\n};\n" "${API_URL%/}" "${APPINSIGHTS_CONNECTION_STRING}" > src/environments/environment.ts
           cat src/environments/environment.ts
 
       - name: Build

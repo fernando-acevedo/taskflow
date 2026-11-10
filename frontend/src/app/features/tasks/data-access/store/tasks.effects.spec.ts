@@ -108,9 +108,19 @@ describe('tasks effects', () => {
     });
   });
 
+  it('sends the version the dialog opened with, not the one a background reload put in the store', () => {
+    const api = { update: vi.fn(() => of(aTask({ id: 'a' }))) } as unknown as TasksApiService;
+    const actions$ = of(TasksPageActions.updateSubmitted({ taskId: 'a', changes: input, rowVersion: 'rv-opened', submissionId: 12 })) as Actions;
+    const store = storeWith(new Map([[tasksFeature.selectEntities, { a: aTask({ id: 'a', rowVersion: 'rv-theirs' }) }]]));
+
+    run(updateTask(actions$, store, api));
+
+    expect(api.update).toHaveBeenCalledWith(expect.objectContaining({ id: 'a', rowVersion: 'rv-opened' }), input);
+  });
+
   it("answers an update of a task that's gone without calling the API, so the form gets its outcome", () => {
     const api = { update: vi.fn() } as unknown as TasksApiService;
-    const actions$ = of(TasksPageActions.updateSubmitted({ taskId: 'gone', changes: input, submissionId: 4 })) as Actions;
+    const actions$ = of(TasksPageActions.updateSubmitted({ taskId: 'gone', changes: input, rowVersion: 'rv1', submissionId: 4 })) as Actions;
 
     const emitted = run(updateTask(actions$, storeWith(new Map([[tasksFeature.selectEntities, {}]])), api));
 

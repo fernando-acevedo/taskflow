@@ -28,7 +28,7 @@ public sealed class LabelTests(SqlServerApiFactory factory)
         var list = await member.GetJsonAsync<List<LabelResponse>>($"/api/projects/{project.Id}/labels");
         list.ShouldHaveSingleItem().Id.ShouldBe(bug.Id);
 
-        using var renamed = await owner.PutAsJsonAsync($"/api/projects/{project.Id}/labels/{bug.Id}", new { name = "Defect", color = "#00ff00" }, Ct);
+        using var renamed = await owner.PutAsJsonAsync($"/api/projects/{project.Id}/labels/{bug.Id}", new { name = "Defect", color = "#00ff00", bug.RowVersion }, Ct);
         (await renamed.ReadAsync<LabelResponse>()).Name.ShouldBe("Defect");
     }
 
@@ -114,7 +114,7 @@ public sealed class LabelTests(SqlServerApiFactory factory)
         (await owner.AddMemberAsync(project.Id, memberEmail)).EnsureSuccessStatusCode();
         var bug = await CreateLabelAsync(owner, project.Id, "Bug", "#FF0000");
 
-        using var put = await member.PutAsJsonAsync($"/api/projects/{project.Id}/labels/{bug.Id}", new { name = "Defect", color = "#00FF00" }, Ct);
+        using var put = await member.PutAsJsonAsync($"/api/projects/{project.Id}/labels/{bug.Id}", new { name = "Defect", color = "#00FF00", bug.RowVersion }, Ct);
         using var delete = await member.DeleteAsync(new Uri($"/api/projects/{project.Id}/labels/{bug.Id}", UriKind.Relative), Ct);
 
         put.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
@@ -186,7 +186,7 @@ public sealed class LabelTests(SqlServerApiFactory factory)
         return await response.ReadAsync<LabeledTask>();
     }
 
-    private sealed record LabelResponse(Guid Id, string Name, string Color);
+    private sealed record LabelResponse(Guid Id, string Name, string Color, byte[] RowVersion);
 
     private sealed record LabeledTask(Guid Id, byte[] RowVersion, IReadOnlyList<LabelResponse> Labels);
 }

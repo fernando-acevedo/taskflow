@@ -11,6 +11,7 @@ internal sealed class TaskCommentConfiguration : IEntityTypeConfiguration<TaskCo
     {
         builder.ToTable("TaskComments");
         builder.Property(comment => comment.Id).ValueGeneratedNever();
+        builder.Property(comment => comment.RowVersion).IsRowVersion();
         builder.Property(comment => comment.Body).HasMaxLength(TaskComment.BodyMaxLength);
 
         builder.HasOne<TaskItem>().WithMany().HasForeignKey(comment => comment.TaskItemId).OnDelete(DeleteBehavior.Cascade);

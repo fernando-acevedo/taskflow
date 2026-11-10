@@ -8,7 +8,7 @@ using TaskFlow.Domain.Tasks;
 
 namespace TaskFlow.Application.Comments;
 
-public sealed record DeleteTaskCommentCommand(Guid ProjectId, Guid TaskId, Guid CommentId);
+public sealed record DeleteTaskCommentCommand(Guid ProjectId, Guid TaskId, Guid CommentId, byte[]? RowVersion = null);
 
 /// <summary>The author, or an owner of the project, deletes a comment.</summary>
 public sealed class DeleteTaskCommentHandler(IAppDbContext db, ProjectAccess access, ICurrentUser currentUser, ActivityLog activity)
@@ -29,6 +29,11 @@ public sealed class DeleteTaskCommentHandler(IAppDbContext db, ProjectAccess acc
         if (comment is null)
         {
             return TaskCommentErrors.NotFound;
+        }
+
+        if (command.RowVersion is not null && !RowVersions.Matches(comment.RowVersion, command.RowVersion))
+        {
+            return CommonErrors.Stale;
         }
 
         var canManage = ProjectAccess.Allows(allowed.Value, ProjectAccessLevel.Manage, currentUser);

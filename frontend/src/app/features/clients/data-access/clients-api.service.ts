@@ -12,6 +12,8 @@ export interface Client {
   readonly isArchived: boolean;
   readonly activeProjectCount: number;
   readonly createdAt: string;
+  /** Concurrency token (base64): edits send it back, and the API answers 409 `Concurrency.Stale` if it moved. */
+  readonly rowVersion: string;
 }
 
 export interface ClientInput {
@@ -43,11 +45,11 @@ export class ClientsApiService {
     return this.http.post<Client>(this.baseUrl, client);
   }
 
-  update(id: string, client: ClientInput): Observable<void> {
-    return this.http.put<void>(`${this.baseUrl}/${id}`, client);
+  update(id: string, client: ClientInput, rowVersion: string): Observable<void> {
+    return this.http.put<void>(`${this.baseUrl}/${id}`, { ...client, rowVersion });
   }
 
-  setArchived(id: string, archived: boolean): Observable<void> {
-    return this.http.post<void>(`${this.baseUrl}/${id}/${archived ? 'archive' : 'restore'}`, null);
+  setArchived(id: string, archived: boolean, rowVersion: string): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/${id}/${archived ? 'archive' : 'restore'}`, { rowVersion });
   }
 }

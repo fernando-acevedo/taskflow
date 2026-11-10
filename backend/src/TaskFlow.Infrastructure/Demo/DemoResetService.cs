@@ -2,12 +2,14 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using TaskFlow.Infrastructure.Diagnostics;
 
 namespace TaskFlow.Infrastructure.Demo;
 
 /// <summary>
 /// Checks at startup and every <see cref="DemoOptions.CheckIntervalMinutes"/> whether the public demo is due for a
-/// reset (ADR 0005). The app may sleep through the scheduled time, so the check compares the last reset with the
+/// reset (ADR 0005). The reset takes its own application lock and reads the persisted reset log inside it, so
+/// several instances never reset twice. The app may sleep through the scheduled time, so the check compares the last reset with the
 /// latest scheduled occurrence instead of waiting for a timer to fire.
 /// </summary>
 internal sealed partial class DemoResetService(
@@ -43,6 +45,7 @@ internal sealed partial class DemoResetService(
     {
         try
         {
+            using var activity = TaskFlowTelemetry.Source.StartActivity("demo-reset.check");
             await using var scope = scopes.CreateAsyncScope();
             if (await scope.ServiceProvider.GetRequiredService<DemoResetter>().ResetIfDueAsync(cancellationToken))
             {

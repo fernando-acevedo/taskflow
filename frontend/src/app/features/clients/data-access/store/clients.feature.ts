@@ -58,6 +58,10 @@ export const clientsFeature = createFeature({
       (state, { page }): ClientsState =>
         adapter.setAll([...page.items], { ...state, totalCount: page.totalCount, loading: false }),
     ),
+    on(
+      ClientsApiActions.clientsRefreshed,
+      (state, { page }): ClientsState => adapter.setAll([...page.items], { ...state, totalCount: page.totalCount }),
+    ),
     on(ClientsApiActions.clientsLoadFailed, (state, { error }): ClientsState => ({ ...state, loading: false, loadError: error })),
     on(ClientsApiActions.clientSaved, (state): ClientsState => ({ ...state, saving: false, loading: true })),
     on(ClientsApiActions.clientSaveFailed, (state): ClientsState => ({ ...state, saving: false })),

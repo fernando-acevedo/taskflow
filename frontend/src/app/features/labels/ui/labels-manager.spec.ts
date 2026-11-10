@@ -3,6 +3,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { of } from 'rxjs';
+import { Notifier } from '../../../core/notifications/notifier';
 import { Submissions } from '../../../shared/data-access/submission';
 import { LabelsPageActions } from '../data-access/store/labels.actions';
 import { labelsFeature } from '../data-access/store/labels.feature';
@@ -11,6 +12,8 @@ import { LabelsManager } from './labels-manager';
 
 describe('LabelsManager', () => {
   const dialog = { open: vi.fn() };
+  const notifier = { info: vi.fn() };
+  const dispatchAndWait = vi.fn();
   let store: MockStore;
 
   const labels = [
@@ -20,6 +23,8 @@ describe('LabelsManager', () => {
 
   function render(items: typeof labels): HTMLElement {
     dialog.open.mockReset();
+    notifier.info.mockReset();
+    dispatchAndWait.mockReset();
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       imports: [
@@ -34,7 +39,8 @@ describe('LabelsManager', () => {
           ],
         }),
         { provide: MatDialog, useValue: dialog },
-        { provide: Submissions, useValue: { dispatchAndWait: vi.fn() } },
+        { provide: Submissions, useValue: { dispatchAndWait } },
+        { provide: Notifier, useValue: notifier },
       ],
     });
     store = TestBed.inject<MockStore>(MockStore);
@@ -82,5 +88,54 @@ describe('LabelsManager', () => {
     element.querySelectorAll('li')[1].querySelectorAll('button')[1].click();
 
     expect(store.dispatch).not.toHaveBeenCalled();
+  });
+  describe('row version of an edit', () => {
+    const rows = [{ id: 'l1', name: 'Bug', color: '#D32F2F', rowVersion: 'rv1' }];
+    const input = { name: 'Bug 2', color: '#D32F2F' };
+
+    function openEdit() {
+      const element = render(rows);
+      const ref = { close: vi.fn() };
+      dialog.open.mockReturnValue(ref);
+      element.querySelector<HTMLButtonElement>('li button')!.click();
+      const data = (dialog.open.mock.calls[0][1] as { data: { save: (i: unknown) => unknown; refresh: () => { subscribe: (f: (l: unknown) => void) => void } } }).data;
+      return { data, ref };
+    }
+
+    it('sends the version the dialog opened with even if the store was reloaded meanwhile', () => {
+      const { data } = openEdit();
+      store.overrideSelector(labelsFeature.selectAll, [{ ...rows[0], rowVersion: 'rv-theirs' }] as never);
+      store.refreshState();
+
+      data.save(input);
+
+      expect(dispatchAndWait).toHaveBeenCalledWith(expect.objectContaining({ rowVersion: 'rv1', changes: input }));
+    });
+
+    it('takes the reloaded version only after a successful refresh (Reload or Save anyway)', () => {
+      const { data } = openEdit();
+      dispatchAndWait.mockReturnValue(of(null));
+      store.overrideSelector(labelsFeature.selectAll, [{ ...rows[0], rowVersion: 'rv-theirs' }] as never);
+      store.refreshState();
+
+      data.refresh().subscribe(() => undefined);
+      data.save(input);
+
+      expect(dispatchAndWait).toHaveBeenLastCalledWith(expect.objectContaining({ rowVersion: 'rv-theirs' }));
+    });
+
+    it('says it no longer exists and closes the dialog when the label is gone after reloading', () => {
+      const { data, ref } = openEdit();
+      dispatchAndWait.mockReturnValue(of(null));
+      store.overrideSelector(labelsFeature.selectAll, [] as never);
+      store.refreshState();
+      const result = vi.fn();
+
+      data.refresh().subscribe(result);
+
+      expect(result).toHaveBeenCalledWith(null);
+      expect(notifier.info).toHaveBeenCalledWith('common.gone');
+      expect(ref.close).toHaveBeenCalled();
+    });
   });
 });

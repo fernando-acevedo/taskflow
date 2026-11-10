@@ -11,7 +11,8 @@ public sealed record TaskCommentDto(
     DateTimeOffset CreatedAt,
     DateTimeOffset? EditedAt,
     bool IsEdited,
-    IReadOnlyList<Guid> MentionedUserIds)
+    IReadOnlyList<Guid> MentionedUserIds,
+    byte[] RowVersion)
 {
     public static TaskCommentDto From(TaskComment comment, string authorName)
     {
@@ -25,6 +26,7 @@ public sealed record TaskCommentDto(
             comment.CreatedAt,
             comment.EditedAt,
             comment.EditedAt is not null,
-            [.. comment.Mentions.Select(mention => mention.UserId)]);
+            [.. comment.Mentions.Select(mention => mention.UserId)],
+            comment.RowVersion);
     }
 }

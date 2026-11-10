@@ -2,7 +2,7 @@ import { inject } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
 import { catchError, concatMap, map, of, switchMap, tap, withLatestFrom } from 'rxjs';
-import { toApiError } from '../../../../core/http/api-error';
+import { isStale, toApiError } from '../../../../core/http/api-error';
 import { Notifier } from '../../../../core/notifications/notifier';
 import { CommentsApiService } from '../comments-api.service';
 import { CommentsApiActions, CommentsPageActions } from './comments.actions';
@@ -53,12 +53,32 @@ export const updateComment = createEffect(
     actions$.pipe(
       ofType(CommentsPageActions.updateSubmitted),
       withLatestFrom(store.select(commentsFeature.selectCommentsState)),
-      concatMap(([{ commentId, changes, submissionId }, state]) => {
+      concatMap(([{ commentId, changes, rowVersion, submissionId }, state]) => {
+        const thread = openThread(state);
+        const current = state.entities[commentId];
+        return thread === null || current === undefined
+          ? of(CommentsApiActions.commentSaveFailed({ error: { code: 'unexpected', fields: {} }, submissionId }))
+          : api.update(thread.projectId, thread.taskId, commentId, changes, rowVersion).pipe(
+              map((saved) => CommentsApiActions.commentSaved({ comment: saved, message: 'comments.saved', submissionId })),
+              catchError((error: unknown) => of(CommentsApiActions.commentSaveFailed({ error: toApiError(error), submissionId }))),
+            );
+      }),
+    ),
+  { functional: true },
+);
+
+/** The inline editor's "Reload": the server's thread, so the next save carries the current row version. */
+export const refreshComments = createEffect(
+  (actions$ = inject(Actions), store = inject(Store), api = inject(CommentsApiService)) =>
+    actions$.pipe(
+      ofType(CommentsPageActions.refreshRequested),
+      withLatestFrom(store.select(commentsFeature.selectCommentsState)),
+      concatMap(([{ submissionId }, state]) => {
         const thread = openThread(state);
         return thread === null
           ? of(CommentsApiActions.commentSaveFailed({ error: { code: 'unexpected', fields: {} }, submissionId }))
-          : api.update(thread.projectId, thread.taskId, commentId, changes).pipe(
-              map((saved) => CommentsApiActions.commentSaved({ comment: saved, message: 'comments.saved', submissionId })),
+          : api.list(thread.projectId, thread.taskId).pipe(
+              map((comments) => CommentsApiActions.commentsRefreshed({ taskId: thread.taskId, comments, submissionId })),
               catchError((error: unknown) => of(CommentsApiActions.commentSaveFailed({ error: toApiError(error), submissionId }))),
             );
       }),
@@ -99,7 +119,10 @@ export const notify = createEffect(
             notifier.success('comments.deleted');
             break;
           default:
-            notifier.error(action.error);
+            // A stale edit is shown inside the editor that submitted it, not as a snackbar.
+            if (!(isStale(action.error) && 'submissionId' in action && action.submissionId !== undefined)) {
+              notifier.error(action.error);
+            }
         }
       }),
     ),

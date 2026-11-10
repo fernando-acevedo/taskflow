@@ -1,11 +1,14 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using TaskFlow.Api.Identity;
 using TaskFlow.Application.TimeTracking;
 
 namespace TaskFlow.Api.Controllers;
 
 /// <summary>Hours logged on a project, in total, per person and per task. Only project owners read it.</summary>
 [Authorize]
+[EnableRateLimiting(RateLimitPolicies.Report)]
 [Route("api/projects/{projectId:guid}")]
 public sealed class TimeSummaryController : ApiControllerBase
 {
@@ -27,6 +30,7 @@ public sealed class TimeSummaryController : ApiControllerBase
     /// <summary>The entries behind the summary as CSV (UTF-8 with BOM, comma separated); `from` and `to` are required.</summary>
     [HttpGet("time-summary.csv")]
     [Produces("text/csv")]
+    [EnableRateLimiting(RateLimitPolicies.Export)]
     [ProducesResponseType<FileContentResult>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]

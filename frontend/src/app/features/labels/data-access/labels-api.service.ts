@@ -8,7 +8,12 @@ export interface Label {
   readonly name: string;
   /** `#RRGGBB`. */
   readonly color: string;
+  /** Concurrency token (base64): edits send it back, and the API answers 409 `Concurrency.Stale` if it moved. */
+  readonly rowVersion: string;
 }
+
+/** What a task carries of a label: no row version, since labels are edited through the labels endpoints only. */
+export type LabelSummary = Pick<Label, 'id' | 'name' | 'color'>;
 
 export interface LabelInput {
   readonly name: string;
@@ -27,8 +32,8 @@ export class LabelsApiService {
     return this.http.post<Label>(this.url(projectId), label);
   }
 
-  update(projectId: string, labelId: string, label: LabelInput): Observable<Label> {
-    return this.http.put<Label>(`${this.url(projectId)}/${labelId}`, label);
+  update(projectId: string, labelId: string, label: LabelInput, rowVersion: string): Observable<Label> {
+    return this.http.put<Label>(`${this.url(projectId)}/${labelId}`, { ...label, rowVersion });
   }
 
   delete(projectId: string, labelId: string): Observable<void> {

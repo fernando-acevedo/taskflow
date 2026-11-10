@@ -65,11 +65,11 @@ export const updateTask = createEffect(
     actions$.pipe(
       ofType(TasksPageActions.updateSubmitted),
       withLatestFrom(store.select(tasksFeature.selectEntities)),
-      concatMap(([{ taskId, changes, submissionId }, tasks]) => {
+      concatMap(([{ taskId, changes, rowVersion, submissionId }, tasks]) => {
         const task = tasks[taskId];
         return task === undefined
           ? of(TasksApiActions.taskSaveFailed({ error: taskGone, submissionId }))
-          : api.update(task, changes).pipe(
+          : api.update({ ...task, rowVersion }, changes).pipe(
               map((saved) => TasksApiActions.taskSaved({ task: saved, message: 'tasks.saved', submissionId })),
               catchError((error: unknown) => of(TasksApiActions.taskSaveFailed({ error: toApiError(error), submissionId }))),
             );

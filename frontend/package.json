@@ -7,10 +7,13 @@
     "build": "ng build",
     "postbuild": "node scripts/apply-csp.mjs && node scripts/apply-csp.mjs --check",
     "check:csp": "node scripts/apply-csp.mjs --check",
+    "test:scripts": "node --test scripts/apply-csp.test.mjs",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "lint": "ng lint",
-    "screenshots": "node scripts/screenshots.mjs"
+    "screenshots": "node scripts/screenshots.mjs",
+    "api:types": "node scripts/api-types.mjs",
+    "api:check": "node scripts/api-types.mjs --check"
   },
   "private": true,
   "packageManager": "npm@11.17.0",
@@ -24,6 +27,7 @@
     "@angular/platform-browser": "^22.2.0",
     "@angular/router": "^22.2.0",
     "@jsverse/transloco": "^8.4.0",
+    "@microsoft/applicationinsights-web": "^3.4.6",
     "@ngrx/effects": "^22.0.1",
     "@ngrx/entity": "^22.0.1",
     "@ngrx/router-store": "^22.0.1",
@@ -41,10 +45,16 @@
     "axe-core": "^4.14.0",
     "eslint": "^10.12.0",
     "jsdom": "^30.0.0",
+    "openapi-typescript": "7.13.0",
     "playwright": "^1.65.0",
     "prettier": "^3.8.1",
-    "typescript": "~6.0.2",
+    "typescript": "6.0.3",
     "typescript-eslint": "8.71.0",
     "vitest": "^5.0.0"
+  },
+  "overrides": {
+    "openapi-typescript": {
+      "typescript": "$typescript"
+    }
   }
 }

@@ -42,7 +42,7 @@ public sealed class UpdateProjectHandler(
         }
 
         var project = allowed.Value;
-        if (!project.RowVersion.SequenceEqual(command.RowVersion))
+        if (!RowVersions.Matches(project.RowVersion, command.RowVersion))
         {
             return CommonErrors.Stale;
         }

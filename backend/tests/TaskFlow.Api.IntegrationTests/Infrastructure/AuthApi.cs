@@ -82,7 +82,7 @@ public static class AuthApi
             await db.SaveChangesAsync(TestContext.Current.CancellationToken);
         }
 
-        scope.ServiceProvider.GetRequiredService<TenantAccess>().Forget(user.Id, tenantId);
+        await scope.ServiceProvider.GetRequiredService<TenantAccess>().ForgetAsync(user.Id, TestContext.Current.CancellationToken);
     }
 
     public static async Task<HttpClient> CreateAdminClientAsync(this SqlServerApiFactory factory)

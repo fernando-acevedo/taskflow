@@ -10,12 +10,13 @@ using TaskFlow.Domain.Projects;
 
 namespace TaskFlow.Application.Labels;
 
-public sealed record UpdateLabelCommand(Guid ProjectId, Guid LabelId, string Name, string Color);
+public sealed record UpdateLabelCommand(Guid ProjectId, Guid LabelId, string Name, string Color, byte[] RowVersion);
 
 public sealed class UpdateLabelValidator : AbstractValidator<UpdateLabelCommand>
 {
     public UpdateLabelValidator()
     {
+        RuleFor(command => command.RowVersion).NotEmpty();
         RuleFor(command => command.Name).NotEmpty().MaximumLength(Label.NameMaxLength);
         // The color is checked by the domain (LabelErrors.InvalidColor), which the API localizes by code.
     }
@@ -47,6 +48,11 @@ public sealed class UpdateLabelHandler(
         if (label is null)
         {
             return LabelErrors.NotFound;
+        }
+
+        if (!RowVersions.Matches(label.RowVersion, command.RowVersion))
+        {
+            return CommonErrors.Stale;
         }
 
         var previousName = label.Name;

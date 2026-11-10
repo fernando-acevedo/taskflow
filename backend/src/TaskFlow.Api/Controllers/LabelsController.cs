@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TaskFlow.Application.Labels;
+using TaskFlow.Domain.Common;
 
 namespace TaskFlow.Api.Controllers;
 
@@ -37,13 +38,22 @@ public sealed class LabelsController : ApiControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status412PreconditionFailed)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status428PreconditionRequired)]
     public async Task<ActionResult<LabelDto>> Update(
         Guid projectId,
         Guid labelId,
-        LabelRequest request,
+        UpdateLabelRequest request,
         [FromServices] UpdateLabelHandler handler,
-        CancellationToken cancellationToken) =>
-        OkOrProblem(await handler.HandleAsync(new UpdateLabelCommand(projectId, labelId, request.Name, request.Color), cancellationToken));
+        CancellationToken cancellationToken)
+    {
+        if (!HasPrecondition(request.RowVersion))
+        {
+            return ProblemFrom(CommonErrors.PreconditionRequired);
+        }
+
+        return OkOrProblem(await handler.HandleAsync(new UpdateLabelCommand(projectId, labelId, request.Name, request.Color, RowVersionFrom(request.RowVersion)), cancellationToken));
+    }
 
     /// <summary>Deletes the label and removes it from the tasks that have it.</summary>
     [HttpDelete("{labelId:guid}")]
@@ -51,12 +61,15 @@ public sealed class LabelsController : ApiControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status412PreconditionFailed)]
     public async Task<ActionResult> Delete(
         Guid projectId,
         Guid labelId,
         [FromServices] DeleteLabelHandler handler,
         CancellationToken cancellationToken) =>
-        NoContentOrProblem(await handler.HandleAsync(new DeleteLabelCommand(projectId, labelId), cancellationToken));
+        NoContentOrProblem(await handler.HandleAsync(new DeleteLabelCommand(projectId, labelId, OptionalRowVersion()), cancellationToken));
 }
 
 public sealed record LabelRequest(string Name, string Color);
+
+public sealed record UpdateLabelRequest(string Name, string Color, byte[]? RowVersion);

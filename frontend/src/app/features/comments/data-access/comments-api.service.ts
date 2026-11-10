@@ -15,6 +15,8 @@ export interface TaskComment {
   readonly editedAt: string | null;
   readonly isEdited: boolean;
   readonly mentionedUserIds: readonly string[];
+  /** Concurrency token (base64): edits send it back, and the API answers 409 `Concurrency.Stale` if it moved. */
+  readonly rowVersion: string;
 }
 
 export interface CommentInput {
@@ -35,8 +37,14 @@ export class CommentsApiService {
     return this.http.post<TaskComment>(this.url(projectId, taskId), comment);
   }
 
-  update(projectId: string, taskId: string, commentId: string, comment: CommentInput): Observable<TaskComment> {
-    return this.http.put<TaskComment>(`${this.url(projectId, taskId)}/${commentId}`, comment);
+  update(
+    projectId: string,
+    taskId: string,
+    commentId: string,
+    comment: CommentInput,
+    rowVersion: string,
+  ): Observable<TaskComment> {
+    return this.http.put<TaskComment>(`${this.url(projectId, taskId)}/${commentId}`, { ...comment, rowVersion });
   }
 
   delete(projectId: string, taskId: string, commentId: string): Observable<void> {

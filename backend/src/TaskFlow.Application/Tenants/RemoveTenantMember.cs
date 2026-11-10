@@ -36,7 +36,7 @@ public sealed class RemoveTenantMemberHandler(
         var result = await transactions.RunSerializableAsync(token => RemoveAsync(command.UserId, tenantId, token), cancellationToken);
         if (result.IsSuccess)
         {
-            accessCache.Forget(command.UserId, tenantId);
+            await accessCache.ForgetAsync(command.UserId, cancellationToken);
         }
 
         return result;

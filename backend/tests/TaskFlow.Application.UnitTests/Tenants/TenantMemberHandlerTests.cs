@@ -89,7 +89,7 @@ public sealed class TenantMemberHandlerTests
         result.Value.AccountCreated.ShouldBeTrue();
         result.Value.InvitationSent.ShouldBeTrue();
         _db.TenantMemberships.Received(1).Add(Arg.Is<TenantMembership>(m => m.UserId == userId && m.TenantId == TenantId && m.Role == TenantRole.Member));
-        _cache.Received(1).Forget(userId, TenantId);
+        await _cache.Received(1).ForgetAsync(userId, Arg.Any<CancellationToken>());
         await _invitations.Received(1).SendTenantAddedAsync(Arg.Any<UserDto>(), "Acme", Arg.Any<CancellationToken>());
         await _identity.DidNotReceiveWithAnyArgs().CreateAsync(default!, TestContext.Current.CancellationToken);
         await _invitations.DidNotReceiveWithAnyArgs().SendAsync(default!, default!, TestContext.Current.CancellationToken);
@@ -166,7 +166,7 @@ public sealed class TenantMemberHandlerTests
         result.IsSuccess.ShouldBeTrue();
         member.Role.ShouldBe(TenantRole.Admin);
         await _db.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
-        _cache.Received(1).Forget(member.UserId, TenantId);
+        await _cache.Received(1).ForgetAsync(member.UserId, Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -182,7 +182,7 @@ public sealed class TenantMemberHandlerTests
         remove.Error.ShouldBe(TenantErrors.LastOwner);
         owner.Role.ShouldBe(TenantRole.Owner);
         _db.TenantMemberships.DidNotReceiveWithAnyArgs().Remove(default!);
-        _cache.DidNotReceiveWithAnyArgs().Forget(default, default);
+        await _cache.DidNotReceiveWithAnyArgs().ForgetAsync(default, TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -243,7 +243,7 @@ public sealed class TenantMemberHandlerTests
 
         result.IsSuccess.ShouldBeTrue();
         _db.TenantMemberships.Received(1).Remove(member);
-        _cache.Received(1).Forget(member.UserId, TenantId);
+        await _cache.Received(1).ForgetAsync(member.UserId, Arg.Any<CancellationToken>());
     }
 
     [Fact]

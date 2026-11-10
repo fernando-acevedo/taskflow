@@ -110,7 +110,7 @@ export const changeProject = createEffect(
         let submissionId: number | undefined;
         switch (action.type) {
           case ProjectPageActions.updateSubmitted.type:
-            request = api.update(project.id, action.project, project.rowVersion);
+            request = api.update(project.id, action.project, action.rowVersion);
             message = 'projects.saved';
             submissionId = action.submissionId;
             break;

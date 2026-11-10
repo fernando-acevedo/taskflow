@@ -27,17 +27,27 @@ export class TaskEditor {
   private readonly canEdit = this.store.selectSignal(projectsFeature.selectCanEditTasks);
 
   open(task: Task | null = null): void {
+    // The version the dialog opened with; it changes only on Reload or Save anyway (a successful refresh).
+    let rowVersion = task?.rowVersion ?? '';
     const save: SaveFn<TaskInput> = (input) =>
       this.submissions.dispatchAndWait(
         task
-          ? TasksPageActions.updateSubmitted({ taskId: task.id, changes: input, submissionId: nextSubmissionId() })
+          ? TasksPageActions.updateSubmitted({ taskId: task.id, changes: input, rowVersion, submissionId: nextSubmissionId() })
           : TasksPageActions.createSubmitted({ task: input, submissionId: nextSubmissionId() }),
       );
 
     const refresh = (): Observable<Task | null> =>
       this.submissions
         .dispatchAndWait(TasksPageActions.refreshRequested({ taskId: task?.id ?? '', submissionId: nextSubmissionId() }))
-        .pipe(map((error) => (error ? null : (this.allTasks().find((t) => t.id === task?.id) ?? null))));
+        .pipe(
+          map((error) => {
+            const latest = error ? null : (this.allTasks().find((t) => t.id === task?.id) ?? null);
+            if (latest) {
+              rowVersion = latest.rowVersion;
+            }
+            return latest;
+          }),
+        );
 
     const closed = this.dialog
       .open<TaskFormDialog, TaskFormData, TaskFormResult>(TaskFormDialog, {

@@ -38,7 +38,8 @@ public sealed class ClientsTests(SqlServerApiFactory factory)
         using var unknown = await admin.GetAsync(new Uri($"/api/clients/{Guid.NewGuid()}", UriKind.Relative), Ct);
         using var archiveUnknown = await admin.ArchiveClientAsync(Guid.NewGuid());
 
-        read.ShouldBe(created);
+        read.ShouldBe(created with { RowVersion = read.RowVersion });
+        read.RowVersion.ShouldBe(created.RowVersion);
         unknown.StatusCode.ShouldBe(HttpStatusCode.NotFound);
         (await unknown.ReadAsync<ProblemResponse>()).Code.ShouldBe("Clients.NotFound");
         archiveUnknown.StatusCode.ShouldBe(HttpStatusCode.NotFound);
@@ -95,7 +96,9 @@ public sealed class ClientsTests(SqlServerApiFactory factory)
         first.Headers.Location!.AbsolutePath.ShouldBe($"/api/clients/{client.Id}");
         client.Name.ShouldBe(name);
         client.ContactEmail.ShouldBe("pm@acme.test");
-        (await admin.GetJsonAsync<ClientResponse>($"/api/clients/{client.Id}")).ShouldBe(client);
+        var reread = await admin.GetJsonAsync<ClientResponse>($"/api/clients/{client.Id}");
+        reread.ShouldBe(client with { RowVersion = reread.RowVersion });
+        reread.RowVersion.ShouldBe(client.RowVersion);
 
         using var duplicate = await admin.PostAsJsonAsync("/api/clients", new { name = $" {name} " }, Ct);
         duplicate.StatusCode.ShouldBe(HttpStatusCode.Conflict);

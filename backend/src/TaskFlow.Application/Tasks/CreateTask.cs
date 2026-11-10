@@ -20,7 +20,10 @@ public sealed record CreateTaskCommand(
     Guid? AssigneeId = null,
     DateOnly? DueDate = null,
     int? EstimatedMinutes = null,
-    IReadOnlyList<Guid>? LabelIds = null) : ITaskFields;
+    IReadOnlyList<Guid>? LabelIds = null,
+    DateOnly? StartDate = null,
+    bool IsBlocked = false,
+    string? StatusNote = null) : ITaskFields;
 
 public sealed class CreateTaskValidator : AbstractValidator<CreateTaskCommand>
 {
@@ -28,6 +31,7 @@ public sealed class CreateTaskValidator : AbstractValidator<CreateTaskCommand>
     {
         this.AddTaskFieldRules();
         RuleFor(command => command.DueDate).GreaterThanOrEqualTo(_ => time.Today());
+        RuleFor(command => command.StatusNote).MaximumLength(TaskItem.StatusNoteMaxLength);
     }
 }
 
@@ -75,6 +79,15 @@ public sealed class CreateTaskHandler(
         if (!created.IsSuccess)
         {
             return created.Error;
+        }
+
+        if (command.StartDate is not null || command.IsBlocked || !string.IsNullOrWhiteSpace(command.StatusNote))
+        {
+            var planned = created.Value.SetPlanning(allowed.Value, null, command.StartDate, command.IsBlocked, command.StatusNote, time.GetUtcNow());
+            if (!planned.IsSuccess)
+            {
+                return planned.Error;
+            }
         }
 
         var labelled = await created.Value.ApplyLabelsAsync(db, allowed.Value, command.LabelIds, cancellationToken);

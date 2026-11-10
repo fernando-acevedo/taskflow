@@ -38,6 +38,9 @@
   <data name="Projects.LastOwner" xml:space="preserve"><value>Un proyecto necesita al menos un propietario.</value></data>
   <data name="Projects.AssigneeNotMember" xml:space="preserve"><value>El responsable debe ser miembro del proyecto.</value></data>
   <data name="Tasks.NotFound" xml:space="preserve"><value>No se encontró la tarea.</value></data>
+  <data name="RateLimit.Exceeded" xml:space="preserve"><value>Demasiadas solicitudes. Espera un momento e inténtalo de nuevo.</value></data>
+  <data name="Concurrency.PreconditionFailed" xml:space="preserve"><value>El elemento cambió desde que lo leíste. Recárgalo e inténtalo de nuevo.</value></data>
+  <data name="Concurrency.PreconditionRequired" xml:space="preserve"><value>Envía la versión que leíste: una cabecera If-Match o el rowVersion en el cuerpo.</value></data>
   <data name="Concurrency.Stale" xml:space="preserve"><value>Otra persona modificó este elemento. Recárgalo e inténtalo de nuevo.</value></data>
   <data name="Labels.NotFound" xml:space="preserve"><value>No se encontró la etiqueta.</value></data>
   <data name="Labels.NameRequired" xml:space="preserve"><value>El nombre de la etiqueta es obligatorio.</value></data>

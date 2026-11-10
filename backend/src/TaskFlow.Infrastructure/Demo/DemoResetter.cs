@@ -102,8 +102,8 @@ internal sealed partial class DemoResetWork(
         {
             foreach (var userId in affectedUsers)
             {
-                sessions.Forget(userId);
-                tenantAccess.Forget(userId, demoId);
+                await sessions.ForgetAsync(userId, cancellationToken);
+                await tenantAccess.ForgetAsync(userId, cancellationToken);
             }
         }
 

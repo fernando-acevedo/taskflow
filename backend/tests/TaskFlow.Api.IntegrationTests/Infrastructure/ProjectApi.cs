@@ -14,8 +14,19 @@ public static class ProjectApi
         return await response.ReadAsync<ClientResponse>();
     }
 
+    /// <summary>Archives the client with its current version (a made-up one when the client can't be read, to reach the error paths).</summary>
     public static Task<HttpResponseMessage> ArchiveClientAsync(this HttpClient admin, Guid clientId) =>
-        admin.PostAsync(new Uri($"/api/clients/{clientId}/archive", UriKind.Relative), null, Ct);
+        admin.PostClientVersionAsync(clientId, "archive");
+
+    public static Task<HttpResponseMessage> RestoreClientAsync(this HttpClient admin, Guid clientId) =>
+        admin.PostClientVersionAsync(clientId, "restore");
+
+    private static async Task<HttpResponseMessage> PostClientVersionAsync(this HttpClient admin, Guid clientId, string action)
+    {
+        using var read = await admin.GetAsync(new Uri($"/api/clients/{clientId}", UriKind.Relative), Ct);
+        var rowVersion = read.IsSuccessStatusCode ? (await read.ReadAsync<ClientResponse>()).RowVersion : new byte[8];
+        return await admin.PostAsJsonAsync($"/api/clients/{clientId}/{action}", new { rowVersion }, Ct);
+    }
 
     public static async Task<ProjectResponse> CreateProjectAsync(this HttpClient client, Guid clientId, string name = "Website redesign")
     {
@@ -67,7 +78,7 @@ public static class ProjectApi
         (await client.GetJsonAsync<UserResponse>("/api/users/me")).Id;
 }
 
-public sealed record ClientResponse(Guid Id, string Name, string? ContactEmail, bool IsArchived, int ActiveProjectCount);
+public sealed record ClientResponse(Guid Id, string Name, string? ContactEmail, bool IsArchived, int ActiveProjectCount, byte[] RowVersion);
 
 public sealed record ClientOptionResponse(Guid Id, string Name);
 

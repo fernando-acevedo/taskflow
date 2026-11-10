@@ -118,7 +118,7 @@ internal static class TaskQueries
             task.UpdatedAt,
             task.CompletedAt,
             task.RowVersion,
-            task.Labels.OrderBy(label => label.Name).Select(label => new LabelDto(label.Id, label.Name, label.Color)).ToList(),
+            task.Labels.OrderBy(label => label.Name).Select(label => new LabelDto(label.Id, label.Name, label.Color, label.RowVersion)).ToList(),
             task.ExternalKey,
             task.StartDate,
             task.IsBlocked,

@@ -49,9 +49,9 @@ public sealed class TaskCommentTests(SqlServerApiFactory factory)
         var task = await owner.CreateTaskAsync(project.Id, new { title = "Write copy" });
         var comment = await PostAsync(member, project.Id, task.Id, "Draft", null);
 
-        using var byOwner = await owner.PutAsJsonAsync(CommentUrl(project.Id, task.Id, comment.Id), new { body = "Hijacked" }, Ct);
+        using var byOwner = await owner.PutAsJsonAsync(CommentUrl(project.Id, task.Id, comment.Id), new { body = "Hijacked", comment.RowVersion }, Ct);
         factory.Time.Advance(TimeSpan.FromMinutes(5));
-        using var byAuthor = await member.PutAsJsonAsync(CommentUrl(project.Id, task.Id, comment.Id), new { body = "Final" }, Ct);
+        using var byAuthor = await member.PutAsJsonAsync(CommentUrl(project.Id, task.Id, comment.Id), new { body = "Final", comment.RowVersion }, Ct);
 
         byOwner.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
         (await byOwner.ReadAsync<ProblemResponse>()).Code.ShouldBe("TaskComments.NotAuthor");
@@ -98,7 +98,7 @@ public sealed class TaskCommentTests(SqlServerApiFactory factory)
         (await owner.ArchiveProjectAsync(project.Id)).EnsureSuccessStatusCode();
 
         using var create = await owner.PostAsJsonAsync(CommentsUrl(project.Id, task.Id), new { body = "After" }, Ct);
-        using var update = await owner.PutAsJsonAsync(CommentUrl(project.Id, task.Id, comment.Id), new { body = "Edited" }, Ct);
+        using var update = await owner.PutAsJsonAsync(CommentUrl(project.Id, task.Id, comment.Id), new { body = "Edited", comment.RowVersion }, Ct);
         using var delete = await owner.DeleteAsync(new Uri(CommentUrl(project.Id, task.Id, comment.Id), UriKind.Relative), Ct);
 
         create.StatusCode.ShouldBe(HttpStatusCode.Conflict);
@@ -121,9 +121,9 @@ public sealed class TaskCommentTests(SqlServerApiFactory factory)
         var comment = await PostAsync(owner, project.Id, task.Id, "Hello", null);
 
         using var create = await owner.PostAsJsonAsync(
-            CommentsUrl(project.Id, task.Id), new { body = "Hi", mentionedUserIds = new[] { outsiderId } }, Ct);
+            CommentsUrl(project.Id, task.Id), new { body = "Hi", mentionedUserIds = new[] { outsiderId }, comment.RowVersion }, Ct);
         using var update = await owner.PutAsJsonAsync(
-            CommentUrl(project.Id, task.Id, comment.Id), new { body = "Hi", mentionedUserIds = new[] { outsiderId } }, Ct);
+            CommentUrl(project.Id, task.Id, comment.Id), new { body = "Hi", mentionedUserIds = new[] { outsiderId }, comment.RowVersion }, Ct);
 
         create.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await create.ReadAsync<ProblemResponse>()).Code.ShouldBe("TaskComments.MentionNotMember");
@@ -160,7 +160,7 @@ public sealed class TaskCommentTests(SqlServerApiFactory factory)
         var comment = await PostAsync(owner, project.Id, task.Id, "Hi", [memberId]);
 
         using var update = await owner.PutAsJsonAsync(
-            CommentUrl(project.Id, task.Id, comment.Id), new { body = "Hi again", mentionedUserIds = Array.Empty<Guid>() }, Ct);
+            CommentUrl(project.Id, task.Id, comment.Id), new { body = "Hi again", mentionedUserIds = Array.Empty<Guid>(), comment.RowVersion }, Ct);
 
         update.StatusCode.ShouldBe(HttpStatusCode.OK);
         (await update.ReadAsync<CommentResponse>()).MentionedUserIds.ShouldBeEmpty();
@@ -181,7 +181,7 @@ public sealed class TaskCommentTests(SqlServerApiFactory factory)
         var comment = await PostAsync(member, project.Id, task.Id, "Draft", null);
 
         using var response = await owner.PutAsJsonAsync(
-            CommentUrl(project.Id, task.Id, comment.Id), new { body = "x", mentionedUserIds = new[] { Guid.NewGuid() } }, Ct);
+            CommentUrl(project.Id, task.Id, comment.Id), new { body = "x", mentionedUserIds = new[] { Guid.NewGuid() }, comment.RowVersion }, Ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
         (await response.ReadAsync<ProblemResponse>()).Code.ShouldBe("TaskComments.NotAuthor");
@@ -204,9 +204,9 @@ public sealed class TaskCommentTests(SqlServerApiFactory factory)
         deactivate.StatusCode.ShouldBe(HttpStatusCode.NoContent);
 
         using var create = await owner.PostAsJsonAsync(
-            CommentsUrl(project.Id, task.Id), new { body = "Hi", mentionedUserIds = new[] { memberId } }, Ct);
+            CommentsUrl(project.Id, task.Id), new { body = "Hi", mentionedUserIds = new[] { memberId }, comment.RowVersion }, Ct);
         using var update = await owner.PutAsJsonAsync(
-            CommentUrl(project.Id, task.Id, comment.Id), new { body = "Hi", mentionedUserIds = new[] { memberId } }, Ct);
+            CommentUrl(project.Id, task.Id, comment.Id), new { body = "Hi", mentionedUserIds = new[] { memberId }, comment.RowVersion }, Ct);
 
         create.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await create.ReadAsync<ProblemResponse>()).Code.ShouldBe("TaskComments.MentionNotMember");
@@ -270,5 +270,6 @@ public sealed class TaskCommentTests(SqlServerApiFactory factory)
         DateTimeOffset CreatedAt,
         DateTimeOffset? EditedAt,
         bool IsEdited,
-        IReadOnlyList<Guid> MentionedUserIds);
+        IReadOnlyList<Guid> MentionedUserIds,
+        byte[] RowVersion);
 }

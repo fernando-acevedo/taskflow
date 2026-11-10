@@ -11,7 +11,7 @@ export const TasksPageActions = createActionGroup({
     /** A drag and drop, or the board's "Move to" menu (the keyboard way to do the same). */
     'Task Dropped': props<{ taskId: string; status: TaskStatus; position: number }>(),
     'Create Submitted': props<{ task: TaskInput } & Required<Submission>>(),
-    'Update Submitted': props<{ taskId: string; changes: TaskInput } & Required<Submission>>(),
+    'Update Submitted': props<{ taskId: string; changes: TaskInput; rowVersion: string } & Required<Submission>>(),
     'Delete Confirmed': props<{ taskId: string }>(),
     /** The edit dialog asks for the server's version after a stale save. */
     'Refresh Requested': props<{ taskId: string } & Required<Submission>>(),

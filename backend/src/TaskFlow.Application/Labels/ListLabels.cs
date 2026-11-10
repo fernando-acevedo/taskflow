@@ -21,7 +21,7 @@ public sealed class ListLabelsHandler(IAppDbContext db, ProjectAccess access)
         var labels = await db.Labels.AsNoTracking()
             .Where(label => label.ProjectId == query.ProjectId)
             .OrderBy(label => label.Name)
-            .Select(label => new LabelDto(label.Id, label.Name, label.Color))
+            .Select(label => new LabelDto(label.Id, label.Name, label.Color, label.RowVersion))
             .ToListAsync(cancellationToken);
         return labels;
     }

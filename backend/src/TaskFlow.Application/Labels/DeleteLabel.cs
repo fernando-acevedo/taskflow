@@ -8,7 +8,7 @@ using TaskFlow.Domain.Projects;
 
 namespace TaskFlow.Application.Labels;
 
-public sealed record DeleteLabelCommand(Guid ProjectId, Guid LabelId);
+public sealed record DeleteLabelCommand(Guid ProjectId, Guid LabelId, byte[]? RowVersion = null);
 
 /// <summary>An owner deletes a label; the database drops it from the tasks that carried it.</summary>
 public sealed class DeleteLabelHandler(IAppDbContext db, ProjectAccess access, ActivityLog activity)
@@ -26,6 +26,11 @@ public sealed class DeleteLabelHandler(IAppDbContext db, ProjectAccess access, A
         if (label is null)
         {
             return LabelErrors.NotFound;
+        }
+
+        if (command.RowVersion is not null && !RowVersions.Matches(label.RowVersion, command.RowVersion))
+        {
+            return CommonErrors.Stale;
         }
 
         var deletable = Label.CanDelete(allowed.Value);

@@ -299,7 +299,7 @@ public sealed class ApiKeyTests(SqlServerApiFactory factory)
             var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
             var user = (await users.FindByEmailAsync(owner.Email))!;
             (await users.UpdateSecurityStampAsync(user)).Succeeded.ShouldBeTrue();
-            scope.ServiceProvider.GetRequiredService<SessionValidator>().Forget(user.Id);
+            await scope.ServiceProvider.GetRequiredService<SessionValidator>().ForgetAsync(user.Id, Ct);
         }
 
         (await owner.Client.GetAsync(url, Ct)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
