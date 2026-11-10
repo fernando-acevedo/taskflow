@@ -71,13 +71,75 @@ public sealed class OpenApiSnapshotTests(NoDatabaseApiFactory factory) : IClassF
         document["paths"]!["/api/projects/{projectId}/tasks/{taskId}"]!["get"]!["responses"]!.AsObject().ContainsKey("304").ShouldBeTrue();
     }
 
-    /// <summary>Sorted keys, LF, and no servers (they hold the host the test happened to run on).</summary>
+    /// <summary>
+    /// Sorted keys, LF, and no servers (they hold the host the test happened to run on). The Identity endpoints under
+    /// <c>/api/auth</c> are left out, with the schemas only they use: ASP.NET Core describes them itself and its patch
+    /// releases change that description (10.0.15 added 400 responses that 10.0.11 does not have), so they would make
+    /// the snapshot depend on the installed runtime. The frontend does not generate types for them.
+    /// </summary>
     private static string Normalize(string json)
     {
         var node = JsonNode.Parse(json)!.AsObject();
         node.Remove("servers");
+        RemoveFrameworkEndpoints(node);
         return Sort(node)!.ToJsonString(new JsonSerializerOptions { WriteIndented = true, Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping })
             .Replace("\r\n", "\n", StringComparison.Ordinal) + "\n";
+    }
+
+    private static void RemoveFrameworkEndpoints(JsonObject document)
+    {
+        if (document["paths"] is not JsonObject paths)
+        {
+            return;
+        }
+
+        foreach (var path in paths.Select(p => p.Key).Where(p => p.StartsWith("/api/auth/", StringComparison.Ordinal)).ToList())
+        {
+            paths.Remove(path);
+        }
+
+        if (document["components"]?["schemas"] is not JsonObject schemas)
+        {
+            return;
+        }
+
+        // Keep only the schemas still reachable from the remaining paths.
+        const string prefix = "#/components/schemas/";
+        var reachable = new HashSet<string>(StringComparer.Ordinal);
+        var pending = new Stack<JsonNode?>([paths]);
+        while (pending.Count > 0)
+        {
+            switch (pending.Pop())
+            {
+                case JsonObject obj:
+                    foreach (var (key, value) in obj)
+                    {
+                        if (key == "$ref" && value?.GetValue<string>() is { } reference && reference.StartsWith(prefix, StringComparison.Ordinal)
+                            && reachable.Add(reference[prefix.Length..]))
+                        {
+                            pending.Push(schemas[reference[prefix.Length..]]);
+                        }
+                        else
+                        {
+                            pending.Push(value);
+                        }
+                    }
+
+                    break;
+                case JsonArray array:
+                    foreach (var item in array)
+                    {
+                        pending.Push(item);
+                    }
+
+                    break;
+            }
+        }
+
+        foreach (var name in schemas.Select(s => s.Key).Where(name => !reachable.Contains(name)).ToList())
+        {
+            schemas.Remove(name);
+        }
     }
 
     private static JsonNode? Sort(JsonNode? node) => node switch
