@@ -1,12 +1,15 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using TaskFlow.Infrastructure.Caching;
+using TaskFlow.Infrastructure.Diagnostics;
 
 namespace TaskFlow.Infrastructure.Email.Outbox;
 
 /// <summary>Polls the outbox every <see cref="OutboxOptions.PollInterval"/> and sends what is due (ADR 0018).</summary>
 internal sealed partial class OutboxProcessor(
     OutboxDispatcher dispatcher,
+    JobLock jobLock,
     IOptions<OutboxOptions> options,
     TimeProvider time,
     ILogger<OutboxProcessor> logger) : BackgroundService
@@ -26,11 +29,15 @@ internal sealed partial class OutboxProcessor(
         {
             try
             {
-                await dispatcher.ProcessPendingAsync(stoppingToken);
+                using (TaskFlowTelemetry.Source.StartActivity("outbox.process"))
+                {
+                    await dispatcher.ProcessPendingAsync(stoppingToken);
+                }
+
                 if (time.GetUtcNow() - lastCleanUp >= CleanUpEvery)
                 {
                     lastCleanUp = time.GetUtcNow();
-                    await dispatcher.CleanUpAsync(stoppingToken);
+                    await CleanUpAsync(stoppingToken);
                 }
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
@@ -52,6 +59,23 @@ internal sealed partial class OutboxProcessor(
             {
                 return;
             }
+        }
+    }
+
+    // Claiming is already safe between instances; the clean-up only needs one of them at a time (ADR 0020).
+    private async Task CleanUpAsync(CancellationToken cancellationToken)
+    {
+        using var activity = TaskFlowTelemetry.Source.StartActivity("outbox.cleanup");
+        var held = await jobLock.TryAcquireAsync("taskflow-outbox-cleanup", cancellationToken);
+        if (held is null)
+        {
+            activity?.SetTag("job.skipped", true);
+            return;
+        }
+
+        await using (held)
+        {
+            await dispatcher.CleanUpAsync(cancellationToken);
         }
     }
 

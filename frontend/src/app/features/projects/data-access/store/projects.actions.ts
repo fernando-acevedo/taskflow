@@ -17,7 +17,7 @@ export const ProjectPageActions = createActionGroup({
   source: 'Project Page',
   events: {
     Opened: props<{ projectId: string }>(),
-    'Update Submitted': props<{ project: ProjectInput } & Required<Submission>>(),
+    'Update Submitted': props<{ project: ProjectInput; rowVersion: string } & Required<Submission>>(),
     /** The edit dialog asks for the server's version after a stale save. */
     'Refresh Requested': props<Required<Submission>>(),
     'Archive Confirmed': emptyProps(),

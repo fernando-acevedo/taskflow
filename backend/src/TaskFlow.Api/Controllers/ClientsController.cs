@@ -4,6 +4,7 @@ using TaskFlow.Api.Identity;
 using TaskFlow.Application.Clients;
 using TaskFlow.Application.Common;
 using TaskFlow.Application.Users;
+using TaskFlow.Domain.Common;
 
 namespace TaskFlow.Api.Controllers;
 
@@ -40,8 +41,9 @@ public sealed class ClientsController : ApiControllerBase
     [Authorize(Policy = AuthPolicies.TenantAdmin)]
     [ProducesResponseType<ClientDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status304NotModified)]
     public async Task<ActionResult<ClientDto>> Get(Guid clientId, [FromServices] GetClientHandler handler, CancellationToken cancellationToken) =>
-        OkOrProblem(await handler.HandleAsync(clientId, cancellationToken));
+        OkOrProblem(await handler.HandleAsync(clientId, cancellationToken), client => client.RowVersion);
 
     [HttpPost]
     [Authorize(Policy = AuthPolicies.TenantAdmin)]
@@ -60,27 +62,63 @@ public sealed class ClientsController : ApiControllerBase
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status412PreconditionFailed)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status428PreconditionRequired)]
     public async Task<ActionResult> Update(
         Guid clientId,
         ClientRequest request,
         [FromServices] UpdateClientHandler handler,
-        CancellationToken cancellationToken) =>
-        NoContentOrProblem(await handler.HandleAsync(
-            new UpdateClientCommand(clientId, request.Name, request.ContactEmail, request.Notes), cancellationToken));
+        CancellationToken cancellationToken)
+    {
+        if (!HasPrecondition(request.RowVersion))
+        {
+            return ProblemFrom(CommonErrors.PreconditionRequired);
+        }
+
+        return NoContentOrProblem(await handler.HandleAsync(
+            new UpdateClientCommand(clientId, request.Name, request.ContactEmail, request.Notes, RowVersionFrom(request.RowVersion)), cancellationToken));
+    }
 
     /// <summary>Hides the client from pickers. Fails while it has active projects.</summary>
     [HttpPost("{clientId:guid}/archive")]
     [Authorize(Policy = AuthPolicies.TenantAdmin)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
-    public async Task<ActionResult> Archive(Guid clientId, [FromServices] SetClientArchivedHandler handler, CancellationToken cancellationToken) =>
-        NoContentOrProblem(await handler.HandleAsync(new SetClientArchivedCommand(clientId, IsArchived: true), cancellationToken));
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status412PreconditionFailed)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status428PreconditionRequired)]
+    public async Task<ActionResult> Archive(
+        Guid clientId,
+        ClientVersionRequest? request,
+        [FromServices] SetClientArchivedHandler handler,
+        CancellationToken cancellationToken) =>
+        await SetArchivedAsync(handler, clientId, isArchived: true, request, cancellationToken);
 
     [HttpPost("{clientId:guid}/restore")]
     [Authorize(Policy = AuthPolicies.TenantAdmin)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<ActionResult> Restore(Guid clientId, [FromServices] SetClientArchivedHandler handler, CancellationToken cancellationToken) =>
-        NoContentOrProblem(await handler.HandleAsync(new SetClientArchivedCommand(clientId, IsArchived: false), cancellationToken));
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status412PreconditionFailed)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status428PreconditionRequired)]
+    public async Task<ActionResult> Restore(
+        Guid clientId,
+        ClientVersionRequest? request,
+        [FromServices] SetClientArchivedHandler handler,
+        CancellationToken cancellationToken) =>
+        await SetArchivedAsync(handler, clientId, isArchived: false, request, cancellationToken);
+
+    private async Task<ActionResult> SetArchivedAsync(
+        SetClientArchivedHandler handler, Guid clientId, bool isArchived, ClientVersionRequest? request, CancellationToken cancellationToken)
+    {
+        if (!HasPrecondition(request?.RowVersion))
+        {
+            return ProblemFrom(CommonErrors.PreconditionRequired);
+        }
+
+        return NoContentOrProblem(await handler.HandleAsync(new SetClientArchivedCommand(clientId, isArchived, RowVersionFrom(request?.RowVersion)), cancellationToken));
+    }
 }
 
-public sealed record ClientRequest(string Name, string? ContactEmail, string? Notes);
+/// <summary>The body of an update: <paramref name="RowVersion"/> is the version the user edited (base64).</summary>
+public sealed record ClientRequest(string Name, string? ContactEmail, string? Notes, byte[]? RowVersion);
+
+/// <summary>The body of archive and restore.</summary>
+public sealed record ClientVersionRequest(byte[]? RowVersion);

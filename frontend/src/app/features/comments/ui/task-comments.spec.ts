@@ -1,5 +1,5 @@
 import { signal } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
@@ -26,6 +26,7 @@ describe('TaskComments', () => {
   const dialog = { open: vi.fn() };
   const dispatchAndWait = vi.fn(() => of(null));
   let store: MockStore;
+  let fixture: ComponentFixture<TaskComments>;
 
   const members = [
     { userId: 'u1', email: 'ana@x.test', displayName: 'Ana', isActive: true, role: 'Owner', joinedAt: '' },
@@ -68,7 +69,7 @@ describe('TaskComments', () => {
     });
     store = TestBed.inject<MockStore>(MockStore);
     vi.spyOn(store, 'dispatch');
-    const fixture = TestBed.createComponent(TaskComments);
+    fixture = TestBed.createComponent(TaskComments);
     fixture.componentRef.setInput('projectId', 'p1');
     fixture.componentRef.setInput('taskId', 't1');
     fixture.detectChanges();
@@ -169,5 +170,33 @@ describe('TaskComments', () => {
     element.querySelector<HTMLFormElement>('app-comment-editor form')!.dispatchEvent(new Event('submit'));
 
     expect(dispatchAndWait).not.toHaveBeenCalled();
+  });
+  describe('row version of an edit', () => {
+    function startEditing(): HTMLElement {
+      const element = render({ me: 'u1' });
+      element.querySelector<HTMLButtonElement>('.comment button[aria-label="comments.edit"]')!.click();
+      fixture.detectChanges();
+      return element;
+    }
+
+    function submitText(element: HTMLElement, text: string): void {
+      const box = element.querySelector<HTMLTextAreaElement>('app-comment-editor textarea')!;
+      box.value = text;
+      box.dispatchEvent(new Event('input'));
+      element.querySelector<HTMLFormElement>('app-comment-editor form')!.dispatchEvent(new Event('submit'));
+    }
+
+    it('saves with the version the editor opened with, even if the thread was reloaded meanwhile', () => {
+      const element = startEditing();
+      store.overrideSelector(commentsFeature.selectAll, [aComment({ id: 'c1', authorId: 'u1', rowVersion: 'rv-theirs' }), comments[1]]);
+      store.refreshState();
+      fixture.detectChanges();
+
+      submitText(element, 'Mine');
+
+      expect(dispatchAndWait).toHaveBeenCalledWith(
+        expect.objectContaining({ type: CommentsPageActions.updateSubmitted.type, commentId: 'c1', rowVersion: 'rv1' }),
+      );
+    });
   });
 });

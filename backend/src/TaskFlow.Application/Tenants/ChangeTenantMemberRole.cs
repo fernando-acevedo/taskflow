@@ -51,7 +51,7 @@ public sealed class ChangeTenantMemberRoleHandler(
         var result = await transactions.RunSerializableAsync(token => ChangeAsync(command, tenantId, token), cancellationToken);
         if (result.IsSuccess)
         {
-            accessCache.Forget(command.UserId, tenantId);
+            await accessCache.ForgetAsync(command.UserId, cancellationToken);
         }
 
         return result;

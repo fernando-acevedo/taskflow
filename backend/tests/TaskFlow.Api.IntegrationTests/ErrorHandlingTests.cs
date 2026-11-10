@@ -37,6 +37,35 @@ public sealed class ErrorHandlingTests(NoDatabaseApiFactory factory) : IClassFix
     }
 
     [Fact]
+    public async Task ProblemDetailsCarryTheTraceIdOfTheRequest()
+    {
+        using var failing = factory.WithWebHostBuilder(builder => builder.ConfigureTestServices(services =>
+            services.AddSingleton(ThrowingProxy.Create<IIdentityService>(new InvalidOperationException(SecretMessage)))));
+        using var client = failing.CreateClient();
+        const string traceId = "4bf92f3577b34da6a3ce929d0e0e4736";
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/api/invitations/accept")
+        {
+            Content = JsonContent.Create(new { email = AuthApi.NewEmail(), token = "token", password = AuthApi.ValidPassword }),
+        };
+        request.Headers.Add("traceparent", $"00-{traceId}-00f067aa0ba902b7-01");
+
+        // An unhandled exception (500) and a validation failure (400, written by MVC) both carry the id.
+        using var serverError = await client.SendAsync(request, Ct);
+        using var validation = await client.PostAsJsonAsync("/api/invitations/accept", new { }, Ct);
+
+        serverError.StatusCode.ShouldBe(HttpStatusCode.InternalServerError);
+        (await TraceIdOfAsync(serverError)).ShouldBe(traceId);
+        validation.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await TraceIdOfAsync(validation))!.ShouldMatch("^[0-9a-f]{32}$");
+    }
+
+    private static async Task<string?> TraceIdOfAsync(HttpResponseMessage response)
+    {
+        using var document = System.Text.Json.JsonDocument.Parse(await response.Content.ReadAsStringAsync(Ct));
+        return document.RootElement.TryGetProperty("traceId", out var value) ? value.GetString() : null;
+    }
+
+    [Fact]
     public async Task AuthEndpointsAreRateLimited()
     {
         using var limited = factory.WithWebHostBuilder(builder => builder.UseSetting("RateLimiting:Auth:PermitLimit", "2"));

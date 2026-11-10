@@ -227,6 +227,8 @@
   "common": {
     "cancel": "Cancel",
     "dismiss": "Dismiss",
+    "gone": "It no longer exists (someone else deleted or archived it).",
+    "supportCode": "Support code: {{code}}",
     "retry": "Try again",
     "stale": {
       "reload": "Reload",
@@ -284,6 +286,8 @@
       "SyncTooLarge": "A sync can carry at most 200 tasks."
     },
     "Concurrency": {
+      "PreconditionFailed": "This changed since you opened it. We reloaded it; try again.",
+      "PreconditionRequired": "This change is missing the version it was based on. Reload and try again.",
       "Stale": "Someone else changed this in the meantime. We reloaded it; try again."
     },
     "Labels": {
@@ -332,6 +336,9 @@
       "TooMany": "You have too many active API keys. Revoke one first.",
       "ScopeInsufficient": "This API key's scope doesn't allow this action.",
       "NotAllowedWithKey": "API keys can't be used for this. Sign in as a person."
+    },
+    "RateLimit": {
+      "Exceeded": "Too many requests. Wait a moment and try again."
     }
   },
   "clients": {
@@ -362,6 +369,7 @@
     "notes": "Notes",
     "cancel": "Cancel",
     "save": "Save",
+    "staleMessage": "Someone else changed this client while you were editing it.",
     "saved": "Client saved"
   },
   "users": {
@@ -603,6 +611,7 @@
     "cancel": "Cancel",
     "save": "Save",
     "created": "Label created",
+    "staleMessage": "Someone else changed this label while you were editing it.",
     "saved": "Label saved",
     "deleted": "Label deleted",
     "deleteTitle": "Delete this label?",
@@ -640,6 +649,7 @@
     "bodyRequired": "Write something before posting.",
     "bodyTooLong": "A comment can have up to {{ max }} characters.",
     "created": "Comment posted.",
+    "staleMessage": "Someone else changed this comment while you were editing it.",
     "saved": "Comment saved.",
     "deleted": "Comment deleted.",
     "deleteTitle": "Delete this comment?",

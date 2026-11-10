@@ -8,8 +8,10 @@ export const LabelsPageActions = createActionGroup({
   events: {
     Opened: props<{ projectId: string }>(),
     'Create Submitted': props<{ label: LabelInput } & Required<Submission>>(),
-    'Update Submitted': props<{ labelId: string; changes: LabelInput } & Required<Submission>>(),
+    'Update Submitted': props<{ labelId: string; changes: LabelInput; rowVersion: string } & Required<Submission>>(),
     'Delete Confirmed': props<{ labelId: string }>(),
+    /** The edit dialog asks for the server's version after a stale save. */
+    'Refresh Requested': props<Required<Submission>>(),
   },
 });
 
@@ -17,6 +19,7 @@ export const LabelsApiActions = createActionGroup({
   source: 'Labels API',
   events: {
     'Labels Loaded': props<{ projectId: string; labels: Label[] }>(),
+    'Labels Refreshed': props<{ projectId: string; labels: Label[] } & Submission>(),
     'Labels Load Failed': props<{ error: ApiError }>(),
     'Label Saved': props<{ label: Label; message: string } & Submission>(),
     'Label Deleted': props<{ labelId: string }>(),

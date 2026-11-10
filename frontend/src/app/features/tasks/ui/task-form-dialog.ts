@@ -18,7 +18,7 @@ import { applyApiFieldErrors } from '../../../shared/data-access/api-field-error
 import { SaveFn } from '../../../shared/data-access/submission';
 import { parseDuration, toClockText } from '../../../shared/ui/duration';
 import { localToday } from '../../../shared/ui/local-today';
-import { Label } from '../../labels/data-access/labels-api.service';
+import { LabelSummary } from '../../labels/data-access/labels-api.service';
 import { TaskHistory } from '../../activity/ui/task-history';
 import { TaskComments } from '../../comments/ui/task-comments';
 import { LabelChip } from '../../labels/ui/label-chip';
@@ -30,7 +30,7 @@ export interface TaskFormData {
   readonly task: Task | null;
   readonly members: readonly ProjectMember[];
   /** The project's labels. */
-  readonly labels: readonly Label[];
+  readonly labels: readonly LabelSummary[];
   /** The project's tasks, to show the titles of the ones this task depends on. */
   readonly tasks?: readonly Task[];
   readonly readOnly: boolean;

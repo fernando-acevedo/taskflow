@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Caching.Memory;
 using TaskFlow.Application.Abstractions;
 using TaskFlow.Domain.Common;
+using TaskFlow.Infrastructure.Caching;
 using TaskFlow.Domain.Tenancy;
 using TaskFlow.Infrastructure.Persistence;
 
@@ -16,10 +18,11 @@ public readonly record struct TenantAccessResult(bool TenantExists, TenantRole? 
 
 /// <summary>
 /// Checks the user's membership in a tenant (ADR 0013). The answer is cached per (user, tenant) for
-/// <see cref="CacheDuration"/>; this instance forgets it as soon as a membership changes (see <see cref="Forget"/>),
-/// other instances pick the change up within the cache duration.
+/// <see cref="CacheDuration"/> under the user's membership tag; a membership change drops the tag (see
+/// <see cref="ForgetAsync"/>), which every instance sees at once with a shared cache (Redis) and within the cache
+/// duration without one (ADR 0020).
 /// </summary>
-public sealed class TenantAccess(AppDbContext db, IMemoryCache cache, TimeProvider? time = null) : ITenantAccessCache
+public sealed class TenantAccess(AppDbContext db, HybridCache cache, IMemoryCache localCache, TimeProvider? time = null) : ITenantAccessCache
 {
     /// <summary>At most one support-access row per (user, tenant) in this window.</summary>
     public static readonly TimeSpan SupportAccessWindow = TimeSpan.FromMinutes(30);
@@ -29,16 +32,18 @@ public sealed class TenantAccess(AppDbContext db, IMemoryCache cache, TimeProvid
     /// <summary>Resolves an explicit tenant. A super-admin gets Owner in any existing tenant they do not belong to.</summary>
     public async Task<TenantAccessResult> CheckAsync(Guid userId, Guid tenantId, bool isSuperAdmin, CancellationToken cancellationToken)
     {
-        var entry = await cache.GetOrCreateAsync(AccessKey(userId, tenantId), async cacheEntry =>
+        var entry = await cache.GetOrCreateAsync(AccessKey(userId, tenantId), async token =>
         {
-            cacheEntry.AbsoluteExpirationRelativeToNow = CacheDuration;
-            var exists = await db.Tenants.AnyAsync(tenant => tenant.Id == tenantId, cancellationToken);
+            var exists = await db.Tenants.AnyAsync(tenant => tenant.Id == tenantId, token);
             TenantRole? role = await db.TenantMemberships
                 .Where(membership => membership.UserId == userId && membership.TenantId == tenantId)
                 .Select(membership => (TenantRole?)membership.Role)
-                .FirstOrDefaultAsync(cancellationToken);
+                .FirstOrDefaultAsync(token);
             return new TenantAccessResult(exists, role);
-        });
+        },
+        EntryOptions,
+        [CacheTags.Membership(userId)],
+        cancellationToken);
 
         // A super-admin who belongs to the tenant acts with their real role there; the implicit Owner is only for
         // tenants they do not belong to (support access).
@@ -53,15 +58,15 @@ public sealed class TenantAccess(AppDbContext db, IMemoryCache cache, TimeProvid
     /// </summary>
     public async Task<(Guid TenantId, TenantRole Role)?> DefaultAsync(Guid userId, CancellationToken cancellationToken)
     {
-        var memberships = await cache.GetOrCreateAsync(DefaultKey(userId), async cacheEntry =>
-        {
-            cacheEntry.AbsoluteExpirationRelativeToNow = CacheDuration;
-            return await db.TenantMemberships
+        var memberships = await cache.GetOrCreateAsync(DefaultKey(userId), async token =>
+            await db.TenantMemberships
                 .Where(membership => membership.UserId == userId)
-                .Select(membership => new { membership.TenantId, membership.Role })
+                .Select(membership => new DefaultMembership(membership.TenantId, membership.Role))
                 .Take(2)
-                .ToListAsync(cancellationToken);
-        });
+                .ToListAsync(token),
+            EntryOptions,
+            [CacheTags.Membership(userId)],
+            cancellationToken);
 
         return memberships is { Count: 1 } ? (memberships[0].TenantId, memberships[0].Role) : null;
     }
@@ -69,23 +74,25 @@ public sealed class TenantAccess(AppDbContext db, IMemoryCache cache, TimeProvid
     /// <summary>Records that a super-admin entered a tenant they do not belong to, at most once per window (same cache).</summary>
     public async Task RecordSupportAccessAsync(Guid userId, Guid tenantId, CancellationToken cancellationToken)
     {
+        // Per instance on purpose: at worst each instance writes one audit row per window.
         var key = $"tenant-support:{userId}:{tenantId}";
-        if (cache.TryGetValue(key, out _))
+        if (localCache.TryGetValue(key, out _))
         {
             return;
         }
 
         db.TenantSupportAccesses.Add(TenantSupportAccess.Create(tenantId, userId, (time ?? TimeProvider.System).GetUtcNow()));
         await db.SaveChangesAsync(cancellationToken);
-        cache.Set(key, true, SupportAccessWindow);
+        localCache.Set(key, true, SupportAccessWindow);
     }
 
-    /// <summary>Called after adding, removing or changing a membership, so this instance sees it at once.</summary>
-    public void Forget(Guid userId, Guid tenantId)
-    {
-        cache.Remove(AccessKey(userId, tenantId));
-        cache.Remove(DefaultKey(userId));
-    }
+    /// <summary>Called after adding, removing or changing a membership, so the user's cached access is dropped at once.</summary>
+    public ValueTask ForgetAsync(Guid userId, CancellationToken cancellationToken = default) =>
+        cache.RemoveByTagAsync(CacheTags.Membership(userId), cancellationToken);
+
+    private static readonly HybridCacheEntryOptions EntryOptions = new() { Expiration = CacheDuration, LocalCacheExpiration = CacheDuration };
+
+    private sealed record DefaultMembership(Guid TenantId, TenantRole Role);
 
     private static string AccessKey(Guid userId, Guid tenantId) => $"tenant-access:{userId}:{tenantId}";
 

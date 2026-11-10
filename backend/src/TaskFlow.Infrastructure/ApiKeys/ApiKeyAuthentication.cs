@@ -3,11 +3,13 @@ using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using TaskFlow.Application.Demo;
 using TaskFlow.Domain.ApiKeys;
+using TaskFlow.Infrastructure.Caching;
 using TaskFlow.Infrastructure.Persistence;
 
 namespace TaskFlow.Infrastructure.ApiKeys;
@@ -53,14 +55,16 @@ public static class ApiKeyDefaults
 /// <summary>
 /// Authenticates <c>Authorization: Bearer tf_...</c>. The key is found by the hash of the secret, which happens before
 /// the request has a tenant, so this is the only lookup that ignores the tenant filter (the key itself says which
-/// tenant the request is in). Found keys are not cached (a revoked key stops working at once); unknown secrets are, for seconds.
+/// tenant the request is in). Found keys are not cached (a revoked key stops working at once); unknown secrets are, for
+/// seconds and per instance. Whether the owner is active is cached under the user's tag (see <see cref="Identity.SessionValidator.ForgetAsync"/>).
 /// </summary>
 internal sealed class ApiKeyAuthenticationHandler(
     IOptionsMonitor<AuthenticationSchemeOptions> options,
     ILoggerFactory loggerFactory,
     UrlEncoder encoder,
     AppDbContext db,
-    IMemoryCache cache,
+    HybridCache cache,
+    IMemoryCache unknownSecrets,
     IDemoMode demo,
     TimeProvider time)
     : AuthenticationHandler<AuthenticationSchemeOptions>(options, loggerFactory, encoder)
@@ -80,7 +84,7 @@ internal sealed class ApiKeyAuthenticationHandler(
 
         var cancellationToken = Context.RequestAborted;
         var hash = ApiKey.HashSecret(secret);
-        if (cache.TryGetValue(ApiKeyDefaults.UnknownCacheKey(hash), out _))
+        if (unknownSecrets.TryGetValue(ApiKeyDefaults.UnknownCacheKey(hash), out _))
         {
             return AuthenticateResult.Fail("Invalid API key.");
         }
@@ -94,7 +98,7 @@ internal sealed class ApiKeyAuthenticationHandler(
         var now = time.GetUtcNow();
         if (found is null)
         {
-            cache.Set(ApiKeyDefaults.UnknownCacheKey(hash), true, ApiKeyDefaults.UnknownCacheDuration);
+            unknownSecrets.Set(ApiKeyDefaults.UnknownCacheKey(hash), true, ApiKeyDefaults.UnknownCacheDuration);
             return AuthenticateResult.Fail("Invalid API key.");
         }
 
@@ -104,11 +108,12 @@ internal sealed class ApiKeyAuthenticationHandler(
         }
 
         var key = found.Key;
-        var ownerActive = await cache.GetOrCreateAsync(ApiKeyDefaults.OwnerCacheKey(key.UserId), entry =>
-        {
-            entry.AbsoluteExpirationRelativeToNow = ApiKeyDefaults.OwnerCacheDuration;
-            return db.Users.Where(user => user.Id == key.UserId).Select(user => user.IsActive).FirstOrDefaultAsync(cancellationToken);
-        });
+        var ownerActive = await cache.GetOrCreateAsync(
+            ApiKeyDefaults.OwnerCacheKey(key.UserId),
+            token => new ValueTask<bool>(db.Users.Where(user => user.Id == key.UserId).Select(user => user.IsActive).FirstOrDefaultAsync(token)),
+            new HybridCacheEntryOptions { Expiration = ApiKeyDefaults.OwnerCacheDuration, LocalCacheExpiration = ApiKeyDefaults.OwnerCacheDuration },
+            [CacheTags.User(key.UserId), CacheTags.ApiKey(key.Id)],
+            cancellationToken);
         if (!ownerActive)
         {
             return AuthenticateResult.Fail("The API key's owner is not active.");

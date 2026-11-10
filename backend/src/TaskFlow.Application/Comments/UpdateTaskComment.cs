@@ -16,12 +16,16 @@ public sealed record UpdateTaskCommentCommand(
     Guid TaskId,
     Guid CommentId,
     string Body,
-    IReadOnlyList<Guid>? MentionedUserIds);
+    IReadOnlyList<Guid>? MentionedUserIds,
+    byte[] RowVersion);
 
 public sealed class UpdateTaskCommentValidator : AbstractValidator<UpdateTaskCommentCommand>
 {
-    public UpdateTaskCommentValidator() =>
+    public UpdateTaskCommentValidator()
+    {
         RuleFor(command => command.Body).NotEmpty().MaximumLength(TaskComment.BodyMaxLength);
+        RuleFor(command => command.RowVersion).NotEmpty();
+    }
 }
 
 /// <summary>The author edits their comment; the mentions are replaced by the ones sent.</summary>
@@ -56,6 +60,11 @@ public sealed class UpdateTaskCommentHandler(
         if (comment is null)
         {
             return TaskCommentErrors.NotFound;
+        }
+
+        if (!RowVersions.Matches(comment.RowVersion, command.RowVersion))
+        {
+            return CommonErrors.Stale;
         }
 
         var mentionedBefore = comment.Mentions.Select(mention => mention.UserId).ToList();

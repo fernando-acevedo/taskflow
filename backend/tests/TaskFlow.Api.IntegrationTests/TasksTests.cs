@@ -36,6 +36,31 @@ public sealed class TasksTests(SqlServerApiFactory factory)
         second.Position.ShouldBe(1);
     }
 
+    [Fact]
+    public async Task ACreatedTaskKeepsItsStartDateBlockedFlagAndStatusNote()
+    {
+        var (ownerClient, _) = await factory.CreateUserClientAsync();
+        using var owner = ownerClient;
+        var project = await factory.CreateProjectAsync(owner);
+        var url = $"/api/projects/{project.Id}/tasks";
+
+        using var response = await owner.PostAsJsonAsync(
+            url, new { title = "Plan", startDate = Today.AddDays(1), dueDate = Today.AddDays(5), isBlocked = true, statusNote = "  waiting for assets " }, Ct);
+        var created = await response.ReadAsync<PlanningResponse>();
+        var read = await owner.GetJsonAsync<PlanningResponse>($"{url}/{created.Id}");
+        using var afterDue = await owner.PostAsJsonAsync(url, new { title = "Bad", startDate = Today.AddDays(9), dueDate = Today.AddDays(5) }, Ct);
+        using var longNote = await owner.PostAsJsonAsync(url, new { title = "Bad", statusNote = new string('x', 501) }, Ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Created);
+        read.StartDate.ShouldBe(Today.AddDays(1));
+        read.IsBlocked.ShouldBeTrue();
+        read.StatusNote.ShouldBe("waiting for assets");
+        afterDue.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        longNote.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    private sealed record PlanningResponse(Guid Id, DateOnly? StartDate, bool IsBlocked, string? StatusNote);
+
     [Theory]
     [InlineData("en", "'Due Date' must be greater than or equal to")]
     [InlineData("es", "'Due Date' debe ser mayor o igual que")]

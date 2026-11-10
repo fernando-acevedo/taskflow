@@ -37,6 +37,9 @@ public sealed class TaskComment : ITenantOwned
     /// <summary>Set when the author edits the comment; null while it is unedited.</summary>
     public DateTimeOffset? EditedAt { get; private set; }
 
+    /// <summary>Concurrency token: an edit made on an older version is rejected.</summary>
+    public byte[] RowVersion { get; private set; } = [];
+
     public IReadOnlyCollection<TaskCommentMention> Mentions => _mentions;
 
     public static Result<TaskComment> Create(

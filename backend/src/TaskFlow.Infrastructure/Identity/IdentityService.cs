@@ -142,8 +142,10 @@ internal sealed class IdentityService(UserManager<ApplicationUser> userManager, 
         else
         {
             EnsureSucceeded(await userManager.UpdateSecurityStampAsync(user));
-            sessions.Forget(userId);
         }
+
+        // Also when reactivating: the cached "owner is active" check of their API keys must not outlive the change.
+        await sessions.ForgetAsync(userId, cancellationToken);
     }
 
     public async Task SetAdminAsync(Guid userId, bool isAdmin, CancellationToken cancellationToken)
@@ -161,7 +163,7 @@ internal sealed class IdentityService(UserManager<ApplicationUser> userManager, 
         }
 
         EnsureSucceeded(await userManager.UpdateSecurityStampAsync(user));
-        sessions.Forget(userId);
+        await sessions.ForgetAsync(userId, cancellationToken);
     }
 
     private Task<Guid> AdminRoleIdAsync(CancellationToken cancellationToken) =>

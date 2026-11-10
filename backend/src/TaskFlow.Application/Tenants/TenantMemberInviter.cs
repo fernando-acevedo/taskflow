@@ -54,7 +54,7 @@ public sealed class TenantMemberInviter(
         var membership = TenantMembership.Create(tenantId, user.Id, role, time.GetUtcNow());
         db.TenantMemberships.Add(membership);
         await db.SaveChangesAsync(cancellationToken);
-        accessCache.Forget(user.Id, tenantId);
+        await accessCache.ForgetAsync(user.Id, cancellationToken);
 
         bool sent;
         if (created)

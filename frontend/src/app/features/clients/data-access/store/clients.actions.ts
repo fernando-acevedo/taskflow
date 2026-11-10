@@ -9,9 +9,11 @@ export const ClientsPageActions = createActionGroup({
     Opened: emptyProps(),
     'Query Changed': props<{ query: Partial<ClientQuery> }>(),
     'Create Submitted': props<{ client: ClientInput } & Required<Submission>>(),
-    'Update Submitted': props<{ id: string; client: ClientInput } & Required<Submission>>(),
+    'Update Submitted': props<{ id: string; client: ClientInput; rowVersion: string } & Required<Submission>>(),
     'Archive Confirmed': props<{ id: string }>(),
     'Restore Clicked': props<{ id: string }>(),
+    /** The edit dialog asks for the server's version after a stale save. */
+    'Refresh Requested': props<Required<Submission>>(),
   },
 });
 
@@ -19,6 +21,7 @@ export const ClientsApiActions = createActionGroup({
   source: 'Clients API',
   events: {
     'Clients Loaded': props<{ page: PagedResult<Client> }>(),
+    'Clients Refreshed': props<{ page: PagedResult<Client> } & Submission>(),
     'Clients Load Failed': props<{ error: ApiError }>(),
     'Client Saved': props<Submission>(),
     'Client Save Failed': props<{ error: ApiError } & Submission>(),

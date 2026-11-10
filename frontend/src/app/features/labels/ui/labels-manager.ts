@@ -1,11 +1,12 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { MatDialog } from '@angular/material/dialog';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { Notifier } from '../../../core/notifications/notifier';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoDirective } from '@jsverse/transloco';
 import { Store } from '@ngrx/store';
-import { filter } from 'rxjs';
+import { Observable, filter, map } from 'rxjs';
 import { SaveFn, Submissions, nextSubmissionId } from '../../../shared/data-access/submission';
 import { confirm } from '../../../shared/ui/confirm-dialog';
 import { Label, LabelInput } from '../data-access/labels-api.service';
@@ -81,18 +82,43 @@ export class LabelsManager {
   private readonly store = inject(Store);
   private readonly submissions = inject(Submissions);
   private readonly dialog = inject(MatDialog);
+  private readonly notifier = inject(Notifier);
 
   protected readonly labels = this.store.selectSignal(labelsFeature.selectAll);
   protected readonly saving = this.store.selectSignal(labelsFeature.selectSaving);
 
   protected edit(label: Label | null): void {
+    // The version the dialog opened with; it changes only on Reload or Save anyway (a successful refresh).
+    let rowVersion = label?.rowVersion ?? '';
     const save: SaveFn<LabelInput> = (input) =>
       this.submissions.dispatchAndWait(
         label
-          ? LabelsPageActions.updateSubmitted({ labelId: label.id, changes: input, submissionId: nextSubmissionId() })
+          ? LabelsPageActions.updateSubmitted({ labelId: label.id, changes: input, rowVersion, submissionId: nextSubmissionId() })
           : LabelsPageActions.createSubmitted({ label: input, submissionId: nextSubmissionId() }),
       );
-    this.dialog.open<LabelFormDialog, LabelFormData>(LabelFormDialog, { data: { label, save }, width: '460px', maxWidth: 'calc(100vw - 32px)' });
+    const refresh = (): Observable<Label | null> =>
+      this.submissions
+        .dispatchAndWait(LabelsPageActions.refreshRequested({ submissionId: nextSubmissionId() }))
+        .pipe(
+          map((error) => {
+            if (error) {
+              return null;
+            }
+            const latest = this.labels().find((current) => current.id === label?.id) ?? null;
+            if (latest) {
+              rowVersion = latest.rowVersion;
+            } else {
+              this.notifier.info('common.gone');
+              ref.close(); // the dialog is open by the time a refresh can answer
+            }
+            return latest;
+          }),
+        );
+    const ref: MatDialogRef<LabelFormDialog> = this.dialog.open<LabelFormDialog, LabelFormData>(LabelFormDialog, {
+      data: { label, save, refresh },
+      width: '460px',
+      maxWidth: 'calc(100vw - 32px)',
+    });
   }
 
   protected remove(label: Label): void {

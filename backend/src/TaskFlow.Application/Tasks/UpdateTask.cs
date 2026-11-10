@@ -70,7 +70,7 @@ public sealed class UpdateTaskHandler(
             return TaskErrors.NotFound;
         }
 
-        if (!task.RowVersion.SequenceEqual(command.RowVersion))
+        if (!RowVersions.Matches(task.RowVersion, command.RowVersion))
         {
             return CommonErrors.Stale;
         }

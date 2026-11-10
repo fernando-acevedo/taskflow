@@ -11,7 +11,7 @@ public sealed class ApiKeySecurityTests(NoDatabaseApiFactory factory) : IClassFi
     {
         using var client = factory.CreateClient();
 
-        using var response = await client.GetAsync(new Uri("/openapi/v1.json", UriKind.Relative), TestContext.Current.CancellationToken);
+        using var response = await client.GetAsync(new Uri("/openapi/1.0.json", UriKind.Relative), TestContext.Current.CancellationToken);
         var json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);

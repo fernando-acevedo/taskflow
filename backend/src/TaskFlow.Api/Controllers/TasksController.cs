@@ -14,6 +14,7 @@ public sealed class TasksController : ApiControllerBase
     [HttpGet]
     [ProducesResponseType<IReadOnlyList<TaskDto>>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status304NotModified)]
     public async Task<ActionResult<IReadOnlyList<TaskDto>>> List(
         Guid projectId,
         [FromQuery] TaskItemStatus? status,
@@ -24,19 +25,20 @@ public sealed class TasksController : ApiControllerBase
         [FromServices] ListTasksHandler handler,
         CancellationToken cancellationToken,
         [FromQuery] bool overdue = false) =>
-        OkOrProblem(await handler.HandleAsync(
+        OkOrProblemWithWeakETag(await handler.HandleAsync(
             new ListTasksQuery(projectId, status, priority, assigneeId, overdue, search, labelId), cancellationToken));
 
     [HttpGet("{taskId:guid}")]
     [ProducesResponseType<TaskDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status304NotModified)]
     public async Task<ActionResult<TaskDto>> Get(
         Guid projectId,
         Guid taskId,
         [FromServices] GetTaskHandler handler,
         CancellationToken cancellationToken) =>
-        OkOrProblem(await handler.HandleAsync(new GetTaskQuery(projectId, taskId), cancellationToken));
+        OkOrProblem(await handler.HandleAsync(new GetTaskQuery(projectId, taskId), cancellationToken), task => task.RowVersion);
 
     /// <summary>Adds a task at the bottom of To Do. The due date can't be in the past.</summary>
     [HttpPost]
@@ -50,7 +52,7 @@ public sealed class TasksController : ApiControllerBase
         CancellationToken cancellationToken) =>
         CreatedOrProblem(
             await handler.HandleAsync(
-                new CreateTaskCommand(projectId, request.Title, request.Description, request.Priority, request.AssigneeId, request.DueDate, request.EstimatedMinutes, request.LabelIds),
+                new CreateTaskCommand(projectId, request.Title, request.Description, request.Priority, request.AssigneeId, request.DueDate, request.EstimatedMinutes, request.LabelIds, request.StartDate, request.IsBlocked, request.StatusNote),
                 cancellationToken),
             nameof(Get),
             task => new { projectId, taskId = task.Id });
@@ -121,6 +123,7 @@ public sealed class TasksController : ApiControllerBase
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status412PreconditionFailed)]
     public async Task<ActionResult<TaskDto>> Update(
         Guid projectId,
         Guid taskId,
@@ -129,7 +132,7 @@ public sealed class TasksController : ApiControllerBase
         CancellationToken cancellationToken) =>
         OkOrProblem(await handler.HandleAsync(
             new UpdateTaskCommand(
-                projectId, taskId, request.Title, request.Description, request.Priority, request.AssigneeId, request.DueDate, request.EstimatedMinutes, request.RowVersion, request.LabelIds, request.StartDate, request.IsBlocked, request.StatusNote),
+                projectId, taskId, request.Title, request.Description, request.Priority, request.AssigneeId, request.DueDate, request.EstimatedMinutes, RowVersionFrom(request.RowVersion), request.LabelIds, request.StartDate, request.IsBlocked, request.StatusNote),
             cancellationToken));
 
     /// <summary>Moves the task to a column and position, as a Kanban drag and drop does.</summary>
@@ -138,6 +141,7 @@ public sealed class TasksController : ApiControllerBase
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status412PreconditionFailed)]
     public async Task<ActionResult<MoveTaskResultDto>> Move(
         Guid projectId,
         Guid taskId,
@@ -145,18 +149,19 @@ public sealed class TasksController : ApiControllerBase
         [FromServices] MoveTaskHandler handler,
         CancellationToken cancellationToken) =>
         OkOrProblem(await handler.HandleAsync(
-            new MoveTaskCommand(projectId, taskId, request.Status, request.Position, request.RowVersion), cancellationToken));
+            new MoveTaskCommand(projectId, taskId, request.Status, request.Position, RowVersionFrom(request.RowVersion)), cancellationToken));
 
     [HttpDelete("{taskId:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status412PreconditionFailed)]
     public async Task<ActionResult> Delete(
         Guid projectId,
         Guid taskId,
         [FromServices] DeleteTaskHandler handler,
         CancellationToken cancellationToken) =>
-        NoContentOrProblem(await handler.HandleAsync(new DeleteTaskCommand(projectId, taskId), cancellationToken));
+        NoContentOrProblem(await handler.HandleAsync(new DeleteTaskCommand(projectId, taskId, OptionalRowVersion()), cancellationToken));
 }
 
 public sealed record CreateTaskRequest(
@@ -166,7 +171,10 @@ public sealed record CreateTaskRequest(
     Guid? AssigneeId = null,
     DateOnly? DueDate = null,
     int? EstimatedMinutes = null,
-    IReadOnlyList<Guid>? LabelIds = null);
+    IReadOnlyList<Guid>? LabelIds = null,
+    DateOnly? StartDate = null,
+    bool IsBlocked = false,
+    string? StatusNote = null);
 
 public sealed record UpdateTaskRequest(
     string Title,
@@ -175,7 +183,7 @@ public sealed record UpdateTaskRequest(
     Guid? AssigneeId,
     DateOnly? DueDate,
     int? EstimatedMinutes,
-    byte[] RowVersion,
+    byte[]? RowVersion,
     IReadOnlyList<Guid>? LabelIds = null,
     DateOnly? StartDate = null,
     bool IsBlocked = false,
@@ -225,4 +233,4 @@ public sealed record SyncTaskItemRequest(
 /// <param name="Items">Between 1 and 200 tasks, each with a different <c>externalKey</c>.</param>
 public sealed record SyncTasksRequest(IReadOnlyList<SyncTaskItemRequest> Items);
 
-public sealed record MoveTaskRequest(TaskItemStatus Status, int Position, byte[] RowVersion);
+public sealed record MoveTaskRequest(TaskItemStatus Status, int Position, byte[]? RowVersion);

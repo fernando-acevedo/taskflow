@@ -2,10 +2,11 @@ import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, input, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
+import { Notifier } from '../../../core/notifications/notifier';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoDirective } from '@jsverse/transloco';
 import { Store } from '@ngrx/store';
-import { filter } from 'rxjs';
+import { Observable, filter, map } from 'rxjs';
 import { authFeature } from '../../../core/auth/store/auth.feature';
 import { LanguageService } from '../../../core/i18n/language.service';
 import { SaveFn, Submissions, nextSubmissionId } from '../../../shared/data-access/submission';
@@ -25,6 +26,7 @@ interface CommentView {
   readonly canEdit: boolean;
   readonly canDelete: boolean;
   readonly save: SaveFn<CommentInput>;
+  readonly refresh: () => Observable<string | null>;
 }
 
 /**
@@ -59,7 +61,7 @@ interface CommentView {
               }
               <span class="spacer"></span>
               @if (view.canEdit && editingId() !== view.comment.id) {
-                <button mat-icon-button type="button" [attr.aria-label]="t('edit')" (click)="editingId.set(view.comment.id)">
+                <button mat-icon-button type="button" [attr.aria-label]="t('edit')" (click)="startEdit(view.comment)">
                   <mat-icon aria-hidden="true">edit</mat-icon>
                 </button>
               }
@@ -73,6 +75,7 @@ interface CommentView {
               <app-comment-editor
                 [members]="mentionable()"
                 [save]="view.save"
+                [refresh]="view.refresh"
                 [initialBody]="view.comment.body"
                 label="editComment"
                 submitLabel="save"
@@ -156,6 +159,7 @@ export class TaskComments implements OnInit {
   private readonly store = inject(Store);
   private readonly submissions = inject(Submissions);
   private readonly dialog = inject(MatDialog);
+  private readonly notifier = inject(Notifier);
   protected readonly language = inject(LanguageService);
 
   private readonly comments = this.store.selectSignal(commentsFeature.selectAll);
@@ -169,6 +173,8 @@ export class TaskComments implements OnInit {
   private readonly now = signal(Date.now());
 
   protected readonly editingId = signal<string | null>(null);
+  /** The row version the open editor started with; it changes only on a successful reload (Reload or Save anyway). */
+  private editVersion: { readonly id: string; readonly version: string } | null = null;
   protected readonly canComment = this.canWork;
   /** Active members: the people a new mention can name. */
   protected readonly mentionable = computed(() => this.members().filter((member) => member.isActive));
@@ -191,7 +197,8 @@ export class TaskComments implements OnInit {
         when: relativeTime(comment.createdAt, now, locale),
         canEdit: mine && this.canWork(),
         canDelete: (mine && this.canWork()) || canManage,
-        save: this.saveFor(comment.id),
+        save: this.saveFor(comment),
+        refresh: this.refreshFor(comment.id),
       };
     });
   });
@@ -209,11 +216,40 @@ export class TaskComments implements OnInit {
     this.store.dispatch(CommentsPageActions.opened({ projectId: this.projectId(), taskId: this.taskId() }));
   }
 
-  private saveFor(commentId: string): SaveFn<CommentInput> {
-    return (changes) =>
-      this.submissions.dispatchAndWait(
-        CommentsPageActions.updateSubmitted({ commentId, changes, submissionId: nextSubmissionId() }),
+  protected startEdit(comment: TaskComment): void {
+    this.editVersion = { id: comment.id, version: comment.rowVersion };
+    this.editingId.set(comment.id);
+  }
+
+  private saveFor(comment: TaskComment): SaveFn<CommentInput> {
+    return (changes) => {
+      const rowVersion = this.editVersion?.id === comment.id ? this.editVersion.version : comment.rowVersion;
+      return this.submissions.dispatchAndWait(
+        CommentsPageActions.updateSubmitted({ commentId: comment.id, changes, rowVersion, submissionId: nextSubmissionId() }),
       );
+    };
+  }
+
+  /** The server's current body of a comment, or null when the thread cannot be loaded or the comment is gone. */
+  private refreshFor(commentId: string): () => Observable<string | null> {
+    return () =>
+      this.submissions
+        .dispatchAndWait(CommentsPageActions.refreshRequested({ submissionId: nextSubmissionId() }))
+        .pipe(
+          map((error) => {
+            if (error) {
+              return null;
+            }
+            const latest = this.comments().find((comment) => comment.id === commentId);
+            if (latest === undefined) {
+              this.notifier.info('common.gone');
+              this.editingId.set(null);
+              return null;
+            }
+            this.editVersion = { id: commentId, version: latest.rowVersion };
+            return latest.body;
+          }),
+        );
   }
 
   protected remove(comment: TaskComment): void {

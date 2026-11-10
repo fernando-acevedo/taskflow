@@ -28,6 +28,8 @@ public sealed class EndpointSecurityTests(NoDatabaseApiFactory factory) : IClass
 
         // The API reference is public in every environment and holds no data (ADR 0016).
         "openapi/{documentName}.json",
+        "openapi/v1.json",
+        "scalar/v1",
         "scalar/{documentName?}",
         "scalar/scalar.js",
         "scalar/scalar.aspnetcore.js",

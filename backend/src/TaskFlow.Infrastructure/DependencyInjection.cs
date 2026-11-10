@@ -89,6 +89,16 @@ public static class DependencyInjection
         services.AddScoped<IdentitySeeder>();
         services.AddScoped<IIdentityService, IdentityService>();
         services.AddMemoryCache();
+
+        // Shared cache (ADR 0020): HybridCache keeps a per-instance L1 and, when ConnectionStrings:Redis is set, a Redis L2
+        // that also carries tag invalidation between instances. Without Redis everything works from memory.
+        if (configuration.GetConnectionString("Redis") is { Length: > 0 } redis)
+        {
+            services.AddStackExchangeRedisCache(options => options.Configuration = redis);
+        }
+
+        services.AddHybridCache();
+        services.AddSingleton(new Caching.JobLock(connectionString));
         services.AddScoped<SessionValidator>();
         services.AddScoped<Tenancy.TenantAccess>();
         services.AddScoped<ITenantAccessCache>(provider => provider.GetRequiredService<Tenancy.TenantAccess>());

@@ -227,6 +227,8 @@
   "common": {
     "cancel": "Cancelar",
     "dismiss": "Cerrar",
+    "gone": "Ya no existe (otra persona lo borró o archivó).",
+    "supportCode": "Código de soporte: {{code}}",
     "retry": "Reintentar",
     "stale": {
       "reload": "Recargar",
@@ -284,6 +286,8 @@
       "SyncTooLarge": "Una sincronización puede llevar como máximo 200 tareas."
     },
     "Concurrency": {
+      "PreconditionFailed": "Esto cambió desde que lo abriste. Lo recargamos; inténtalo de nuevo.",
+      "PreconditionRequired": "Falta la versión en la que se basa este cambio. Recarga e inténtalo de nuevo.",
       "Stale": "Otra persona modificó esto mientras tanto. Lo recargamos; inténtalo de nuevo."
     },
     "Labels": {
@@ -332,6 +336,9 @@
       "TooMany": "Tenés demasiadas claves de API activas. Revocá una primero.",
       "ScopeInsufficient": "El alcance de esta clave de API no permite esta acción.",
       "NotAllowedWithKey": "Las claves de API no sirven para esto. Iniciá sesión como persona."
+    },
+    "RateLimit": {
+      "Exceeded": "Demasiadas solicitudes. Esperá un momento y volvé a intentarlo."
     }
   },
   "clients": {
@@ -362,6 +369,7 @@
     "notes": "Notas",
     "cancel": "Cancelar",
     "save": "Guardar",
+    "staleMessage": "Otra persona modificó este cliente mientras lo editabas.",
     "saved": "Cliente guardado"
   },
   "users": {
@@ -603,6 +611,7 @@
     "cancel": "Cancelar",
     "save": "Guardar",
     "created": "Etiqueta creada",
+    "staleMessage": "Otra persona modificó esta etiqueta mientras la editabas.",
     "saved": "Etiqueta guardada",
     "deleted": "Etiqueta eliminada",
     "deleteTitle": "¿Eliminar esta etiqueta?",
@@ -640,6 +649,7 @@
     "bodyRequired": "Escribe algo antes de publicar.",
     "bodyTooLong": "Un comentario puede tener hasta {{ max }} caracteres.",
     "created": "Comentario publicado.",
+    "staleMessage": "Otra persona modificó este comentario mientras lo editabas.",
     "saved": "Comentario guardado.",
     "deleted": "Comentario eliminado.",
     "deleteTitle": "¿Eliminar este comentario?",

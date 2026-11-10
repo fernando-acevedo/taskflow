@@ -4,7 +4,7 @@ using TaskFlow.Domain.Common;
 
 namespace TaskFlow.Application.Projects;
 
-public sealed record SetProjectArchivedCommand(Guid ProjectId, bool IsArchived);
+public sealed record SetProjectArchivedCommand(Guid ProjectId, bool IsArchived, byte[]? RowVersion = null);
 
 /// <summary>Archiving is a soft delete: the project becomes read-only and leaves the default list.</summary>
 public sealed class SetProjectArchivedHandler(IAppDbContext db, ProjectAccess access, TimeProvider time)
@@ -18,6 +18,11 @@ public sealed class SetProjectArchivedHandler(IAppDbContext db, ProjectAccess ac
         }
 
         var project = allowed.Value;
+        if (command.RowVersion is not null && !RowVersions.Matches(project.RowVersion, command.RowVersion))
+        {
+            return CommonErrors.Stale;
+        }
+
         if (command.IsArchived)
         {
             project.Archive(time.GetUtcNow());

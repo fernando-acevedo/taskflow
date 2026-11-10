@@ -4,6 +4,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using TaskFlow.Application.Notifications;
+using TaskFlow.Infrastructure.Caching;
+using TaskFlow.Infrastructure.Diagnostics;
 using TaskFlow.Infrastructure.Persistence;
 using TaskFlow.Infrastructure.Tenancy;
 
@@ -23,11 +25,14 @@ public sealed class NotificationOptions
 /// <summary>
 /// Runs <see cref="NotifyDueSoonHandler"/> for each tenant once a day at <see cref="NotificationOptions.DueSoonHourUtc"/>. If the
 /// app starts after that hour it runs at once; the handler is idempotent, so a restart or a second instance
-/// doesn't duplicate notifications (ADR 0010).
+/// doesn't duplicate notifications (ADR 0010). That idempotency is why the last run is kept in memory and not persisted:
+/// a restart repeats the pass at worst, and creates nothing new. Each pass also takes an application lock, so with
+/// several instances only one runs it at a time (ADR 0020).
 /// </summary>
 internal sealed partial class DueSoonNotificationService(
     IServiceScopeFactory scopes,
     TenantScope tenantScope,
+    JobLock jobLock,
     IOptions<NotificationOptions> options,
     TimeProvider time,
     ILogger<DueSoonNotificationService> logger) : BackgroundService
@@ -66,6 +71,34 @@ internal sealed partial class DueSoonNotificationService(
     }
 
     private async Task RunAsync(CancellationToken cancellationToken)
+    {
+        using var activity = TaskFlowTelemetry.Source.StartActivity("due-soon-notifications");
+        IAsyncDisposable? held;
+        try
+        {
+            held = await jobLock.TryAcquireAsync("taskflow-due-soon", cancellationToken);
+        }
+#pragma warning disable CA1031 // A failed run must not stop the service; the next day (or restart) tries again.
+        catch (Exception exception) when (exception is not OperationCanceledException)
+#pragma warning restore CA1031
+        {
+            LogFailed(logger, exception);
+            return;
+        }
+
+        if (held is null)
+        {
+            activity?.SetTag("job.skipped", true);
+            return;
+        }
+
+        await using (held)
+        {
+            await RunTenantsAsync(cancellationToken);
+        }
+    }
+
+    private async Task RunTenantsAsync(CancellationToken cancellationToken)
     {
         List<Guid> tenants;
         try

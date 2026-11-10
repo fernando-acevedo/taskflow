@@ -57,7 +57,7 @@ describe('LabelFormDialog', () => {
 
   it('starts from the label being edited', () => {
     const save = vi.fn(() => of(null));
-    const view = render({ id: 'l1', name: 'Bug', color: '#D32F2F' }, save);
+    const view = render({ id: 'l1', name: 'Bug', color: '#D32F2F', rowVersion: 'rv1' }, save);
 
     expect(view.name.value).toBe('Bug');
     expect(view.radios().find((radio) => radio.checked)?.value).toBe('#D32F2F');

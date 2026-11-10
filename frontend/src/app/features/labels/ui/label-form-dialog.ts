@@ -7,9 +7,12 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { Observable } from 'rxjs';
 import { TranslocoDirective, TranslocoService } from '@jsverse/transloco';
+import { isStale } from '../../../core/http/api-error';
 import { applyApiFieldErrors } from '../../../shared/data-access/api-field-errors';
 import { SaveFn } from '../../../shared/data-access/submission';
+import { StaleNotice } from '../../../shared/ui/stale-notice';
 import { Label, LabelInput } from '../data-access/labels-api.service';
 import { LabelChip } from './label-chip';
 import { LABEL_COLORS, LABEL_COLOR_NAMES, textColorFor } from './label-colors';
@@ -17,6 +20,8 @@ import { LABEL_COLORS, LABEL_COLOR_NAMES, textColorFor } from './label-colors';
 export interface LabelFormData {
   readonly label: Label | null;
   readonly save: SaveFn<LabelInput>;
+  /** The server's current label (null if it can't be fetched); the store then holds its new row version. */
+  readonly refresh?: () => Observable<Label | null>;
 }
 
 /** Creates a label, or edits the one passed in: a name and a color from the fixed palette. */
@@ -32,6 +37,7 @@ export interface LabelFormData {
     MatProgressBarModule,
     TranslocoDirective,
     LabelChip,
+    StaleNotice,
   ],
   template: `
     <ng-container *transloco="let t; prefix: 'labels'">
@@ -40,6 +46,9 @@ export interface LabelFormData {
         <mat-dialog-content>
           @if (saving()) {
             <mat-progress-bar mode="indeterminate" />
+          }
+          @if (stale()) {
+            <app-stale-notice [message]="t('staleMessage')" [busy]="saving()" (reload)="reload()" (overwrite)="overwrite()" />
           }
           <mat-form-field appearance="outline">
             <mat-label>{{ t('name') }}</mat-label>
@@ -135,6 +144,8 @@ export class LabelFormDialog {
   private readonly destroyRef = inject(DestroyRef);
   private readonly transloco = inject(TranslocoService);
   protected readonly saving = signal(false);
+  /** Someone else changed the label while this dialog was open. */
+  protected readonly stale = signal(false);
   protected readonly colors = LABEL_COLORS;
   protected readonly colorNames = LABEL_COLOR_NAMES;
   protected readonly textColor = textColorFor;
@@ -154,12 +165,15 @@ export class LabelFormDialog {
       return;
     }
     this.saving.set(true);
+    this.stale.set(false);
     this.data
       .save({ name: name.trim(), color })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((error) => {
         this.saving.set(false);
-        if (error) {
+        if (isStale(error)) {
+          this.stale.set(true);
+        } else if (error) {
           applyApiFieldErrors(this.form, error);
           if (error.code === 'Labels.NameTaken' && !this.form.controls.name.getError('api')) {
             const control = this.form.controls.name;
@@ -168,6 +182,33 @@ export class LabelFormDialog {
           }
         } else {
           this.dialogRef.close(true);
+        }
+      });
+  }
+
+  /** Replaces the form with the server's version, losing what was typed. */
+  protected reload(): void {
+    this.fetchLatest((label) => this.form.reset({ name: label.name, color: label.color }));
+  }
+
+  /** Takes the server's row version, then saves the typed values again. */
+  protected overwrite(): void {
+    this.fetchLatest(() => this.submit());
+  }
+
+  private fetchLatest(then: (label: Label) => void): void {
+    const refresh = this.data.refresh;
+    if (!refresh) {
+      return;
+    }
+    this.saving.set(true);
+    refresh()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((label) => {
+        this.saving.set(false);
+        if (label) {
+          this.stale.set(false);
+          then(label);
         }
       });
   }

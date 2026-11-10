@@ -100,9 +100,11 @@ from `factory.Today`, never `DateTime.UtcNow`. Read responses with `ReadAsync<T>
 which fail on a missing field instead of defaulting it. `ProjectApi` sets up clients, projects and tasks. `NoDatabaseApiFactory` covers endpoints
 that don't need a database. `AuthApi` contains helpers for registering and logging in. Use-case unit tests live in
 `TaskFlow.Application.UnitTests`, mirroring the Application folders (`Users/SetUserActiveHandlerTests.cs`).
+The OpenAPI contract is a snapshot test (`OpenApiSnapshotTests` vs `docs/api/openapi-1.0.json`): after an intended API change run `UPDATE_OPENAPI_SNAPSHOT=1 dotnet test tests/TaskFlow.Api.IntegrationTests --filter OpenApiSnapshotTests -c Release` and commit the file.
 
 ## Frontend architecture
 
+- API types: `core/api/schema.d.ts` is generated from `docs/api/openapi-1.0.json` (aliases in `core/api/types.ts`; no hand-written DTOs in `*-api.service.ts`). Flow: change backend → `UPDATE_OPENAPI_SNAPSHOT=1 dotnet test --filter OpenApiSnapshot` → `npm run api:types`; CI runs `npm run api:check`.
 - The frontend calls the API directly at `environment.apiUrl` (`src/environments/`), with no dev-server proxy,
   so the API's CORS settings in `appsettings*.json` must allow the frontend origin. `authInterceptor` attaches
   the bearer token only to URLs under `${apiUrl}/api/`.

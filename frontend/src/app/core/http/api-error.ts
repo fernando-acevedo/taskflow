@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { sentTraceId } from './trace';
 
 /**
  * A failed API call reduced to what the UI needs. `code` is the API's error code (`Projects.LastOwner`), or one
@@ -8,6 +9,8 @@ import { HttpErrorResponse } from '@angular/common/http';
 export interface ApiError {
   readonly code: string;
   readonly fields: Record<string, string[]>;
+  /** The id of the request's trace (the API's `traceId`, or the one the browser sent); shown to the user for support. */
+  readonly traceId?: string;
 }
 
 export interface PagedResult<T> {
@@ -22,6 +25,7 @@ export interface ProblemBody {
   readonly code?: string;
   readonly detail?: string;
   readonly errors?: Record<string, string[]>;
+  readonly traceId?: string;
 }
 
 export function problemBody(error: HttpErrorResponse): ProblemBody {
@@ -30,11 +34,12 @@ export function problemBody(error: HttpErrorResponse): ProblemBody {
     return {};
   }
 
-  const { code, detail, errors } = body as Record<string, unknown>;
+  const { code, detail, errors, traceId } = body as Record<string, unknown>;
   return {
     code: typeof code === 'string' ? code : undefined,
     detail: typeof detail === 'string' ? detail : undefined,
     errors: typeof errors === 'object' && errors !== null ? (errors as Record<string, string[]>) : undefined,
+    traceId: typeof traceId === 'string' ? traceId : undefined,
   };
 }
 
@@ -51,17 +56,20 @@ export function toApiError(error: unknown): ApiError {
   }
 
   const body = problemBody(error);
+  const traceId = body.traceId ?? sentTraceId(error);
+  const withTrace = (apiError: ApiError): ApiError => (traceId ? { ...apiError, traceId } : apiError);
+
   if (body.code) {
-    return { code: body.code, fields: {} };
+    return withTrace({ code: body.code, fields: {} });
   }
   if (error.status === 400 && body.errors) {
-    return { code: 'validation', fields: body.errors };
+    return withTrace({ code: 'validation', fields: body.errors });
   }
   if (error.status === 403) {
-    return { code: 'forbidden', fields: {} };
+    return withTrace({ code: 'forbidden', fields: {} });
   }
   if (error.status === 0) {
     return { code: 'network', fields: {} };
   }
-  return { code: 'unexpected', fields: {} };
+  return withTrace({ code: 'unexpected', fields: {} });
 }

@@ -11,6 +11,7 @@ export function aComment(overrides: Partial<TaskComment> & Pick<TaskComment, 'id
     editedAt: null,
     isEdited: false,
     mentionedUserIds: [],
+    rowVersion: 'rv1',
     ...overrides,
   };
 }

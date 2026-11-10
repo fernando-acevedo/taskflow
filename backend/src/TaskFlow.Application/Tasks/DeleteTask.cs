@@ -8,7 +8,7 @@ using TaskFlow.Domain.Tasks;
 
 namespace TaskFlow.Application.Tasks;
 
-public sealed record DeleteTaskCommand(Guid ProjectId, Guid TaskId);
+public sealed record DeleteTaskCommand(Guid ProjectId, Guid TaskId, byte[]? RowVersion = null);
 
 /// <summary>Any member deletes a task. The gap it leaves in its column is harmless: the board orders by position.</summary>
 public sealed class DeleteTaskHandler(IAppDbContext db, ProjectAccess access, ActivityLog activity)
@@ -32,6 +32,11 @@ public sealed class DeleteTaskHandler(IAppDbContext db, ProjectAccess access, Ac
         if (task is null)
         {
             return TaskErrors.NotFound;
+        }
+
+        if (command.RowVersion is not null && !RowVersions.Matches(task.RowVersion, command.RowVersion))
+        {
+            return CommonErrors.Stale;
         }
 
         var dependents = await db.TaskDependencies.Where(dependency => dependency.DependsOnTaskId == task.Id).ToListAsync(cancellationToken);

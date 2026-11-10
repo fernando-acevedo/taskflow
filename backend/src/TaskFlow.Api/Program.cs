@@ -1,18 +1,20 @@
 using System.Globalization;
 using System.Text.Json.Serialization;
-using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Asp.Versioning;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.ResponseCompression;
 using Scalar.AspNetCore;
 using Serilog;
 using TaskFlow.Api.ErrorHandling;
 using TaskFlow.Api.Health;
 using TaskFlow.Api.Identity;
+using TaskFlow.Api.Security;
+using TaskFlow.Api.Telemetry;
 using TaskFlow.Application;
 using TaskFlow.Application.Abstractions;
 using TaskFlow.Infrastructure;
-using TaskFlow.Infrastructure.ApiKeys;
 using TaskFlow.Infrastructure.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,8 +23,12 @@ builder.Services.AddSerilog((services, logger) => logger
     .ReadFrom.Configuration(builder.Configuration)
     .ReadFrom.Services(services)
     .Enrich.FromLogContext()
-    .WriteTo.Console(formatProvider: CultureInfo.InvariantCulture));
+    .WriteTo.Console(
+        outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} trace={TraceId}{NewLine}{Exception}",
+        formatProvider: CultureInfo.InvariantCulture));
 
+// The OpenAPI generator reads the minimal-API options, not MVC's: without this the enums are documented as integers.
+builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services
     .AddApplication()
     .AddInfrastructure(builder.Configuration);
@@ -35,11 +41,40 @@ builder.Services.AddAuthorization(options =>
         .AddRequirements(new TenantAdminRequirement())));
 builder.Services.AddScoped<IAuthorizationHandler, TenantAdminHandler>();
 
-builder.Services.AddControllers()
-    .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
-builder.Services.AddOpenApi(options => options.AddDocumentTransformer<BearerSecurityTransformer>());
+builder.Services.AddTaskFlowTelemetry(builder.Configuration);
 
-builder.Services.AddProblemDetails();
+builder.Services.AddControllers(options => options.Filters.Add<TraceIdResultFilter>())
+    .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+builder.Services
+    .AddApiVersioning(options =>
+    {
+        // Existing routes are v1 and stay unversioned in the URL; a client may ask for a version by header or query (ADR 0022).
+        options.DefaultApiVersion = new ApiVersion(1, 0);
+        options.AssumeDefaultVersionWhenUnspecified = true;
+        options.ReportApiVersions = true;
+        options.ApiVersionReader = ApiVersionReader.Combine(new HeaderApiVersionReader("api-version"), new QueryStringApiVersionReader("api-version"));
+    })
+    .AddMvc()
+    .AddApiExplorer()
+    .AddOpenApi(options =>
+    {
+        options.Document.AddDocumentTransformer<BearerSecurityTransformer>();
+        options.Document.AddDocumentTransformer<RateLimitResponseTransformer>();
+        options.Document.AddSchemaTransformer<ContractSchemaTransformer>();
+    });
+
+// Only JSON and text are compressed, and the responses never echo a secret from the request, so BREACH has nothing to
+// recover (ADR 0022). HTTPS is on because the TLS terminates at the platform, before the app.
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.Providers.Add<BrotliCompressionProvider>();
+    options.Providers.Add<GzipCompressionProvider>();
+    options.MimeTypes = ["application/json", "application/problem+json", "text/csv", "text/plain", "text/html", "text/css", "text/javascript", "application/javascript", "image/svg+xml"];
+});
+
+builder.Services.AddProblemDetails(options => options.CustomizeProblemDetails = context =>
+    context.ProblemDetails.Extensions["traceId"] = TelemetryExtensions.CurrentTraceId(context.HttpContext));
 builder.Services.AddExceptionHandler<ConcurrencyExceptionHandler>();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
@@ -53,22 +88,7 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
     options.ApplyCurrentCultureToResponseHeaders = true;
 });
 
-var apiKeyPermitLimit = builder.Configuration.GetValue("RateLimiting:ApiKey:PermitLimit", 120);
-var authPermitLimit = builder.Configuration.GetValue("RateLimiting:Auth:PermitLimit", 10);
-builder.Services.AddRateLimiter(options =>
-{
-    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-    // Each API key has its own budget (ADR 0016); people are limited only on the auth endpoints below.
-    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
-        context.User.FindFirst(ApiKeyDefaults.KeyIdClaim) is { Value: var keyId }
-            ? RateLimitPartition.GetFixedWindowLimiter(
-                $"api-key:{keyId}",
-                _ => new FixedWindowRateLimiterOptions { PermitLimit = apiKeyPermitLimit, Window = TimeSpan.FromMinutes(1) })
-            : RateLimitPartition.GetNoLimiter("people"));
-    options.AddPolicy(RateLimitPolicies.Auth, context => RateLimitPartition.GetFixedWindowLimiter(
-        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-        _ => new FixedWindowRateLimiterOptions { PermitLimit = authPermitLimit, Window = TimeSpan.FromMinutes(1) }));
-});
+builder.Services.AddTaskFlowRateLimiting(builder.Configuration);
 
 // Behind a reverse proxy the client's address arrives in X-Forwarded-For, and the auth rate limit partitions by it.
 // Only proxies in ForwardedHeaders:KnownNetworks (plus loopback) are believed, so clients can't pick their own IP.
@@ -86,19 +106,31 @@ var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get
 builder.Services.AddCors(options => options.AddPolicy(FrontendCorsPolicy, policy => policy
     .WithOrigins(allowedOrigins)
     .AllowAnyHeader()
-    .AllowAnyMethod()));
+    .AllowAnyMethod()
+    .WithExposedHeaders("ETag", "api-supported-versions", "Retry-After")));
 
 var app = builder.Build();
 
 app.UseForwardedHeaders();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHsts();
+}
+
+app.UseMiddleware<SecurityHeadersMiddleware>();
+app.UseResponseCompression();
+app.UseMiddleware<TraceLogContextMiddleware>();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 app.UseSerilogRequestLogging();
 app.UseRequestLocalization();
 app.UseCors(FrontendCorsPolicy);
 // The API reference is public in every environment (ADR 0016): it describes the endpoints and holds no data.
-app.MapOpenApi();
+app.MapOpenApi().WithDocumentPerVersion();
 app.MapScalarApiReference();
+// The documents are named after the API version (1.0); the old v1 addresses keep working.
+app.MapGet("/openapi/v1.json", () => Results.Redirect("/openapi/1.0.json")).ExcludeFromDescription();
+app.MapGet("/scalar/v1", () => Results.Redirect("/scalar/1.0")).ExcludeFromDescription();
 
 // HTTPS is enforced by the hosting platform (App Service "HTTPS only"), not by the app.
 app.UseAuthentication();
@@ -120,7 +152,7 @@ app.MapGroup("/api/auth")
             ? await next(context)
             : Results.NotFound())
     .AddEndpointFilter<DemoRestrictionsFilter>()
-    .AddEndpointFilter<ForgetSessionsOnPasswordReset>()
+    .AddEndpointFilter<ForgetSessionsOnCredentialChange>()
     .MapIdentityApi<ApplicationUser>();
 // Liveness answers without touching dependencies; readiness (and /health, kept as its alias) checks the database.
 app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false, ResponseWriter = HealthResponseWriter.WriteAsync });

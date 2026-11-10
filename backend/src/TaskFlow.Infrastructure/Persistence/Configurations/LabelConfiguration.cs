@@ -10,6 +10,7 @@ internal sealed class LabelConfiguration : IEntityTypeConfiguration<Label>
     {
         builder.ToTable("Labels");
         builder.Property(label => label.Id).ValueGeneratedNever();
+        builder.Property(label => label.RowVersion).IsRowVersion();
         builder.Property(label => label.Name).HasMaxLength(Label.NameMaxLength);
         builder.Property(label => label.Color).HasMaxLength(Label.ColorLength).IsFixedLength().IsUnicode(false);
 

@@ -31,6 +31,9 @@ public sealed partial class Label : ITenantOwned
     /// <summary>Hex color as <c>#RRGGBB</c>, upper case.</summary>
     public string Color { get; private set; }
 
+    /// <summary>Concurrency token: an edit made on an older version is rejected.</summary>
+    public byte[] RowVersion { get; private set; } = [];
+
     public static Result<Label> Create(Project project, string name, string color, IEnumerable<Label> existing, DateTimeOffset now)
     {
         var checkedFields = Check(project, name, color, existing, null);

@@ -41,6 +41,9 @@ export const commentsFeature = createFeature({
     on(CommentsApiActions.commentsLoaded, (state, { taskId, comments }): CommentsState =>
       taskId === state.taskId ? adapter.setAll(comments, { ...state, loading: false }) : state,
     ),
+    on(CommentsApiActions.commentsRefreshed, (state, { taskId, comments }): CommentsState =>
+      taskId === state.taskId ? adapter.setAll(comments, state) : state,
+    ),
     on(CommentsApiActions.commentsLoadFailed, (state, { error }): CommentsState => ({ ...state, loading: false, loadError: error })),
     on(CommentsApiActions.commentSaved, (state, { comment }): CommentsState =>
       comment.taskId === state.taskId ? adapter.upsertOne(comment, state) : state,

@@ -2,7 +2,7 @@ import { inject } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
 import { catchError, concatMap, map, of, switchMap, tap, withLatestFrom } from 'rxjs';
-import { toApiError } from '../../../../core/http/api-error';
+import { isStale, toApiError } from '../../../../core/http/api-error';
 import { Notifier } from '../../../../core/notifications/notifier';
 import { LabelsApiService } from '../labels-api.service';
 import { LabelsApiActions, LabelsPageActions } from './labels.actions';
@@ -47,12 +47,30 @@ export const updateLabel = createEffect(
   (actions$ = inject(Actions), store = inject(Store), api = inject(LabelsApiService)) =>
     actions$.pipe(
       ofType(LabelsPageActions.updateSubmitted),
+      withLatestFrom(store.select(labelsFeature.selectProjectId), store.select(labelsFeature.selectEntities)),
+      concatMap(([{ labelId, changes, rowVersion, submissionId }, projectId, entities]) =>
+        projectId === null || entities[labelId] === undefined
+          ? of(LabelsApiActions.labelSaveFailed({ error: { code: 'unexpected', fields: {} }, submissionId }))
+          : api.update(projectId, labelId, changes, rowVersion).pipe(
+              map((saved) => LabelsApiActions.labelSaved({ label: saved, message: 'labels.saved', submissionId })),
+              catchError((error: unknown) => of(LabelsApiActions.labelSaveFailed({ error: toApiError(error), submissionId }))),
+            ),
+      ),
+    ),
+  { functional: true },
+);
+
+/** The edit dialog's "Reload": the server's labels, so the next save carries the current row version. */
+export const refreshLabels = createEffect(
+  (actions$ = inject(Actions), store = inject(Store), api = inject(LabelsApiService)) =>
+    actions$.pipe(
+      ofType(LabelsPageActions.refreshRequested),
       withLatestFrom(store.select(labelsFeature.selectProjectId)),
-      concatMap(([{ labelId, changes, submissionId }, projectId]) =>
+      concatMap(([{ submissionId }, projectId]) =>
         projectId === null
           ? of(LabelsApiActions.labelSaveFailed({ error: { code: 'unexpected', fields: {} }, submissionId }))
-          : api.update(projectId, labelId, changes).pipe(
-              map((saved) => LabelsApiActions.labelSaved({ label: saved, message: 'labels.saved', submissionId })),
+          : api.list(projectId).pipe(
+              map((labels) => LabelsApiActions.labelsRefreshed({ projectId, labels, submissionId })),
               catchError((error: unknown) => of(LabelsApiActions.labelSaveFailed({ error: toApiError(error), submissionId }))),
             ),
       ),
@@ -90,7 +108,10 @@ export const notify = createEffect(
             notifier.success('labels.deleted');
             break;
           default:
-            notifier.error(action.error);
+            // A stale edit is shown inside the dialog that submitted it, not as a snackbar.
+            if (!(isStale(action.error) && action.submissionId !== undefined)) {
+              notifier.error(action.error);
+            }
         }
       }),
     ),

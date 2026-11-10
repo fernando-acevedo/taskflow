@@ -183,7 +183,7 @@ public sealed class ActivityTests(SqlServerApiFactory factory)
         first.EnsureSuccessStatusCode();
         using var stale = await PutTaskAsync(owner, project.Id, task, new { title = "Second edit", priority = "Medium" });
         using var badLabel = await owner.PutAsJsonAsync(
-            $"/api/projects/{project.Id}/labels/{labelId}", new { name = new string('x', 500), color = "#ff0000" }, Ct);
+            $"/api/projects/{project.Id}/labels/{labelId}", new { name = new string('x', 500), color = "#ff0000", rowVersion = new byte[8] }, Ct);
 
         mention.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         stale.StatusCode.ShouldBe(HttpStatusCode.Conflict);
@@ -228,10 +228,11 @@ public sealed class ActivityTests(SqlServerApiFactory factory)
         var project = await factory.CreateProjectAsync(owner);
         using var created = await owner.PostAsJsonAsync($"/api/projects/{project.Id}/labels", new { name = "Bug", color = "#ff0000" }, Ct);
         created.EnsureSuccessStatusCode();
-        var labelId = (await created.ReadAsync<JsonElement>()).GetProperty("id").GetGuid();
+        var createdLabel = await created.ReadAsync<JsonElement>();
+        var labelId = createdLabel.GetProperty("id").GetGuid();
         factory.Time.Advance(TimeSpan.FromMinutes(1));
         using var rename = await owner.PutAsJsonAsync(
-            $"/api/projects/{project.Id}/labels/{labelId}", new { name = "Defect", color = "#ff0000" }, Ct);
+            $"/api/projects/{project.Id}/labels/{labelId}", new { name = "Defect", color = "#ff0000", rowVersion = createdLabel.GetProperty("rowVersion").GetString() }, Ct);
         rename.EnsureSuccessStatusCode();
         factory.Time.Advance(TimeSpan.FromMinutes(1));
         using var delete = await owner.DeleteAsync(new Uri($"/api/projects/{project.Id}/labels/{labelId}", UriKind.Relative), Ct);

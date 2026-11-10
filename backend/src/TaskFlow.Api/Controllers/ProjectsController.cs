@@ -30,8 +30,9 @@ public sealed class ProjectsController : ApiControllerBase
     [ProducesResponseType<ProjectDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status304NotModified)]
     public async Task<ActionResult<ProjectDto>> Get(Guid projectId, [FromServices] GetProjectHandler handler, CancellationToken cancellationToken) =>
-        OkOrProblem(await handler.HandleAsync(projectId, cancellationToken));
+        OkOrProblem(await handler.HandleAsync(projectId, cancellationToken), project => project.RowVersion);
 
     /// <summary>Creates a project for an active client, with the caller as owner.</summary>
     [HttpPost]
@@ -50,28 +51,31 @@ public sealed class ProjectsController : ApiControllerBase
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status412PreconditionFailed)]
     public async Task<ActionResult> Update(
         Guid projectId,
         UpdateProjectRequest request,
         [FromServices] UpdateProjectHandler handler,
         CancellationToken cancellationToken) =>
         NoContentOrProblem(await handler.HandleAsync(
-            new UpdateProjectCommand(projectId, request.ClientId, request.Name, request.Description, request.RowVersion),
+            new UpdateProjectCommand(projectId, request.ClientId, request.Name, request.Description, RowVersionFrom(request.RowVersion)),
             cancellationToken));
 
     /// <summary>Makes the project read-only and moves it to the archived list.</summary>
     [HttpPost("{projectId:guid}/archive")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status412PreconditionFailed)]
     public async Task<ActionResult> Archive(Guid projectId, [FromServices] SetProjectArchivedHandler handler, CancellationToken cancellationToken) =>
-        NoContentOrProblem(await handler.HandleAsync(new SetProjectArchivedCommand(projectId, IsArchived: true), cancellationToken));
+        NoContentOrProblem(await handler.HandleAsync(new SetProjectArchivedCommand(projectId, IsArchived: true, OptionalRowVersion()), cancellationToken));
 
     [HttpPost("{projectId:guid}/restore")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status412PreconditionFailed)]
     public async Task<ActionResult> Restore(Guid projectId, [FromServices] SetProjectArchivedHandler handler, CancellationToken cancellationToken) =>
-        NoContentOrProblem(await handler.HandleAsync(new SetProjectArchivedCommand(projectId, IsArchived: false), cancellationToken));
+        NoContentOrProblem(await handler.HandleAsync(new SetProjectArchivedCommand(projectId, IsArchived: false, OptionalRowVersion()), cancellationToken));
 }
 
-public sealed record UpdateProjectRequest(Guid ClientId, string Name, string? Description, byte[] RowVersion);
+public sealed record UpdateProjectRequest(Guid ClientId, string Name, string? Description, byte[]? RowVersion);

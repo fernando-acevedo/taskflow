@@ -19,7 +19,7 @@
 
   <app-paged-list
     [loading]="loading()"
-    [busy]="loading() || saving()"
+    [busy]="busy()"
     [loadError]="loadError()"
     [empty]="clients().length === 0"
     [totalCount]="totalCount()"
@@ -53,13 +53,13 @@
                 mat-icon-button
                 type="button"
                 (click)="restore(client)"
-                [disabled]="saving()"
+                [disabled]="busy()"
                 [attr.aria-label]="t('restoreNamed', { name: client.name })"
               >
                 <mat-icon aria-hidden="true">unarchive</mat-icon>
               </button>
             } @else {
-              <button mat-icon-button type="button" (click)="archive(client)" [attr.aria-label]="t('archiveNamed', { name: client.name })">
+              <button mat-icon-button type="button" (click)="archive(client)" [disabled]="busy()" [attr.aria-label]="t('archiveNamed', { name: client.name })">
                 <mat-icon aria-hidden="true">archive</mat-icon>
               </button>
             }

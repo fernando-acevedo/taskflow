@@ -40,6 +40,9 @@ export const labelsFeature = createFeature({
     on(LabelsApiActions.labelsLoaded, (state, { projectId, labels }): LabelsState =>
       projectId === state.projectId ? adapter.setAll(labels, { ...state, loading: false }) : state,
     ),
+    on(LabelsApiActions.labelsRefreshed, (state, { projectId, labels }): LabelsState =>
+      projectId === state.projectId ? adapter.setAll(labels, state) : state,
+    ),
     on(LabelsApiActions.labelsLoadFailed, (state, { error }): LabelsState => ({ ...state, loading: false, loadError: error })),
     on(
       LabelsPageActions.createSubmitted,
