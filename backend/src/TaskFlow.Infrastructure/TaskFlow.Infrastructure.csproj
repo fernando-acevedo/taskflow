@@ -19,6 +19,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Chatbot knowledge base JSON (T-135): embedded so adding files needs no other change. -->
+    <EmbeddedResource Include="Chatbot/KnowledgeBase/**/*.json" LogicalName="TaskFlow.KnowledgeBase/%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
     <InternalsVisibleTo Include="TaskFlow.Infrastructure.UnitTests" />
   </ItemGroup>
 

@@ -1,0 +1,58 @@
+{
+  "intent": "AccountLocked",
+  "description": "Locked out after attempts.",
+  "triggers": [
+    "locked",
+    "blocked"
+  ],
+  "notTriggers": [],
+  "confusedWith": [
+    "LoginIssue"
+  ],
+  "utterances": {
+    "en": [
+      "my account is locked",
+      "too many attempts and now blocked",
+      "account suspended after failed logins",
+      "I am locked out",
+      "my user is blocked"
+    ],
+    "es": [
+      "mi cuenta está bloqueada",
+      "demasiados intentos y ahora estoy bloqueado",
+      "cuenta suspendida tras intentos fallidos",
+      "me quedé fuera de mi cuenta",
+      "mi usuario está bloqueado"
+    ]
+  },
+  "entryStep": "locked.start",
+  "steps": {
+    "locked.start": {
+      "text": {
+        "en": "After several failed attempts the account unlocks by itself in 15 minutes. Can you wait?",
+        "es": "Tras varios intentos fallidos la cuenta se desbloquea sola en 15 minutos. ¿Puedes esperar?"
+      },
+      "quickReplies": [
+        {
+          "id": "wait",
+          "label": {
+            "en": "Yes, I will wait",
+            "es": "Sí, esperaré"
+          },
+          "next": "close"
+        },
+        {
+          "id": "person",
+          "label": {
+            "en": "Talk to a person",
+            "es": "Hablar con una persona"
+          },
+          "next": "escalate"
+        }
+      ],
+      "expectsText": false,
+      "end": false,
+      "outcome": null
+    }
+  }
+}

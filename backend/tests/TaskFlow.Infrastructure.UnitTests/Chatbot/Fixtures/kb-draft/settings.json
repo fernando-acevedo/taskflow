@@ -1,0 +1,21 @@
+{
+  "version": "0.0.0-draft",
+  "locales": [
+    "en",
+    "es"
+  ],
+  "minUtterancesPerLocale": 30,
+  "confidenceThreshold": 0.65,
+  "minMargin": 0.1,
+  "maxConsecutiveFallbacks": 2,
+  "sessionIdleMinutes": 30,
+  "startStep": "start",
+  "fallbackStep": "fallback",
+  "escalateStep": "escalate",
+  "outOfScopeIntent": "OutOfScope",
+  "links": {
+    "support": "support@taskflow.example",
+    "help": "/help",
+    "forgotPassword": "/forgot-password"
+  }
+}

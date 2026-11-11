@@ -27,5 +27,6 @@
 | [23](0023-realtime-with-signalr.md) | Real-time updates with a SignalR hub | Accepted | `/hubs/projects`, groups per project with a View check, events after the commit, `X-Client-Id` echo suppression, optional Azure SignalR Service. |
 | [24](0024-domain-events.md) | Domain events dispatched around SaveChanges | Accepted | `IHasDomainEvents` + interceptor; before-commit handlers (activity, notifications, outbox) and best-effort after-commit handlers; no mediator. |
 | [25](0025-cursor-pagination.md) | Cursor pagination for activity and notifications | Accepted | `?cursor&pageSize` returns `{ items, nextCursor }`, keyset on (timestamp, sequence/id), no COUNT; breaking for those two listings. |
+| [26](0026-chatbot-knowledge-base-and-classifier.md) | Support chatbot: JSON knowledge base and a local intent classifier | Accepted | KB as JSON with both locales side by side, validated in CI and at startup; one multilingual ML.NET model (FeaturizeText + SdcaMaximumEntropy) with per-locale gate; threshold 0.65 + margin; anonymous rate-limited endpoint; PII redacted, 90-day retention; no LLM. |
 
 Add a new ADR when making a decision of comparable weight, and add it to this table.
