@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using TaskFlow.Domain.Activity;
 using TaskFlow.Domain.ApiKeys;
+using TaskFlow.Domain.Chatbot;
 using TaskFlow.Domain.Clients;
 using TaskFlow.Domain.Notifications;
 using TaskFlow.Domain.Projects;
@@ -48,6 +49,12 @@ public interface IAppDbContext
     DbSet<Notification> Notifications { get; }
 
     DbSet<NotificationPreferences> NotificationPreferences { get; }
+
+    DbSet<ChatSession> ChatSessions { get; }
+
+    DbSet<ChatMessage> ChatMessages { get; }
+
+    DbSet<IntentLog> IntentLogs { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

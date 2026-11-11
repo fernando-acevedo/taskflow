@@ -80,4 +80,6 @@
   <data name="Tasks.DuplicateExternalKey" xml:space="preserve"><value>La misma clave externa aparece más de una vez en el pedido.</value></data>
   <data name="Tasks.SyncEmpty" xml:space="preserve"><value>Enviá al menos una tarea.</value></data>
   <data name="Tasks.SyncTooLarge" xml:space="preserve"><value>Una sincronización puede llevar como máximo 200 tareas.</value></data>
+  <data name="Chatbot.SessionClosed" xml:space="preserve"><value>Esta conversación terminó. Inicia una nueva.</value></data>
+  <data name="Chatbot.InvalidLocale" xml:space="preserve"><value>El idioma debe ser en o es.</value></data>
 </root>

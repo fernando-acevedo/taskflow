@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using TaskFlow.Application.Abstractions;
 using TaskFlow.Domain.Activity;
 using TaskFlow.Domain.ApiKeys;
+using TaskFlow.Domain.Chatbot;
 using TaskFlow.Domain.Clients;
 using TaskFlow.Domain.Notifications;
 using TaskFlow.Domain.Projects;
@@ -57,6 +58,12 @@ public sealed class AppDbContext(
     public DbSet<Notification> Notifications => Set<Notification>();
 
     public DbSet<NotificationPreferences> NotificationPreferences => Set<NotificationPreferences>();
+
+    public DbSet<ChatSession> ChatSessions => Set<ChatSession>();
+
+    public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
+
+    public DbSet<IntentLog> IntentLogs => Set<IntentLog>();
 
     public DbSet<DemoResetLog> DemoResetLogs => Set<DemoResetLog>();
 
