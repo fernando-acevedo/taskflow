@@ -20,6 +20,9 @@ public sealed partial class TenantArchitectureTests
         ["NotificationPreferences"] = "per user, not per tenant",
         ["DemoResetLog"] = "global audit of the demo reset",
         ["OutboxMessage"] = "system queue of emails (ADR 0018); the worker has no tenant and the payload is self-contained",
+        ["ChatSession"] = "chatbot sessions start before login, no tenant (ADR 0026)",
+        ["ChatMessage"] = "chatbot sessions start before login, no tenant (ADR 0026)",
+        ["IntentLog"] = "chatbot sessions start before login, no tenant (ADR 0026)",
         ["ApplicationUser"] ="Identity: users are global",
     };
 

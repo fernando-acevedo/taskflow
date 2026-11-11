@@ -325,6 +325,10 @@
       "InvalidMinutes": "The duration must be between 1 minute and 24 hours.",
       "NoteTooLong": "The note can't be longer than 500 characters."
     },
+    "Chatbot": {
+      "SessionClosed": "This conversation has ended. Start a new one.",
+      "InvalidLocale": "The language must be en or es."
+    },
     "Notifications": {
       "NotFound": "The notification was not found."
     },
