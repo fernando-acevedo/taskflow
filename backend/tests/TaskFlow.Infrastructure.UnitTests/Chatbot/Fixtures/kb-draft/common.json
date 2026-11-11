@@ -1,0 +1,130 @@
+{
+  "steps": {
+    "start": {
+      "text": {
+        "en": "Hi! I can help you sign in. What is happening?",
+        "es": "¡Hola! Puedo ayudarte a iniciar sesión. ¿Qué sucede?"
+      },
+      "quickReplies": [
+        {
+          "id": "login",
+          "label": {
+            "en": "I can't sign in",
+            "es": "No puedo iniciar sesión"
+          },
+          "next": "login.start"
+        },
+        {
+          "id": "wrong",
+          "label": {
+            "en": "Wrong password",
+            "es": "Contraseña incorrecta"
+          },
+          "next": "wrongpw.start"
+        },
+        {
+          "id": "reset",
+          "label": {
+            "en": "Reset my password",
+            "es": "Restablecer mi contraseña"
+          },
+          "next": "reset.start"
+        },
+        {
+          "id": "locked",
+          "label": {
+            "en": "Account locked",
+            "es": "Cuenta bloqueada"
+          },
+          "next": "locked.start"
+        },
+        {
+          "id": "email",
+          "label": {
+            "en": "I got no email",
+            "es": "No recibí el correo"
+          },
+          "next": "email.start"
+        },
+        {
+          "id": "error",
+          "label": {
+            "en": "Server error",
+            "es": "Error del servidor"
+          },
+          "next": "error.start"
+        }
+      ],
+      "expectsText": true,
+      "end": false,
+      "outcome": null
+    },
+    "fallback": {
+      "text": {
+        "en": "Sorry, I did not understand. Try rephrasing it or check the help page.",
+        "es": "Lo siento, no entendí. Intenta escribirlo de otra forma o consulta la página de ayuda."
+      },
+      "quickReplies": [
+        {
+          "id": "help",
+          "label": {
+            "en": "Help page",
+            "es": "Página de ayuda"
+          },
+          "next": "close",
+          "url": "{help}"
+        }
+      ],
+      "expectsText": true,
+      "end": false,
+      "outcome": null
+    },
+    "escalate": {
+      "text": {
+        "en": "Let's get you to a person: write to support at {support}.",
+        "es": "Te comunicamos con una persona: escribe a soporte en {support}."
+      },
+      "quickReplies": [],
+      "expectsText": false,
+      "end": true,
+      "outcome": "Escalated"
+    },
+    "close": {
+      "text": {
+        "en": "Did that solve it?",
+        "es": "¿Eso lo resolvió?"
+      },
+      "quickReplies": [
+        {
+          "id": "yes",
+          "label": {
+            "en": "Yes",
+            "es": "Sí"
+          },
+          "next": "end"
+        },
+        {
+          "id": "no",
+          "label": {
+            "en": "No",
+            "es": "No"
+          },
+          "next": "escalate"
+        }
+      ],
+      "expectsText": false,
+      "end": false,
+      "outcome": null
+    },
+    "end": {
+      "text": {
+        "en": "Great, glad I could help!",
+        "es": "¡Perfecto, me alegra haber ayudado!"
+      },
+      "quickReplies": [],
+      "expectsText": false,
+      "end": true,
+      "outcome": "Completed"
+    }
+  }
+}

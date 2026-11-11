@@ -1,0 +1,84 @@
+{
+  "intent": "EmailNotReceived",
+  "description": "Expected email did not arrive.",
+  "triggers": [
+    "email not received"
+  ],
+  "notTriggers": [],
+  "confusedWith": [
+    "LinkExpired"
+  ],
+  "utterances": {
+    "en": [
+      "I did not receive the email",
+      "the reset email never arrived",
+      "no message in my inbox",
+      "where is the confirmation email",
+      "email not arriving"
+    ],
+    "es": [
+      "no recibí el correo",
+      "el correo de restablecimiento nunca llegó",
+      "no hay mensaje en mi bandeja",
+      "dónde está el correo de confirmación",
+      "el correo no llega"
+    ]
+  },
+  "entryStep": "email.start",
+  "steps": {
+    "email.start": {
+      "text": {
+        "en": "Emails can take a few minutes. Did you wait at least five?",
+        "es": "Los correos pueden tardar unos minutos. ¿Esperaste al menos cinco?"
+      },
+      "quickReplies": [
+        {
+          "id": "waited",
+          "label": {
+            "en": "Yes",
+            "es": "Sí"
+          },
+          "next": "email.spam"
+        },
+        {
+          "id": "not_yet",
+          "label": {
+            "en": "Not yet",
+            "es": "Todavía no"
+          },
+          "next": "close"
+        }
+      ],
+      "expectsText": false,
+      "end": false,
+      "outcome": null
+    },
+    "email.spam": {
+      "text": {
+        "en": "Check your spam or junk folder. Did you find it?",
+        "es": "Revisa tu carpeta de spam o correo no deseado. ¿Lo encontraste?"
+      },
+      "quickReplies": [
+        {
+          "id": "found",
+          "label": {
+            "en": "Yes, found it",
+            "es": "Sí, lo encontré"
+          },
+          "next": "end"
+        },
+        {
+          "id": "missing",
+          "label": {
+            "en": "No",
+            "es": "No"
+          },
+          "next": "escalate"
+        }
+      ],
+      "expectsText": false,
+      "end": false,
+      "outcome": null
+    }
+  }
+}

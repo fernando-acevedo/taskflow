@@ -1,0 +1,50 @@
+{
+  "intent": "LinkExpired",
+  "description": "Emailed link no longer works.",
+  "triggers": [
+    "expired link"
+  ],
+  "notTriggers": [],
+  "confusedWith": [
+    "EmailNotReceived"
+  ],
+  "utterances": {
+    "en": [
+      "the link has expired",
+      "my reset link is no longer valid",
+      "expired invitation link",
+      "link says it is too old",
+      "the link does not work anymore"
+    ],
+    "es": [
+      "el enlace ha expirado",
+      "mi enlace de restablecimiento ya no es válido",
+      "enlace de invitación vencido",
+      "el enlace dice que es muy antiguo",
+      "el enlace ya no funciona"
+    ]
+  },
+  "entryStep": "link.start",
+  "steps": {
+    "link.start": {
+      "text": {
+        "en": "Links expire for security. You can request a new one.",
+        "es": "Los enlaces expiran por seguridad. Puedes solicitar uno nuevo."
+      },
+      "quickReplies": [
+        {
+          "id": "new",
+          "label": {
+            "en": "Request a new link",
+            "es": "Solicitar un enlace nuevo"
+          },
+          "next": "close",
+          "url": "{forgotPassword}"
+        }
+      ],
+      "expectsText": false,
+      "end": false,
+      "outcome": null
+    }
+  }
+}

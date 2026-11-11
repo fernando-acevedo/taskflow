@@ -1,0 +1,45 @@
+{
+  "intent": "OutOfScope",
+  "description": "Unrelated to TaskFlow access.",
+  "triggers": [],
+  "notTriggers": [],
+  "confusedWith": [],
+  "utterances": {
+    "en": [
+      "what is the weather today",
+      "tell me a joke",
+      "who won the match",
+      "recommend a movie",
+      "how much is a flight"
+    ],
+    "es": [
+      "qué clima hace hoy",
+      "cuéntame un chiste",
+      "quién ganó el partido",
+      "recomiéndame una película",
+      "cuánto cuesta un vuelo"
+    ]
+  },
+  "entryStep": "oos.start",
+  "steps": {
+    "oos.start": {
+      "text": {
+        "en": "I can only help with signing in. See the help page at {help}.",
+        "es": "Solo puedo ayudar con el inicio de sesión. Consulta la página de ayuda en {help}."
+      },
+      "quickReplies": [
+        {
+          "id": "back",
+          "label": {
+            "en": "Back to start",
+            "es": "Volver al inicio"
+          },
+          "next": "start"
+        }
+      ],
+      "expectsText": false,
+      "end": false,
+      "outcome": null
+    }
+  }
+}

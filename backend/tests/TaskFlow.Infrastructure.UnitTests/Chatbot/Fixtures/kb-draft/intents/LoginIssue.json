@@ -1,0 +1,70 @@
+{
+  "intent": "LoginIssue",
+  "description": "User cannot sign in and does not say why.",
+  "triggers": [
+    "login",
+    "sign in"
+  ],
+  "notTriggers": [
+    "forgot password"
+  ],
+  "confusedWith": [
+    "WrongPassword",
+    "AccountLocked"
+  ],
+  "utterances": {
+    "en": [
+      "I can't log in",
+      "login is not working",
+      "unable to sign in to my account",
+      "I cannot access TaskFlow",
+      "sign in fails every time"
+    ],
+    "es": [
+      "no puedo entrar",
+      "el inicio de sesión no funciona",
+      "no logro iniciar sesión en mi cuenta",
+      "no puedo acceder a TaskFlow",
+      "falla el acceso cada vez"
+    ]
+  },
+  "entryStep": "login.start",
+  "steps": {
+    "login.start": {
+      "text": {
+        "en": "What do you see when you try to sign in?",
+        "es": "¿Qué ves cuando intentas iniciar sesión?"
+      },
+      "quickReplies": [
+        {
+          "id": "wrong",
+          "label": {
+            "en": "Wrong password message",
+            "es": "Mensaje de contraseña incorrecta"
+          },
+          "next": "wrongpw.start",
+          "intent": "WrongPassword"
+        },
+        {
+          "id": "locked",
+          "label": {
+            "en": "Account locked",
+            "es": "Cuenta bloqueada"
+          },
+          "next": "locked.start"
+        },
+        {
+          "id": "other",
+          "label": {
+            "en": "Something else",
+            "es": "Otra cosa"
+          },
+          "next": "escalate"
+        }
+      ],
+      "expectsText": false,
+      "end": false,
+      "outcome": null
+    }
+  }
+}
