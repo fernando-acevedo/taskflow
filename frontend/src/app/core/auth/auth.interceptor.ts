@@ -13,6 +13,7 @@ import { TokenRefresher } from './token-refresher';
 import { TokenStorage } from './token-storage';
 
 const apiPrefix = `${environment.apiUrl}/api/`;
+const chatbotPrefix = `${environment.apiUrl}/api/chatbot/`;
 const authPrefix = `${environment.apiUrl}${AUTH_ENDPOINTS_PREFIX}`;
 
 const myTenantsUrl = `${environment.apiUrl}${MY_TENANTS_PATH}`;
@@ -38,7 +39,12 @@ function withToken(
  * API can't be reached (network, cold start), the tokens are kept and the request just fails.
  */
 export const authInterceptor: HttpInterceptorFn = (request, next) => {
-  if (!request.url.startsWith(apiPrefix) || request.url.startsWith(authPrefix)) {
+  // The support bot is anonymous: a stale token would only earn a 401 (and a refresh that could log the user out).
+  if (
+    !request.url.startsWith(apiPrefix) ||
+    request.url.startsWith(authPrefix) ||
+    request.url.startsWith(chatbotPrefix)
+  ) {
     return next(request);
   }
 

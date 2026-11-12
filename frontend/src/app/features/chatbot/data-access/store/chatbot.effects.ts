@@ -13,8 +13,12 @@ export const sendTurn = createEffect(
   (actions$ = inject(Actions), store = inject(Store), api = inject(ChatbotApiService)) =>
     actions$.pipe(
       ofType(ChatWidgetActions.sessionRequested, ChatWidgetActions.messageSent, ChatWidgetActions.quickReplySelected),
-      withLatestFrom(store.select(chatbotFeature.selectSessionId), store.select(chatbotFeature.selectLocale)),
-      concatMap(([action, sessionId, locale]) => {
+      withLatestFrom(
+        store.select(chatbotFeature.selectSessionId),
+        store.select(chatbotFeature.selectLocale),
+        store.select(chatbotFeature.selectGeneration),
+      ),
+      concatMap(([action, sessionId, locale, generation]) => {
         let turn: ChatTurn;
         if (action.type === ChatWidgetActions.sessionRequested.type) {
           turn = { locale: action.locale };
@@ -24,8 +28,8 @@ export const sendTurn = createEffect(
           turn = { sessionId, locale, quickReplyId: action.id };
         }
         return api.send(turn).pipe(
-          map((result) => ChatApiActions.replyReceived({ result })),
-          catchError((error: unknown) => of(ChatApiActions.sendFailed({ error: toApiError(error) }))),
+          map((result) => ChatApiActions.replyReceived({ result, generation })),
+          catchError((error: unknown) => of(ChatApiActions.sendFailed({ error: toApiError(error), generation }))),
         );
       }),
     ),
@@ -46,8 +50,8 @@ export const restartOnUnknownQuickReply = createEffect(
   (actions$ = inject(Actions), store = inject(Store)) =>
     actions$.pipe(
       ofType(ChatApiActions.sendFailed),
-      filter(({ error }) => error.code === 'Chatbot.UnknownQuickReply'),
-      withLatestFrom(store.select(chatbotFeature.selectLocale)),
+      withLatestFrom(store.select(chatbotFeature.selectLocale), store.select(chatbotFeature.selectGeneration)),
+      filter(([{ error, generation }, , current]) => error.code === 'Chatbot.UnknownQuickReply' && generation === current),
       map(([, locale]) => ChatWidgetActions.sessionRequested({ locale: locale ?? 'en' })),
     ),
   { functional: true },

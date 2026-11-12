@@ -23,6 +23,7 @@ interface Options {
   ended?: boolean;
   outcome?: 'Completed' | 'Escalated' | null;
   lang?: string;
+  sending?: boolean;
 }
 
 describe('ChatWidget', () => {
@@ -43,7 +44,7 @@ describe('ChatWidget', () => {
         provideMockStore({
           selectors: [
             { selector: chatbotFeature.selectMessages, value: opts.messages ?? [] },
-            { selector: chatbotFeature.selectSending, value: false },
+            { selector: chatbotFeature.selectSending, value: opts.sending ?? false },
             { selector: chatbotFeature.selectEnded, value: opts.ended ?? false },
             { selector: chatbotFeature.selectOutcome, value: opts.outcome ?? null },
             { selector: chatbotFeature.selectLocale, value: opts.locale ?? null },
@@ -93,6 +94,17 @@ describe('ChatWidget', () => {
     expect(q('chat-restart-language')).not.toBeNull();
     q('chat-restart-language')?.querySelector('button')?.click();
     expect(store.dispatch).toHaveBeenCalledWith(ChatWidgetActions.sessionRequested({ locale: 'es' }));
+  });
+
+  it('disables the restart button while a turn is in flight', () => {
+    const { open, q, fixture } = render({ sessionId: 's1', locale: 'en', messages: [bot()], sending: true });
+    open();
+    TestBed.inject(TranslocoService).setActiveLang('es');
+    fixture.detectChanges();
+    const button = q('chat-restart-language')?.querySelector('button');
+    expect(button?.disabled).toBe(true);
+    button?.click();
+    expect(store.dispatch).not.toHaveBeenCalled();
   });
 
   it('renders bot text as plain text, never as HTML', () => {

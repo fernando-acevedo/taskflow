@@ -22,6 +22,8 @@ export interface ChatbotState {
   ended: boolean;
   outcome: ChatOutcome | null;
   nextId: number;
+  /** Counts conversations: a response from an earlier one (restarted meanwhile) is ignored. */
+  generation: number;
 }
 
 export const initialChatbotState: ChatbotState = {
@@ -32,6 +34,7 @@ export const initialChatbotState: ChatbotState = {
   ended: false,
   outcome: null,
   nextId: 1,
+  generation: 0,
 };
 
 function withUserMessage(state: ChatbotState, text: string): ChatbotState {
@@ -53,11 +56,14 @@ export const chatbotFeature = createFeature({
     initialChatbotState,
     on(
       ChatWidgetActions.sessionRequested,
-      (state, { locale }): ChatbotState => ({ ...initialChatbotState, locale, sending: true, nextId: state.nextId }),
+      (state, { locale }): ChatbotState => ({ ...initialChatbotState, locale, sending: true, nextId: state.nextId, generation: state.generation + 1 }),
     ),
     on(ChatWidgetActions.messageSent, (state, { text }): ChatbotState => withUserMessage(state, text)),
     on(ChatWidgetActions.quickReplySelected, (state, { label }): ChatbotState => withUserMessage(state, label)),
-    on(ChatApiActions.replyReceived, (state, { result }): ChatbotState => ({
+    on(ChatApiActions.replyReceived, (state, { result, generation }): ChatbotState =>
+      generation !== state.generation
+        ? state
+        : {
       ...state,
       sessionId: result.sessionId,
       locale: result.locale,
@@ -76,7 +82,9 @@ export const chatbotFeature = createFeature({
           isFallback: result.reply.isFallback,
         },
       ],
-    })),
-    on(ChatApiActions.sendFailed, (state): ChatbotState => ({ ...state, sending: false })),
+    }),
+    on(ChatApiActions.sendFailed, (state, { generation }): ChatbotState =>
+      generation !== state.generation ? state : { ...state, sending: false },
+    ),
   ),
 });

@@ -38,7 +38,7 @@ describe('chatbot reducer', () => {
   });
 
   it('keeps the session, shows the bot message and clears answered quick replies', () => {
-    let state = reduce(undefined, ChatApiActions.replyReceived({ result: result() }));
+    let state = reduce(undefined, ChatApiActions.replyReceived({ result: result(), generation: 0 }));
     expect(state.sessionId).toBe('s1');
     expect(state.messages[0].quickReplies).toHaveLength(1);
 
@@ -51,15 +51,26 @@ describe('chatbot reducer', () => {
   });
 
   it('records the outcome when the conversation ends', () => {
-    const state = reduce(undefined, ChatApiActions.replyReceived({ result: result({ ended: true, outcome: 'Escalated' }) }));
+    const state = reduce(undefined, ChatApiActions.replyReceived({ result: result({ ended: true, outcome: 'Escalated' }), generation: 0 }));
     expect(state).toMatchObject({ ended: true, outcome: 'Escalated' });
     expect(state.messages[0].quickReplies).toEqual([]);
   });
 
   it('unlocks the input after a failure', () => {
     const sending = reduce(undefined, ChatWidgetActions.messageSent({ text: 'x' }));
-    const state = reduce(sending, ChatApiActions.sendFailed({ error: { code: 'unexpected', fields: {} } }));
+    const state = reduce(sending, ChatApiActions.sendFailed({ error: { code: 'unexpected', fields: {} }, generation: 0 }));
     expect(state.sending).toBe(false);
+  });
+
+  it('ignores a reply or failure that belongs to a conversation restarted meanwhile', () => {
+    const first = reduce(undefined, ChatWidgetActions.sessionRequested({ locale: 'en' }));
+    const second = reduce(first, ChatWidgetActions.sessionRequested({ locale: 'es' }));
+    expect(second.generation).toBe(first.generation + 1);
+
+    expect(reduce(second, ChatApiActions.replyReceived({ result: result(), generation: first.generation }))).toBe(second);
+    const failure = { code: 'unexpected', fields: {} };
+    expect(reduce(second, ChatApiActions.sendFailed({ error: failure, generation: first.generation }))).toBe(second);
+    expect(reduce(second, ChatApiActions.replyReceived({ result: result(), generation: second.generation })).sessionId).toBe('s1');
   });
 });
 

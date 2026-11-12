@@ -117,7 +117,7 @@ The OpenAPI contract is a snapshot test (`OpenApiSnapshotTests` vs `docs/api/ope
 - `src/app/features/<feature>/` is split into `data-access/` (API service + NgRx `store/` with
   `*.actions.ts`, `*.effects.ts` (functional effects), `*.feature.ts` (`createFeature`)), `ui/` and `pages/`.
   Each feature has a `<feature>.routes.ts` loaded with `loadChildren`, which provides its state and effects on
-  the route (`provideState` / `provideEffects`); auth and notifications (the shell's bell, ADR 0010) are the exceptions, registered at the root in `app.config.ts`.
+  the route (`provideState` / `provideEffects`); auth and notifications (the shell's bell, ADR 0010) are the exceptions, registered at the root in `app.config.ts`. The chatbot widget is another exception: it is root-mounted and lazy, and its state/effects are provided by a child `EnvironmentInjector` created in `loadChatWidget` (`features/chatbot/index.ts`).
   Lists use `@ngrx/entity`. Feature reducers reset on `ShellActions.logoutClicked` / `AuthApiActions.sessionExpired`.
   Write effects use `concatMap` (none is dropped). Form dialogs stay open until the API answers: the page passes
   a `SaveFn` that tags the submitted action with a `submissionId` (`shared/data-access/submission.ts`), effects

@@ -1,5 +1,5 @@
 import { NgComponentOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, EnvironmentInjector, afterNextRender, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EnvironmentInjector, ErrorHandler, afterNextRender, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
@@ -63,10 +63,14 @@ export class App {
   protected readonly chatWidget = signal<LoadedChatWidget | null>(null);
 
   private readonly environmentInjector = inject(EnvironmentInjector);
+  private readonly errorHandler = inject(ErrorHandler);
 
   constructor() {
     afterNextRender(() => {
-      void loadChatWidget(this.environmentInjector).then((widget) => this.chatWidget.set(widget));
+      // The widget is optional: if its chunk fails to load the app keeps working without it.
+      loadChatWidget(this.environmentInjector)
+        .then((widget) => widget && this.chatWidget.set(widget))
+        .catch((error: unknown) => this.errorHandler.handleError(error));
     });
   }
 

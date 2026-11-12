@@ -15,7 +15,7 @@ export const ChatWidgetActions = createActionGroup({
 export const ChatApiActions = createActionGroup({
   source: 'Chat API',
   events: {
-    'Reply Received': props<{ result: SendChatMessageResult }>(),
-    'Send Failed': props<{ error: ApiError }>(),
+    'Reply Received': props<{ result: SendChatMessageResult; generation: number }>(),
+    'Send Failed': props<{ error: ApiError; generation: number }>(),
   },
 });

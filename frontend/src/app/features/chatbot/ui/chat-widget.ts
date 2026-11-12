@@ -67,7 +67,7 @@ import { ChatLink, classifyLink } from './chat-link';
           @if (localeMismatch()) {
             <div class="notice" data-testid="chat-restart-language">
               <span>{{ t('languageChanged') }}</span>
-              <button mat-button type="button" (click)="start()">{{ t('restartIn', { language: languageName() }) }}</button>
+              <button mat-button type="button" [disabled]="sending()" (click)="start()">{{ t('restartIn', { language: languageName() }) }}</button>
             </div>
           }
 
@@ -132,11 +132,11 @@ import { ChatLink, classifyLink } from './chat-link';
               } @else {
                 <p>{{ t('outcome.completed') }}</p>
               }
-              <button mat-flat-button type="button" data-testid="chat-start-over" (click)="start()">{{ t('startOver') }}</button>
+              <button mat-flat-button type="button" data-testid="chat-start-over" [disabled]="sending()" (click)="start()">{{ t('startOver') }}</button>
             </div>
           } @else if (messages().length === 0 && !sending()) {
             <div class="ended">
-              <button mat-flat-button type="button" data-testid="chat-start-over" (click)="start()">{{ t('startOver') }}</button>
+              <button mat-flat-button type="button" data-testid="chat-start-over" [disabled]="sending()" (click)="start()">{{ t('startOver') }}</button>
             </div>
           } @else {
             <form class="composer" (submit)="submit($event)">
@@ -224,6 +224,9 @@ export class ChatWidget {
 
   /** A new session in the active language: first open, "Start over" and "Restart in <language>". */
   protected start(): void {
+    if (this.sending()) {
+      return;
+    }
     this.draft.set('');
     this.store.dispatch(ChatWidgetActions.sessionRequested({ locale: this.language.current() }));
   }

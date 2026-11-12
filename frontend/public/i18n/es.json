@@ -134,7 +134,7 @@
       "expiresRule": "Elegí una fecha futura, dentro de un año.",
       "cancel": "Cancelar",
       "save": "Crear key",
-      "empty": "No tenés API keys.",
+      "empty": "No tienes API keys.",
       "loadFailed": "No se pudieron cargar las API keys.",
       "loading": "Cargando…",
       "retry": "Reintentar",
@@ -307,7 +307,7 @@
       "InvalidColor": "Elige uno de los colores disponibles.",
       "NameTaken": "Este proyecto ya tiene una etiqueta con ese nombre.",
       "NotInProject": "Una de las etiquetas no pertenece a este proyecto.",
-      "CreateNotAllowed": "Solo un propietario del proyecto con sesión de persona puede crear etiquetas. Creá esta etiqueta antes o pedíselo a un propietario."
+      "CreateNotAllowed": "Solo un propietario del proyecto con sesión de persona puede crear etiquetas. Crea esta etiqueta antes o pídeselo a un propietario."
     },
     "TaskComments": {
       "NotFound": "No se encontró el comentario. Puede que alguien lo haya eliminado.",
@@ -349,7 +349,7 @@
       "NotFound": "No se encontró la clave de API.",
       "ExpiryInPast": "La fecha de vencimiento debe ser futura.",
       "ExpiryTooFar": "Una clave de API puede durar como máximo un año.",
-      "TooMany": "Tenés demasiadas claves de API activas. Revocá una primero.",
+      "TooMany": "Tienes demasiadas claves de API activas. Revoca una primero.",
       "ScopeInsufficient": "El alcance de esta clave de API no permite esta acción.",
       "NotAllowedWithKey": "Las claves de API no sirven para esto. Iniciá sesión como persona."
     },
@@ -726,7 +726,7 @@
     "loadFailed": "No se pudieron cargar las horas.",
     "loading": "Cargando horas…",
     "empty": "Todavía no hay horas cargadas.",
-    "readOnly": "No podés cargar horas en esta tarea.",
+    "readOnly": "No puedes cargar horas en esta tarea.",
     "yourEntries": "La lista muestra tus registros; el total es el de toda la tarea.",
     "edit": "Editar carga",
     "delete": "Eliminar carga",
