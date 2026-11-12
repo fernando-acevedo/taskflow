@@ -1,0 +1,20 @@
+{
+  "version": "1.0.0",
+  "locales": [
+    "en",
+    "es"
+  ],
+  "minUtterancesPerLocale": 30,
+  "confidenceThreshold": 0.55,
+  "minMargin": 0.1,
+  "maxConsecutiveFallbacks": 2,
+  "sessionIdleMinutes": 30,
+  "startStep": "start",
+  "fallbackStep": "fallback",
+  "escalateStep": "escalate",
+  "outOfScopeIntent": "OutOfScope",
+  "links": {
+    "support": "",
+    "help": ""
+  }
+}

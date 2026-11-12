@@ -18,6 +18,7 @@ internal static class RateLimiting
     {
         var apiKeyPermitLimit = configuration.GetValue("RateLimiting:ApiKey:PermitLimit", 120);
         var authPermitLimit = configuration.GetValue("RateLimiting:Auth:PermitLimit", 10);
+        var chatbotPermitLimit = configuration.GetValue("RateLimiting:Chatbot:PermitLimit", 30);
         var user = Bucket.Read(configuration, "User", tokenLimit: 300, tokensPerPeriod: 50, periodSeconds: 10);
         var report = Bucket.Read(configuration, "Report", tokenLimit: 30, tokensPerPeriod: 5, periodSeconds: 10);
         var export = Bucket.Read(configuration, "Export", tokenLimit: 5, tokensPerPeriod: 1, periodSeconds: 12);
@@ -41,6 +42,9 @@ internal static class RateLimiting
             options.AddPolicy(RateLimitPolicies.Auth, context => RateLimitPartition.GetFixedWindowLimiter(
                 context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
                 _ => new FixedWindowRateLimiterOptions { PermitLimit = authPermitLimit, Window = TimeSpan.FromMinutes(1) }));
+            options.AddPolicy(RateLimitPolicies.Chatbot, context => RateLimitPartition.GetFixedWindowLimiter(
+                $"chatbot:{context.Connection.RemoteIpAddress}",
+                _ => new FixedWindowRateLimiterOptions { PermitLimit = chatbotPermitLimit, Window = TimeSpan.FromMinutes(1) }));
             options.AddPolicy(RateLimitPolicies.Report, context => RateLimitPartition.GetTokenBucketLimiter(
                 $"report:{Caller(context)}", _ => report.ToOptions()));
             options.AddPolicy(RateLimitPolicies.Export, context => RateLimitPartition.GetTokenBucketLimiter(

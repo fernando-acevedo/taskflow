@@ -57,6 +57,14 @@ param forwardedHeadersKnownNetworks array = [
   '169.254.0.0/16'
 ]
 
+@description('Where the support chatbot sends people it cannot help (Chatbot:SupportContact), shown in its answers: an email address or a URL. Required: the API does not start outside Development without it. No default on purpose.')
+@minLength(1)
+param chatbotSupportContact string
+
+@description('Public help page URL the chatbot links to (Chatbot:HelpUrl). Required: the API does not start outside Development without it. No default on purpose.')
+@minLength(1)
+param chatbotHelpUrl string
+
 @description('SMTP host. Empty (default) means no email is sent: the demo works, but invitation and password reset emails are not delivered.')
 param smtpHost string = ''
 
@@ -164,6 +172,9 @@ var baseAppSettings = [
   // Base URL of the frontend: the emailed invitation and reset links point to it.
   { name: 'Email__FrontendUrl', value: frontendOrigin }
   { name: 'Auth__AllowSelfRegistration', value: 'false' }
+  // Required outside Development (ADR 0026): the API fails to start without them.
+  { name: 'Chatbot__SupportContact', value: chatbotSupportContact }
+  { name: 'Chatbot__HelpUrl', value: chatbotHelpUrl }
   // /home is persistent storage on App Service Linux, so data protection keys (and the tokens they sign) survive restarts.
   { name: 'DataProtection__KeysPath', value: '/home/data/keys' }
   { name: 'Seed__Admin__Email', value: seedAdminEmail }

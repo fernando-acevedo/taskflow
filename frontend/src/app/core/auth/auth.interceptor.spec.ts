@@ -40,6 +40,14 @@ describe('authInterceptor', () => {
     localStorage.clear();
   });
 
+  it('leaves the anonymous chatbot calls alone: no token, no refresh, no session expiry on a 401', () => {
+    http.post(`${api}/chatbot/message`, {}).subscribe({ error: () => undefined });
+    const req = httpMock.expectOne(`${api}/chatbot/message`);
+    expect(req.request.headers.has('Authorization')).toBe(false);
+    req.flush({}, unauthorized);
+    expect(store.dispatch).not.toHaveBeenCalled();
+  });
+
   it('adds the access token to API calls but not to the auth endpoints', () => {
     http.get(`${api}/users/me`).subscribe();
     http.post(`${api}/auth/login`, {}).subscribe();

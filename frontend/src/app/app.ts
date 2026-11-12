@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { NgComponentOutlet } from '@angular/common';
+import { ChangeDetectionStrategy, Component, EnvironmentInjector, ErrorHandler, afterNextRender, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
@@ -16,6 +17,7 @@ import { LanguageService } from '@core/i18n/language.service';
 import { SUPPORTED_LANGUAGES } from '@core/i18n/languages';
 import { ThemeMenu } from '@core/theme/theme-menu';
 import { OfflineBanner } from '@core/network/offline-banner';
+import { LoadedChatWidget, loadChatWidget } from '@features/chatbot';
 import { NotificationBell } from '@features/notifications';
 
 const languageNames = new Map<string, string>(
@@ -33,6 +35,7 @@ const languageNames = new Map<string, string>(
     MatIconModule,
     MatMenuModule,
     MatToolbarModule,
+    NgComponentOutlet,
     NotificationBell,
     OfflineBanner,
     ThemeMenu,
@@ -56,6 +59,20 @@ export class App {
   protected readonly isAdmin = this.store.selectSignal(authFeature.selectIsAdmin);
   /** Owner or Admin of the current tenant. */
   protected readonly canManage = this.store.selectSignal(tenantFeature.selectCanManage);
+  /** The support chat, loaded after the first render so it stays out of the initial bundle. */
+  protected readonly chatWidget = signal<LoadedChatWidget | null>(null);
+
+  private readonly environmentInjector = inject(EnvironmentInjector);
+  private readonly errorHandler = inject(ErrorHandler);
+
+  constructor() {
+    afterNextRender(() => {
+      // The widget is optional: if its chunk fails to load the app keeps working without it.
+      loadChatWidget(this.environmentInjector)
+        .then((widget) => widget && this.chatWidget.set(widget))
+        .catch((error: unknown) => this.errorHandler.handleError(error));
+    });
+  }
 
   /** A skip link must move focus too: the router would treat the bare #main anchor as a navigation. */
   protected skipToContent(event: Event, main: HTMLElement): void {

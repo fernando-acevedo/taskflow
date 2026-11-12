@@ -1,0 +1,238 @@
+{
+  "intent": "EmailNotReceived",
+  "description": "No recibe el correo de restablecimiento, confirmación o invitación.",
+  "triggers": [
+    "Esperaba un correo que no llegó",
+    "No encuentra el correo en la bandeja"
+  ],
+  "notTriggers": [
+    "El correo llegó pero el enlace no funciona (LinkExpired)"
+  ],
+  "confusedWith": [
+    "LinkExpired",
+    "EmailNotConfirmed",
+    "InvitationPending"
+  ],
+  "utterances": {
+    "en": [
+      "I didn't receive the password reset email.",
+      "I have not received the email to reset my password.",
+      "the password reset email never showed up",
+      "Still no reset email in my inbox, I checked spam too.",
+      "pasword reset email didnt arrive",
+      "Could you resend the password reset message? It never arrived.",
+      "no email came",
+      "no mail arrived",
+      "i never got any email",
+      "didnt get an email from you",
+      "nothing arrived, no email at all",
+      "no emial received",
+      "The invitation email never arrived.",
+      "I never received the email with my invitation.",
+      "invitation mail didnt come",
+      "Where is my invite email? It has not arrived.",
+      "the invite email never arived",
+      "still waiting for the invitation message",
+      "no reset email",
+      "reset email missing",
+      "no confirmation email",
+      "no email received",
+      "email not arriving",
+      "no reset mial",
+      "Where is the email you sent me?",
+      "Did you actually send the email? I can't find it.",
+      "where's the reset email i asked for?",
+      "How long does the email take to arrive?",
+      "why hasnt the email come yet",
+      "Could you check whether the email was sent to my address?",
+      "reset mail not recieved",
+      "confirmation mail not recieved",
+      "i dont recieve the email",
+      "didnt recieve reset emial",
+      "the emial never came",
+      "no verification mail recived",
+      "nothing in my inbox, checked twice",
+      "inbox is empty, checked spam and everything",
+      "nothing in my inbox or spam folder",
+      "i looked in spam, still no email",
+      "checked my inbox three times, nothing yet",
+      "no email after 10 minutes, checked junk too",
+      "I've been waiting an hour for that email!",
+      "Still no email after two hours, this is unacceptable!",
+      "Why doesn't the email ever arrive?? I've asked three times!",
+      "I keep requesting it and nothing arrives!",
+      "Where is the email?! I've been waiting all morning",
+      "no email AGAIN, what is going on"
+    ],
+    "es": [
+      "No recibí el correo para restablecer la contraseña.",
+      "No he recibido el correo para cambiar mi contraseña.",
+      "el correo de restablecimiento nunca me llegó",
+      "Todavía no llega el mensaje para restablecer la contraseña, revisé spam.",
+      "no me llego el correo para restablecer la contrasena",
+      "¿Podrían reenviar el correo de restablecimiento? No me ha llegado.",
+      "no me llegó ningún correo",
+      "no llegó ningún mail",
+      "no recibo ningún correo",
+      "no me ha llegado nada al correo",
+      "ni un solo email me llegó",
+      "no me llego ningun corrreo",
+      "Nunca llegó el correo de invitación.",
+      "Aún no me llega el correo con la invitación.",
+      "el mail de invitacion no ha llegado",
+      "¿Dónde está el correo de invitación? No me llegó.",
+      "no me llegó el email de la invitación",
+      "sigo esperando el mensaje de invitación",
+      "no llega el correo",
+      "correo no llega",
+      "sin correo de restablecimiento",
+      "no llegó el email",
+      "mail no recibido",
+      "no llega el corero",
+      "¿Dónde está el correo que me enviaron?",
+      "¿Seguro que enviaron el correo? No lo encuentro.",
+      "¿cuánto tarda en llegar el correo?",
+      "¿Dónde está el email que pedí?",
+      "porque no me llega el correo",
+      "¿Pueden revisar si el mensaje se envió a mi dirección?",
+      "no me llego el mail de reseteo",
+      "no me llego el correo de confirmacion",
+      "no recibi el mail de restablecimiento",
+      "el corero de reseteo no llega",
+      "no me yego el email",
+      "no resibo el correo",
+      "no tengo nada en la bandeja, ya revisé dos veces",
+      "mi bandeja está vacía, ya revisé spam",
+      "no hay nada en la bandeja de entrada ni en spam",
+      "revisé en no deseados y tampoco está",
+      "ya miré mi correo tres veces y nada",
+      "llevo diez minutos y no llega nada, revisé spam",
+      "¡Hace una hora que espero ese correo!",
+      "¡Ya pasaron dos horas y no llega el correo!",
+      "¡¿Por qué nunca llega el correo?! Ya lo pedí tres veces",
+      "¡Lo solicito una y otra vez y no llega nada!",
+      "¡Llevo toda la mañana esperando el correo!",
+      "otra vez sin correo, esto es increíble"
+    ]
+  },
+  "entryStep": "email.start",
+  "steps": {
+    "email.start": {
+      "text": {
+        "en": [
+          "Emails can take a few minutes. Check your spam or junk folder and search for 'TaskFlow'. Did you find it?",
+          "Sometimes emails take a few minutes. Look in your spam or junk folder and search for 'TaskFlow'. Is it there?",
+          "It may take a few minutes to arrive. Check spam or junk and search your inbox for 'TaskFlow'. Did you find it?",
+          "Give it a few minutes; emails aren't always instant. Also check the spam or junk folder and search for 'TaskFlow'. Any luck?",
+          "Let's look for it: emails can be delayed a few minutes and sometimes land in spam or junk. Search for 'TaskFlow'. Did it show up?"
+        ],
+        "es": [
+          "Los correos pueden tardar unos minutos. Revisa la carpeta de spam o correo no deseado y busca 'TaskFlow'. ¿Lo encontraste?",
+          "A veces los correos tardan unos minutos. Mira en la carpeta de spam o correo no deseado y busca 'TaskFlow'. ¿Está ahí?",
+          "Puede tardar unos minutos en llegar. Revisa spam o correo no deseado y busca 'TaskFlow' en tu bandeja. ¿Lo encontraste?",
+          "Espera unos minutos; los correos no siempre llegan al instante. Revisa también la carpeta de spam o correo no deseado y busca 'TaskFlow'. ¿Hubo suerte?",
+          "Busquémoslo: los correos pueden demorar unos minutos y a veces caen en spam o correo no deseado. Busca 'TaskFlow'. ¿Apareció?"
+        ]
+      },
+      "quickReplies": [
+        {
+          "id": "found",
+          "label": {
+            "en": "I found it",
+            "es": "Lo encontré"
+          },
+          "next": "close"
+        },
+        {
+          "id": "missing",
+          "label": {
+            "en": "It's not there",
+            "es": "No está"
+          },
+          "next": "email.kind"
+        }
+      ]
+    },
+    "email.kind": {
+      "text": {
+        "en": [
+          "Which email were you expecting?",
+          "What kind of email were you waiting for?",
+          "Which email didn't arrive?",
+          "Tell me which email you were expecting.",
+          "What was the email about?"
+        ],
+        "es": [
+          "¿Qué correo esperabas recibir?",
+          "¿Qué tipo de correo estabas esperando?",
+          "¿Qué correo es el que no llegó?",
+          "Dime qué correo esperabas.",
+          "¿De qué se trataba el correo?"
+        ]
+      },
+      "quickReplies": [
+        {
+          "id": "reset",
+          "label": {
+            "en": "Password reset",
+            "es": "Restablecer contraseña"
+          },
+          "next": "email.reset"
+        },
+        {
+          "id": "confirm",
+          "label": {
+            "en": "Account confirmation",
+            "es": "Confirmación de cuenta"
+          },
+          "next": "confirm.start"
+        },
+        {
+          "id": "invite",
+          "label": {
+            "en": "Invitation",
+            "es": "Invitación"
+          },
+          "next": "invite.resend"
+        }
+      ]
+    },
+    "email.reset": {
+      "text": {
+        "en": [
+          "We only send the reset link to confirmed emails. Check that you entered the same email you use in TaskFlow and request it again.",
+          "The reset link is only sent to confirmed emails. Make sure you typed the same email you use in TaskFlow, then request it again.",
+          "Reset links go only to confirmed email addresses. Double-check that it's the email you use in TaskFlow and request a new one.",
+          "Keep in mind we send reset links only to confirmed emails. Check that the email you entered is the one you use in TaskFlow and try requesting it again.",
+          "We can only send the reset link to a confirmed email. Verify it's exactly the email you use in TaskFlow and request it once more."
+        ],
+        "es": [
+          "Solo enviamos el enlace para restablecer a correos confirmados. Verifica que escribiste el mismo correo con el que usas TaskFlow y vuelve a solicitarlo.",
+          "El enlace para restablecer solo se envía a correos confirmados. Asegúrate de haber escrito el mismo correo que usas en TaskFlow y vuelve a solicitarlo.",
+          "Los enlaces para restablecer solo llegan a direcciones de correo confirmadas. Revisa que sea el correo que usas en TaskFlow y solicita uno nuevo.",
+          "Ten en cuenta que solo enviamos enlaces para restablecer a correos confirmados. Verifica que el correo que escribiste sea el que usas en TaskFlow e intenta solicitarlo de nuevo.",
+          "Solo podemos enviar el enlace para restablecer a un correo confirmado. Comprueba que sea exactamente el correo que usas en TaskFlow y solicítalo una vez más."
+        ]
+      },
+      "quickReplies": [
+        {
+          "id": "again",
+          "label": {
+            "en": "Request it again",
+            "es": "Solicitarlo de nuevo"
+          },
+          "next": "close",
+          "url": "/forgot-password"
+        },
+        {
+          "id": "still",
+          "label": {
+            "en": "Still nothing",
+            "es": "Sigue sin llegar"
+          },
+          "next": "escalate"
+        }
+      ]
+    }
+  }
+}

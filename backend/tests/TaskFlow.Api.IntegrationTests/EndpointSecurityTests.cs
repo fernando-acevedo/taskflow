@@ -18,6 +18,7 @@ public sealed class EndpointSecurityTests(NoDatabaseApiFactory factory) : IClass
         "api/system/info",
         "api/demo/status",
         "api/invitations/accept",
+        "api/chatbot/message",
         "api/auth/register",
         "api/auth/login",
         "api/auth/refresh",

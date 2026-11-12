@@ -12,6 +12,7 @@ using TaskFlow.Application.Demo;
 using TaskFlow.Application.Notifications;
 using TaskFlow.Application.Users;
 using TaskFlow.Infrastructure.ApiKeys;
+using TaskFlow.Infrastructure.Chatbot;
 using TaskFlow.Infrastructure.Demo;
 using TaskFlow.Infrastructure.Email;
 using TaskFlow.Infrastructure.Email.Outbox;
@@ -122,6 +123,9 @@ public static class DependencyInjection
         services.AddScoped<IEmailOutbox, EmailOutbox>();
         services.AddSingleton<OutboxDispatcher>();
         services.AddHostedService<OutboxProcessor>();
+
+        // Support chatbot (ADR 0026): knowledge base, classifier, dialogue engine; {support}/{help} required outside Development.
+        services.AddChatbot(configuration);
 
         services.AddScoped<IInvitationSender, InvitationSender>();
         services.AddScoped<INotificationEmailSender, NotificationEmailSender>();

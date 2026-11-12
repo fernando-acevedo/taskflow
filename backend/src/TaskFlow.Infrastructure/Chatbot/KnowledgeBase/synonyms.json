@@ -1,0 +1,14 @@
+{
+  "password": [
+    "contraseña",
+    "clave",
+    "pass"
+  ],
+  "email": [
+    "correo",
+    "mail"
+  ],
+  "account": [
+    "cuenta"
+  ]
+}

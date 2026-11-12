@@ -134,7 +134,7 @@
       "expiresRule": "Elegí una fecha futura, dentro de un año.",
       "cancel": "Cancelar",
       "save": "Crear key",
-      "empty": "No tenés API keys.",
+      "empty": "No tienes API keys.",
       "loadFailed": "No se pudieron cargar las API keys.",
       "loading": "Cargando…",
       "retry": "Reintentar",
@@ -307,7 +307,7 @@
       "InvalidColor": "Elige uno de los colores disponibles.",
       "NameTaken": "Este proyecto ya tiene una etiqueta con ese nombre.",
       "NotInProject": "Una de las etiquetas no pertenece a este proyecto.",
-      "CreateNotAllowed": "Solo un propietario del proyecto con sesión de persona puede crear etiquetas. Creá esta etiqueta antes o pedíselo a un propietario."
+      "CreateNotAllowed": "Solo un propietario del proyecto con sesión de persona puede crear etiquetas. Crea esta etiqueta antes o pídeselo a un propietario."
     },
     "TaskComments": {
       "NotFound": "No se encontró el comentario. Puede que alguien lo haya eliminado.",
@@ -324,6 +324,12 @@
       "InvalidRange": "Elegí una fecha de inicio y de fin, la de inicio no posterior a la de fin, con un rango de hasta 366 días.",
       "InvalidMinutes": "La duración debe estar entre 1 minuto y 24 horas.",
       "NoteTooLong": "La nota no puede superar los 500 caracteres."
+    },
+    "Chatbot": {
+      "InvalidLocale": "El chat no admite ese idioma.",
+      "UnknownQuickReply": "Esa opción ya no está disponible. Reiniciamos el chat.",
+      "EmptyMessage": "Escribe un mensaje primero.",
+      "MessageTooLong": "Tu mensaje es demasiado largo. Usa menos de 1000 caracteres."
     },
     "Notifications": {
       "NotFound": "No se encontró la notificación."
@@ -343,12 +349,12 @@
       "NotFound": "No se encontró la clave de API.",
       "ExpiryInPast": "La fecha de vencimiento debe ser futura.",
       "ExpiryTooFar": "Una clave de API puede durar como máximo un año.",
-      "TooMany": "Tenés demasiadas claves de API activas. Revocá una primero.",
+      "TooMany": "Tienes demasiadas claves de API activas. Revoca una primero.",
       "ScopeInsufficient": "El alcance de esta clave de API no permite esta acción.",
       "NotAllowedWithKey": "Las claves de API no sirven para esto. Iniciá sesión como persona."
     },
     "RateLimit": {
-      "Exceeded": "Demasiadas solicitudes. Esperá un momento y volvé a intentarlo."
+      "Exceeded": "Demasiadas solicitudes. Espera un momento y vuelve a intentarlo."
     }
   },
   "clients": {
@@ -720,7 +726,7 @@
     "loadFailed": "No se pudieron cargar las horas.",
     "loading": "Cargando horas…",
     "empty": "Todavía no hay horas cargadas.",
-    "readOnly": "No podés cargar horas en esta tarea.",
+    "readOnly": "No puedes cargar horas en esta tarea.",
     "yourEntries": "La lista muestra tus registros; el total es el de toda la tarea.",
     "edit": "Editar carga",
     "delete": "Eliminar carga",
@@ -807,5 +813,27 @@
     "empty": "Todavía no hay tenants.",
     "retry": "Reintentar",
     "createdOn": "Creado el {{ when }}"
+  },
+  "chatbot": {
+    "open": "Abrir el chat de soporte",
+    "close": "Cerrar el chat de soporte",
+    "title": "Soporte",
+    "conversation": "Conversación",
+    "you": "Tú",
+    "bot": "Asistente",
+    "quickReplies": "Respuestas sugeridas",
+    "openLink": "Abrir",
+    "opensInNewTab": "(se abre en una pestaña nueva)",
+    "typing": "Escribiendo...",
+    "inputLabel": "Tu mensaje",
+    "inputPlaceholder": "Escribe tu mensaje",
+    "send": "Enviar",
+    "startOver": "Empezar de nuevo",
+    "languageChanged": "Cambió el idioma, pero este chat sigue en el anterior.",
+    "restartIn": "Reiniciar en {{ language }}",
+    "outcome": {
+      "completed": "Conversación terminada. Nos alegra haber podido ayudarte.",
+      "escalated": "Pasamos tu caso al equipo de soporte."
+    }
   }
 }

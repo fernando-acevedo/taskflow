@@ -1,0 +1,163 @@
+{
+  "intent": "ServerError",
+  "description": "Falla técnica: error 500, página caída o pantalla en blanco.",
+  "triggers": [
+    "Menciona un error técnico o la página no carga"
+  ],
+  "notTriggers": [
+    "Mensaje de credenciales inválidas (WrongPassword)"
+  ],
+  "confusedWith": [
+    "LoginIssue"
+  ],
+  "utterances": {
+    "en": [
+      "I get a 500 error when I log in.",
+      "An internal server error 500 appears each time I attempt to log in.",
+      "getting a 500 when i try to sign in",
+      "error 500",
+      "get eror 500 when loging in",
+      "What does the 500 error on the login page mean?",
+      "site is down?",
+      "Is the website currently unavailable?",
+      "is taskflow down right now",
+      "site down",
+      "is the sitte dwon",
+      "Is there an outage? I get a 503 page.",
+      "The login page does not load.",
+      "The sign-in page fails to load in my browser.",
+      "login page wont load on chrome",
+      "login wont load",
+      "login pgae wont load",
+      "Why wont the login page open?",
+      "server error",
+      "502 bad gateway",
+      "I am seeing a server error message.",
+      "it just says server error",
+      "sever eror",
+      "What is this server error?",
+      "Why do I see a blank page after signing in?",
+      "Why is the screen white after I log in?",
+      "After signing in I only see an empty white page.",
+      "white screen after login",
+      "blanck page after loging in",
+      "blank screen",
+      "app crashs when i sign in",
+      "the app crashs everytime i log in",
+      "app freezes and crashes when i log in on my phone",
+      "The application crashes as soon as I sign in.",
+      "app crashes at login",
+      "Is the app broken? It crashes when I sign in.",
+      "keeps spinning forever",
+      "the loading wheel never stops",
+      "infinite loading",
+      "The page remains in a loading state indefinitely.",
+      "stuk on loading forevr",
+      "Why is it loading forever on my phone?",
+      "Something went wrong, again!",
+      "Same error again, something went wrong!!",
+      "I keep receiving a message that something went wrong.",
+      "something went wrong again ugh",
+      "somthing went wrong agian!",
+      "error again!"
+    ],
+    "es": [
+      "Me sale un error 500 al iniciar sesión.",
+      "Aparece un error interno del servidor 500 cada vez que intento ingresar.",
+      "me aparece un 500 al intentar entrar",
+      "error 500 servidor",
+      "me sale eror 500 al iniciar sesion",
+      "¿Qué significa el error 500 en la página de inicio de sesión?",
+      "¿la página está caída?",
+      "¿El sitio web se encuentra fuera de servicio?",
+      "esta caido taskflow ahora",
+      "sitio caído",
+      "esta caida la pagian",
+      "¿Hay una caída del servicio? Me sale un 503.",
+      "La página de inicio de sesión no carga.",
+      "La página de acceso no se carga en mi navegador.",
+      "la pagina del login no abre en chrome",
+      "login no carga",
+      "la pagina de inicio de seion no carga",
+      "¿Por qué no abre la página de inicio de sesión?",
+      "error del servidor",
+      "error 502",
+      "Veo un mensaje de error del servidor.",
+      "solo dice error del servidor",
+      "eror del sevidor",
+      "¿Qué es este error del servidor?",
+      "¿Por qué queda en blanco después de entrar?",
+      "¿Por qué la pantalla sale blanca al iniciar sesión?",
+      "Tras iniciar sesión solo veo una página en blanco.",
+      "pantalla blanca despues de entrar",
+      "pagina en blaco despues de entar",
+      "pantalla en blanco",
+      "la app se cae cuando inicio sesion",
+      "la aplicasion se cierra sola al iniciar sesion",
+      "la app se congela y se cierra cuando entro desde el celular",
+      "La aplicación falla en cuanto inicio sesión.",
+      "la app falla al entrar",
+      "¿Está dañada la app? Se cae cuando inicio sesión.",
+      "se queda cargando para siempre",
+      "la ruedita nunca deja de girar",
+      "carga infinita",
+      "La página permanece cargando indefinidamente.",
+      "se queda cargnado eternamente",
+      "¿Por qué sigue cargando sin parar en el celular?",
+      "¡Algo salió mal, otra vez!",
+      "¡Otra vez el mismo error, algo salió mal!!",
+      "Sigo recibiendo un mensaje que dice que algo salió mal.",
+      "otra vez algo salió mal, qué fastidio",
+      "algo salio mal otra ves!",
+      "¡error de nuevo!"
+    ]
+  },
+  "entryStep": "error.start",
+  "steps": {
+    "error.start": {
+      "text": {
+        "en": [
+          "Sorry about that. Try reloading the page or opening it in a private window. You can also check the service status.",
+          "Sorry for the trouble. Reload the page or try a private window. You can also check the service status.",
+          "That shouldn't happen, sorry. Try refreshing the page or opening it in a private (incognito) window, and check the service status too.",
+          "Apologies for that. Reloading the page or using a private window often helps. You can also see the service status.",
+          "Sorry, something went wrong. Reload the page or open it in a private window, and take a look at the service status."
+        ],
+        "es": [
+          "Lamentamos el inconveniente. Intenta recargar la página o abrirla en una ventana privada. También puedes revisar el estado del servicio.",
+          "Disculpa las molestias. Recarga la página o intenta con una ventana privada. También puedes revisar el estado del servicio.",
+          "Eso no debería pasar, lo siento. Intenta actualizar la página o abrirla en una ventana privada (de incógnito), y revisa también el estado del servicio.",
+          "Perdón por eso. Muchas veces ayuda recargar la página o usar una ventana privada. También puedes ver el estado del servicio.",
+          "Lo siento, algo falló. Recarga la página o ábrela en una ventana privada, y revisa el estado del servicio."
+        ]
+      },
+      "quickReplies": [
+        {
+          "id": "status",
+          "label": {
+            "en": "View service status",
+            "es": "Ver el estado del servicio"
+          },
+          "next": "close",
+          "url": "/status"
+        },
+        {
+          "id": "works",
+          "label": {
+            "en": "It works now",
+            "es": "Ya funciona"
+          },
+          "next": "end"
+        },
+        {
+          "id": "still",
+          "label": {
+            "en": "Still failing",
+            "es": "Sigue fallando"
+          },
+          "next": "escalate"
+        }
+      ]
+    }
+  }
+}

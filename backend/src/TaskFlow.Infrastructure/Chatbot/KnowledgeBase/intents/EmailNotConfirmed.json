@@ -1,0 +1,193 @@
+{
+  "intent": "EmailNotConfirmed",
+  "description": "Se registró y no confirmó el correo, por eso no puede entrar ni restablecer.",
+  "triggers": [
+    "Le piden confirmar o verificar el correo",
+    "Se registró hace poco y no puede entrar"
+  ],
+  "notTriggers": [
+    "Lo invitó un administrador (InvitationPending)"
+  ],
+  "confusedWith": [
+    "EmailNotReceived",
+    "InvitationPending"
+  ],
+  "utterances": {
+    "en": [
+      "It says I need to confirm my email address.",
+      "The system asks me to confirm my email address before I can continue.",
+      "it says confirm your email or something",
+      "confirm email message",
+      "it says i have to confrim my emial",
+      "Why does it ask me to confirm my email?",
+      "signed up but cant get in",
+      "I created an account on my own but I am not able to access it.",
+      "made an account myself, cant log in yet",
+      "signed up, cant login",
+      "singed up but cant log in, email not verifed?",
+      "I just signed up, why cant I log in?",
+      "I registered yesterday and cannot log in.",
+      "I registered an account yesterday and have not been able to sign in since.",
+      "registered yesterday, still cant log in",
+      "registered, no access",
+      "i registerd yesterday and cant loggin",
+      "I registered yesterday, do I need to verify something before logging in?",
+      "email not confirmed",
+      "unconfirmed email",
+      "My email address has not been confirmed.",
+      "my email isnt confirmed yet",
+      "emial not confrimed",
+      "How do I confirm my email?",
+      "How do I verify my account?",
+      "What steps do I need to follow to verify my account?",
+      "verify account how",
+      "how do i activate my new account",
+      "how do i verfy my acount",
+      "Where do I click to activate my new account?",
+      "verfy email pls",
+      "pls verfy my emial",
+      "verify email",
+      "can you help me verify my email please",
+      "Please help me verify my email address.",
+      "Can I verify my email from here?",
+      "resend the confirmation email",
+      "Could you please resend the confirmation email for my new account?",
+      "send confirmation again",
+      "resend confrimation emial",
+      "can u send the confirmation link again",
+      "How can I get another confirmation email?",
+      "I signed up three times and it still isn't activated!",
+      "I made an account and its still not activated, this is ridiculous!",
+      "I have registered several times and my account is still not active.",
+      "registered a few times, account still inactive",
+      "i registerd 3 times and stil not activaed!!",
+      "still not activated!"
+    ],
+    "es": [
+      "Dice que tengo que confirmar mi correo.",
+      "El sistema me pide confirmar mi correo electrónico antes de continuar.",
+      "me sale que confirme mi correo",
+      "mensaje de confirmar correo",
+      "dice que tengo que confirmar mi corero",
+      "¿Por qué me pide confirmar mi correo?",
+      "me registré y no puedo entrar",
+      "Me registré en la plataforma pero no logro acceder a ella.",
+      "hice mi cuenta y todavía no puedo entrar",
+      "me registré, no entro",
+      "me registre y no puedo entar todavia",
+      "Me acabo de registrar, ¿por qué no puedo entrar?",
+      "Me registré ayer y no puedo iniciar sesión.",
+      "Me registré ayer y desde entonces no he podido ingresar.",
+      "ayer me registré y sigo sin poder entrar",
+      "registrado, sin acceso",
+      "me registre ayer y no pued iniciar sesion",
+      "Me registré ayer, ¿tengo que verificar algo antes de entrar?",
+      "correo no confirmado",
+      "correo sin confirmar",
+      "Mi dirección de correo electrónico no ha sido confirmada.",
+      "mi correo todavía no está confirmado",
+      "corero no confirmdo",
+      "¿Cómo confirmo mi correo?",
+      "¿Cómo verifico mi cuenta?",
+      "¿Qué pasos debo seguir para verificar mi cuenta?",
+      "verificar cuenta, ¿cómo?",
+      "como activo mi cuenta nueva",
+      "como verifco mi cuenta",
+      "¿Dónde hago clic para activar mi cuenta recién creada?",
+      "verificar correo porfa",
+      "porfa verifcar mi corero",
+      "verificar email",
+      "me ayudas a verificar mi correo por favor",
+      "Por favor, ayúdeme a verificar mi correo electrónico.",
+      "¿Puedo verificar mi correo desde aquí?",
+      "reenviar el correo de confirmación",
+      "¿Podrían reenviarme el correo de confirmación de mi cuenta nueva?",
+      "enviar confirmación otra vez",
+      "reenviar confirmasion del corero",
+      "me mandan de nuevo el enlace de confirmación",
+      "¿Cómo consigo otro correo de confirmación?",
+      "¡Me registré tres veces y sigue sin activarse!",
+      "¡Creé mi cuenta y sigue sin activarse, es el colmo!",
+      "Me he registrado varias veces y mi cuenta continúa inactiva.",
+      "me registré unas cuantas veces y la cuenta sigue inactiva",
+      "me registre 3 veces y sigue sin activarse!!",
+      "¡sigue sin activarse!"
+    ]
+  },
+  "entryStep": "confirm.start",
+  "steps": {
+    "confirm.start": {
+      "text": {
+        "en": [
+          "If you signed up yourself, you need to confirm your email before signing in. Open the confirmation email we sent you and follow the link.",
+          "If you created the account yourself, you have to confirm your email before signing in. Open the confirmation email we sent and follow the link.",
+          "Self-registered accounts need a confirmed email to sign in. Look for our confirmation email and open the link inside.",
+          "If you signed up on your own, confirm your email first: open the confirmation email we sent you and click the link.",
+          "Before signing in, accounts created through sign-up must confirm their email. Find the confirmation email we sent and follow its link."
+        ],
+        "es": [
+          "Si te registraste por tu cuenta, necesitas confirmar tu correo antes de iniciar sesión. Abre el correo de confirmación que te enviamos y sigue el enlace.",
+          "Si creaste la cuenta desde el registro, tienes que confirmar tu correo antes de iniciar sesión. Abre el correo de confirmación que te enviamos y sigue el enlace.",
+          "Las cuentas creadas desde el registro necesitan un correo confirmado para iniciar sesión. Busca nuestro correo de confirmación y abre el enlace que trae.",
+          "Si te registraste por tu cuenta, primero confirma tu correo: abre el correo de confirmación que te enviamos y haz clic en el enlace.",
+          "Antes de iniciar sesión, las cuentas creadas con registro deben confirmar su correo. Busca el correo de confirmación que te enviamos y sigue su enlace."
+        ]
+      },
+      "quickReplies": [
+        {
+          "id": "resend",
+          "label": {
+            "en": "Send it again",
+            "es": "Enviarlo de nuevo"
+          },
+          "next": "confirm.resend"
+        },
+        {
+          "id": "done",
+          "label": {
+            "en": "I've confirmed it",
+            "es": "Ya lo confirmé"
+          },
+          "next": "close"
+        }
+      ]
+    },
+    "confirm.resend": {
+      "text": {
+        "en": [
+          "On the sign-in page, use 'Send confirmation email'. If it doesn't arrive within a few minutes, check your spam folder.",
+          "Go to the sign-in page and use 'Send confirmation email'. If it hasn't arrived after a few minutes, look in your spam folder.",
+          "You can request it again from the sign-in page with 'Send confirmation email'. Give it a few minutes and check spam if it doesn't show up.",
+          "On the sign-in page there's a 'Send confirmation email' option. Use it, and if nothing arrives within a few minutes, check spam.",
+          "Use 'Send confirmation email' on the sign-in page. Emails can take a few minutes; if it doesn't arrive, look in your spam folder."
+        ],
+        "es": [
+          "En la página de inicio de sesión, usa 'Enviar email de confirmación'. Si no llega en unos minutos, revisa la carpeta de spam.",
+          "Ve a la página de inicio de sesión y usa 'Enviar email de confirmación'. Si no llegó después de unos minutos, busca en la carpeta de spam.",
+          "Puedes volver a pedirlo desde la página de inicio de sesión con 'Enviar email de confirmación'. Espera unos minutos y revisa spam si no aparece.",
+          "En la página de inicio de sesión está la opción 'Enviar email de confirmación'. Úsala y, si no llega nada en unos minutos, revisa spam.",
+          "Usa 'Enviar email de confirmación' en la página de inicio de sesión. Los correos pueden tardar unos minutos; si no llega, busca en la carpeta de spam."
+        ]
+      },
+      "quickReplies": [
+        {
+          "id": "go",
+          "label": {
+            "en": "Go to sign in",
+            "es": "Ir a iniciar sesión"
+          },
+          "next": "close",
+          "url": "/login"
+        },
+        {
+          "id": "still",
+          "label": {
+            "en": "Still nothing",
+            "es": "Sigue sin llegar"
+          },
+          "next": "escalate"
+        }
+      ]
+    }
+  }
+}

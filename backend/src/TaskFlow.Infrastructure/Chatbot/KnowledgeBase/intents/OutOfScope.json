@@ -1,0 +1,158 @@
+{
+  "intent": "OutOfScope",
+  "description": "Cualquier tema que no sea acceso a la cuenta. Sirve de ejemplo negativo.",
+  "triggers": [
+    "Funciones de la app, agradecimientos, temas ajenos"
+  ],
+  "notTriggers": [
+    "Cualquier problema para entrar",
+    "Saludos (Greeting)"
+  ],
+  "confusedWith": [
+    "HumanAgent",
+    "Greeting",
+    "LoginIssue"
+  ],
+  "utterances": {
+    "en": [
+      "How do I create a new project?",
+      "How can I start a new project in TaskFlow?",
+      "create project",
+      "how do i creat a new porject",
+      "Where can I set up a project template?",
+      "can you delete a project i dont need anymore",
+      "how do i log my hours",
+      "How do I track time on a task?",
+      "time tracking",
+      "how do i logg my hours on a taks",
+      "where do i see the hours my team logged",
+      "the timer keeps showing the wrong total!",
+      "Export the Gantt chart to Excel.",
+      "I need to export a report to PDF.",
+      "export to csv",
+      "how do i exprot the gantt",
+      "Can the Gantt chart be printed?",
+      "download the reports as a spreadsheet",
+      "thanks",
+      "thank you",
+      "Thank you very much for your help.",
+      "thx",
+      "thanks a lot, bye",
+      "thnaks",
+      "How do I add a member to a project?",
+      "How do I assign someone to a project?",
+      "add member",
+      "how do i remvoe a memebr from the project",
+      "Can I change a member's role in a project?",
+      "how many people can join one project",
+      "move a tsk to done",
+      "move task to done",
+      "How do I drag a card to another column?",
+      "how do i move a taks to the next colum",
+      "Please mark this task as completed.",
+      "set a due date on a task",
+      "what's the weather like today",
+      "Will it rain tomorrow?",
+      "whats the temprature outside",
+      "what is the capital of france",
+      "recommend a good pizza place",
+      "Who won the football match yesterday?",
+      "Why is the Kanban board so slow?!",
+      "The Gantt chart looks wrong and it drives me crazy!",
+      "why are my notifications so annoying",
+      "kanban board is so slwo!!",
+      "Dark mode is still broken, this is ridiculous!",
+      "Why cant I find the label option anywhere?!"
+    ],
+    "es": [
+      "¿Cómo creo un proyecto nuevo?",
+      "¿Cómo puedo empezar un proyecto en TaskFlow?",
+      "crear proyecto",
+      "como creo un proyeto nuebo",
+      "¿Dónde configuro una plantilla de proyecto?",
+      "se puede borrar un proyecto que ya no uso",
+      "cómo registro mis horas",
+      "¿Cómo puedo controlar el tiempo en una tarea?",
+      "control de tiempo",
+      "como registro mis oras en una tarea",
+      "donde veo las horas que cargó mi equipo",
+      "¡El cronómetro marca mal el total!",
+      "Exportar el diagrama de Gantt a Excel.",
+      "Necesito exportar un reporte a PDF.",
+      "exportar a csv",
+      "como exportro el gantt",
+      "¿Se puede imprimir el diagrama de Gantt?",
+      "descargar los informes en una hoja de calculo",
+      "gracias",
+      "muchas gracias",
+      "Gracias por su ayuda.",
+      "grasias",
+      "gracias, hasta luego",
+      "ok gracias, adiós",
+      "¿Cómo agrego un miembro a un proyecto?",
+      "¿Cómo asigno a alguien a un proyecto?",
+      "agregar miembro",
+      "como quito a un miembro del proyceto",
+      "¿Puedo cambiar el rol de un miembro del proyecto?",
+      "cuántas personas caben en un proyecto",
+      "mover una tarea a terminada",
+      "mover tarea a hecho",
+      "¿Cómo arrastro una tarjeta a otra columna?",
+      "como muevo una tera a la siguiente colmna",
+      "Por favor, marque esta tarea como completada.",
+      "poner fecha de vencimiento a una tarea",
+      "qué clima hace hoy",
+      "¿Va a llover mañana?",
+      "que temperatura hace afuera",
+      "cual es la capital de francia",
+      "recomiendame una buena pizzeria",
+      "quien gano el partdio de ayer",
+      "¡¿Por qué el tablero Kanban está tan lento?!",
+      "¡El diagrama de Gantt se ve mal y me desespera!",
+      "por que las notificaciones son tan molestas",
+      "el tablro kanban esta muy lneto!!",
+      "¡El modo oscuro sigue fallando, esto es ridículo!",
+      "¿¡Por qué no encuentro la opción de etiquetas!?"
+    ]
+  },
+  "entryStep": "oos.start",
+  "steps": {
+    "oos.start": {
+      "text": {
+        "en": [
+          "For now I can only help with signing in and your password. For other questions, check the help page.",
+          "Right now I can only help with signing in and passwords. For anything else, the help page is the best place to look.",
+          "That's outside what I can do for now: I only handle signing in and passwords. The help page can answer other questions.",
+          "Sorry, at the moment I can only help with signing in and your password. For other questions, take a look at the help page.",
+          "I'm only able to help with signing in and passwords for now. For other topics, check the help page."
+        ],
+        "es": [
+          "Por ahora solo puedo ayudarte con el inicio de sesión y tu contraseña. Para otras consultas, revisa la página de ayuda.",
+          "Por ahora solo puedo ayudar con el inicio de sesión y las contraseñas. Para lo demás, la página de ayuda es el mejor lugar.",
+          "Eso está fuera de lo que puedo hacer por ahora: solo atiendo el inicio de sesión y las contraseñas. La página de ayuda puede responder otras preguntas.",
+          "Lo siento, por el momento solo puedo ayudarte con el inicio de sesión y tu contraseña. Para otras consultas, revisa la página de ayuda.",
+          "De momento solo puedo ayudarte con el inicio de sesión y las contraseñas. Para otros temas, consulta la página de ayuda."
+        ]
+      },
+      "quickReplies": [
+        {
+          "id": "help",
+          "label": {
+            "en": "Help page",
+            "es": "Página de ayuda"
+          },
+          "next": "end",
+          "url": "{help}"
+        },
+        {
+          "id": "menu",
+          "label": {
+            "en": "Back to the menu",
+            "es": "Volver al menú"
+          },
+          "next": "start"
+        }
+      ]
+    }
+  }
+}

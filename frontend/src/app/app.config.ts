@@ -51,6 +51,7 @@ export const appConfig: ApplicationConfig = {
       // Registered at the root, like auth, instead of on a route: the bell lives in the always-present shell
       // toolbar, so its state must exist on every page for as long as the app does (ADR 0010).
       [notificationsFeature.name]: notificationsFeature.reducer,
+      // The support bot's state is not here: it is provided with the lazy widget (`loadChatWidget`).
     }),
     provideEffects(authEffects, tenantEffects, notificationsEffects, realtimeEffects),
     provideRouterStore(),

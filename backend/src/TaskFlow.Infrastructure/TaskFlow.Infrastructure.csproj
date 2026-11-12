@@ -10,12 +10,20 @@
 
   <ItemGroup>
     <PackageReference Include="MailKit" />
+    <PackageReference Include="Microsoft.ML" />
     <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" />
     <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Chatbot knowledge base JSON (T-135): embedded so adding files needs no other change. -->
+    <EmbeddedResource Include="Chatbot/KnowledgeBase/**/*.json" LogicalName="TaskFlow.KnowledgeBase/%(RecursiveDir)%(Filename)%(Extension)" />
+    <!-- Trained intent model (T-140). Regenerate with the TaskFlow.Chatbot.Trainer tool; a test fails when it is stale. -->
+    <EmbeddedResource Include="Chatbot/Model/intent-model.zip" LogicalName="TaskFlow.Chatbot/intent-model.zip" />
   </ItemGroup>
 
   <ItemGroup>
