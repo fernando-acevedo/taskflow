@@ -5,9 +5,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 TaskFlow is a project-management app for digital agencies (clients, projects, Kanban, workload dashboard) in
 English and Spanish. Backend is ASP.NET Core 10 + EF Core 10 + SQL Server; frontend is Angular 22 (standalone,
 zoneless, signals) + NgRx + Angular Material + Transloco. The project is built in phases (see the Roadmap in
-`README.md`); phases 1 (authentication), 2 (domain and API for clients, projects, members and tasks), 3 (the
-Angular screens, with the Kanban board) and 4 (dashboards) are done; phase 5 (Azure deployment and the public
-demo) comes next.
+`README.md`); phases 0–13 are done in code (core app, collaboration features, multitenancy, per-user theme, API
+keys, hardening, scale, real time and the support chatbot). Phase 5's Azure code is done, but the first deploy
+and its post-deploy checks are still pending.
 
 ## Commands
 
