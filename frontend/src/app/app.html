@@ -93,4 +93,8 @@
   <main id="main" tabindex="-1" #main>
     <router-outlet />
   </main>
+
+  @if (chatWidget(); as widget) {
+    <ng-container *ngComponentOutlet="widget" />
+  }
 </ng-container>

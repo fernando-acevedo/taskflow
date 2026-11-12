@@ -19,3 +19,9 @@ export type MoveTaskResultDto = Schemas['MoveTaskResultDto'];
 export type TaskItemStatus = Schemas['TaskItemStatus'];
 export type TaskPriority = Schemas['TaskPriority'];
 export type TaskCommentDto = Schemas['TaskCommentDto'];
+
+export type SendChatMessageRequest = Schemas['SendChatMessageRequest'];
+export type SendChatMessageResult = Schemas['SendChatMessageResult'];
+export type ChatReplyDto = Schemas['ChatReplyDto'];
+export type ChatQuickReplyDto = Schemas['ChatQuickReplyDto'];
+export type ChatOutcome = NonNullable<Schemas['ChatOutcome']>;

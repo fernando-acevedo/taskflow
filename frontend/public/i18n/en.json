@@ -326,8 +326,10 @@
       "NoteTooLong": "The note can't be longer than 500 characters."
     },
     "Chatbot": {
-      "SessionClosed": "This conversation has ended. Start a new one.",
-      "InvalidLocale": "The language must be en or es."
+      "InvalidLocale": "That language is not supported by the chat.",
+      "UnknownQuickReply": "That option is no longer available. Starting the chat again.",
+      "EmptyMessage": "Write a message first.",
+      "MessageTooLong": "Your message is too long. Keep it under 1000 characters."
     },
     "Notifications": {
       "NotFound": "The notification was not found."
@@ -811,5 +813,27 @@
     "empty": "There are no tenants yet.",
     "retry": "Try again",
     "createdOn": "Created {{ when }}"
+  },
+  "chatbot": {
+    "open": "Open support chat",
+    "close": "Close support chat",
+    "title": "Support",
+    "conversation": "Conversation",
+    "you": "You",
+    "bot": "Assistant",
+    "quickReplies": "Suggested replies",
+    "openLink": "Open",
+    "opensInNewTab": "(opens in a new tab)",
+    "typing": "Typing...",
+    "inputLabel": "Your message",
+    "inputPlaceholder": "Write your message",
+    "send": "Send",
+    "startOver": "Start over",
+    "languageChanged": "The language changed, but this chat is still in the previous one.",
+    "restartIn": "Restart in {{ language }}",
+    "outcome": {
+      "completed": "Conversation finished. Glad we could help.",
+      "escalated": "We passed your case to our support team."
+    }
   }
 }
