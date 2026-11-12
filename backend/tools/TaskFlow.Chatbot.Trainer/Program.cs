@@ -37,6 +37,13 @@ try
         Console.WriteLine(FormattableString.Invariant($"  {locale}: {accuracy:P1}"));
     }
 
+    if (arguments.TryGetValue("report", out var reportPath))
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(reportPath))!);
+        File.WriteAllText(reportPath, EvaluationReport.Build(kb, metrics), new System.Text.UTF8Encoding(false));
+        Console.WriteLine($"Wrote {reportPath}");
+    }
+
     Console.WriteLine($"Wrote {modelPath} ({new FileInfo(modelPath).Length} bytes) and {metricsPath}");
     return 0;
 }

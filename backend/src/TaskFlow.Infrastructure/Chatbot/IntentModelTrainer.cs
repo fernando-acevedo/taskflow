@@ -37,7 +37,15 @@ public sealed record IntentModelMetrics
 
     /// <summary>Share of held-out utterances accepted at <see cref="SuggestedThreshold"/>.</summary>
     public double CoverageAtSuggestedThreshold { get; init; }
+
+    /// <summary>Every held-out prediction, for calibration reports.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public IReadOnlyList<HeldOutPrediction> Predictions { get; init; } = [];
 }
+
+/// <summary>One cross-validation prediction with the margin between its top two scores.</summary>
+public sealed record HeldOutPrediction(
+    string Utterance, string Intent, string Locale, string Predicted, double Score, double Margin);
 
 /// <summary>A trained pipeline plus what it was trained on.</summary>
 public sealed class TrainedIntentModel
@@ -154,7 +162,7 @@ public static class IntentModelTrainer
             }
         }
 
-        var results = new List<(string Intent, string Locale, string Predicted, double Score)>();
+        var results = new List<(string Intent, string Locale, string Predicted, double Score, double Margin, string Utterance)>();
         for (var fold = 0; fold < folds; fold++)
         {
             var train = samples.Where((_, i) => foldOf[i] != fold).ToList();
@@ -172,7 +180,8 @@ public static class IntentModelTrainer
             {
                 var scores = engine.Predict(new IntentRow { Text = normalizer.Normalize(sample.Utterance) }).Score;
                 var best = Array.IndexOf(scores, scores.Max());
-                results.Add((sample.Intent, sample.Locale, labels[best], scores[best]));
+                var second = scores.Where((_, i) => i != best).DefaultIfEmpty(0f).Max();
+                results.Add((sample.Intent, sample.Locale, labels[best], scores[best], scores[best] - second, sample.Utterance));
             }
         }
 
@@ -180,7 +189,7 @@ public static class IntentModelTrainer
     }
 
     private static IntentModelMetrics Summarize(
-        List<(string Intent, string Locale, string Predicted, double Score)> results, int folds)
+        List<(string Intent, string Locale, string Predicted, double Score, double Margin, string Utterance)> results, int folds)
     {
         var intents = results.Select(r => r.Intent).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).ToList();
         var index = intents.Select((name, i) => (name, i)).ToDictionary(x => x.name, x => x.i, StringComparer.Ordinal);
@@ -232,6 +241,7 @@ public static class IntentModelTrainer
             ConfusionMatrix = matrix.Select(row => (IReadOnlyList<int>)row).ToList(),
             SuggestedThreshold = threshold,
             CoverageAtSuggestedThreshold = coverage,
+            Predictions = results.Select(r => new HeldOutPrediction(r.Utterance, r.Intent, r.Locale, r.Predicted, r.Score, r.Margin)).ToList(),
         };
     }
 
