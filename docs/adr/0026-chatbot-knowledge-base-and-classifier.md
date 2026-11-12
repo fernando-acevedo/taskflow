@@ -33,7 +33,7 @@ few and known, and answers must be reviewed by a person.
   suite with a per-locale accuracy gate. If a locale falls below the gate, we move to two models (one per locale)
   behind the same interface.
 - **Thresholds and session criteria (validated in T0, frozen in `settings.json`).** A prediction is accepted only if
-  its score is at least 0.65 and it beats the second best by at least 0.1; otherwise the bot answers with the
+  its score is at least 0.55 (lowered from 0.65 on 2026-11-12 after calibration: 67.6 % answered at 96.1 % accuracy, see docs/analysis/f13-classifier-eval.md) and it beats the second best by at least 0.1; otherwise the bot answers with the
   fallback step, and escalates after 2 consecutive fallbacks (`maxConsecutiveFallbacks`). A session is idle after 30
   minutes (`sessionIdleMinutes`). The language is the UI language when the chat opens and stays fixed for the whole
   session, even if the user types in the other one. The out-of-scope intent is a real class, not only a threshold.

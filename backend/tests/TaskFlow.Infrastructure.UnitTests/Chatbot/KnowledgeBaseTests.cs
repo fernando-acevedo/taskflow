@@ -68,7 +68,7 @@ public class KnowledgeBaseTests
         var kb = Load();
 
         kb.Settings.Version.ShouldBe("1.0.0");
-        kb.Settings.ConfidenceThreshold.ShouldBe(0.65);
+        kb.Settings.ConfidenceThreshold.ShouldBe(0.55);
         kb.Settings.MinMargin.ShouldBe(0.1);
         kb.Settings.MaxConsecutiveFallbacks.ShouldBe(2);
         kb.Settings.SessionIdleMinutes.ShouldBe(30);
