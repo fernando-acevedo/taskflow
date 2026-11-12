@@ -713,6 +713,81 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/chatbot/message": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: {
+                    /** @description The requested API version */
+                    "api-version"?: "1.0";
+                };
+                header?: {
+                    /** @description The requested API version */
+                    "api-version"?: "1.0";
+                };
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/*+json": components["schemas"]["SendChatMessageRequest"];
+                    "application/json": components["schemas"]["SendChatMessageRequest"];
+                    "text/json": components["schemas"]["SendChatMessageRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SendChatMessageResult"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ValidationProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Too many requests. Wait the seconds in Retry-After and try again. */
+                429: {
+                    headers: {
+                        "Retry-After"?: number;
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/clients": {
         parameters: {
             query?: never;
@@ -5258,6 +5333,22 @@ export interface components {
         ChangeTenantRoleRequest: {
             role: components["schemas"]["TenantRole"];
         };
+        /** @enum {string} */
+        ChatOutcome: "Completed" | "Escalated" | null;
+        ChatQuickReplyDto: {
+            id: string;
+            label: string;
+            url: null | string;
+        };
+        ChatReplyDto: {
+            ended: boolean;
+            isFallback: boolean;
+            outcome: null | components["schemas"]["ChatOutcome"];
+            quickReplies: components["schemas"]["ChatQuickReplyDto"][];
+            stepId: string;
+            text: string;
+            url: null | string;
+        };
         ClientDto: {
             /** Format: int32 */
             activeProjectCount: number;
@@ -5578,6 +5669,20 @@ export interface components {
         };
         /** @enum {string} */
         ProjectRole: "Member" | "Owner";
+        SendChatMessageRequest: {
+            locale: null | string;
+            quickReplyId: null | string;
+            /** Format: uuid */
+            sessionId: null | string;
+            text: null | string;
+        };
+        SendChatMessageResult: {
+            locale: string;
+            newSession: boolean;
+            reply: components["schemas"]["ChatReplyDto"];
+            /** Format: uuid */
+            sessionId: string;
+        };
         StatusCount: {
             /** Format: int32 */
             count: number;

@@ -46,7 +46,7 @@ public sealed class SendChatMessageHandlerTests
         _sessionSet.When(set => set.Add(Arg.Any<ChatSession>())).Do(call => _sessions.Add(call.Arg<ChatSession>()));
         var replies = new LocalizedReplyProvider(_kb, new FirstPicker(), new Dictionary<string, string> { ["help"] = "https://h.test" });
         _handler = new SendChatMessageHandler(
-            _db, _kb, new DialogueEngine(_kb, replies), _classifier, new TextNormalizer(_kb.Synonyms), _time);
+            _db, new SendChatMessageValidator(), _kb, new DialogueEngine(_kb, replies), _classifier, new TextNormalizer(_kb.Synonyms), _time);
     }
 
     private static Dictionary<string, IReadOnlyList<string>> Text(string name) =>

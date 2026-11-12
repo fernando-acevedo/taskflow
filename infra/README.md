@@ -25,6 +25,7 @@ The web app gets its settings from the template: connection string `TaskFlow` (`
 | `Cors__AllowedOrigins__0` | `https://<static web app hostname>` |
 | `Email__FrontendUrl` | `https://<static web app hostname>` (base of emailed links) |
 | `Auth__AllowSelfRegistration` | `false` |
+| `Chatbot__SupportContact`, `Chatbot__HelpUrl` | required, no defaults (params `chatbotSupportContact`, `chatbotHelpUrl`; env `TASKFLOW_CHATBOT_SUPPORT_CONTACT`, `TASKFLOW_CHATBOT_HELP_URL`). The API does not start outside Development without them (ADR 0026) |
 | `DataProtection__KeysPath` | `/home/data/keys` (persistent storage) |
 | `Seed__Admin__Email`, `Seed__Admin__Password` (secure), `Seed__Admin__DisplayName` | the real admin, which the demo reset preserves |
 | `Demo__Enabled` | `true` |

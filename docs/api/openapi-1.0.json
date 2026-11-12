@@ -213,6 +213,84 @@
         ],
         "type": "object"
       },
+      "ChatOutcome": {
+        "enum": [
+          "Completed",
+          "Escalated",
+          null
+        ],
+        "type": "string"
+      },
+      "ChatQuickReplyDto": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "url": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "url"
+        ],
+        "type": "object"
+      },
+      "ChatReplyDto": {
+        "properties": {
+          "ended": {
+            "type": "boolean"
+          },
+          "isFallback": {
+            "type": "boolean"
+          },
+          "outcome": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ChatOutcome"
+              }
+            ]
+          },
+          "quickReplies": {
+            "items": {
+              "$ref": "#/components/schemas/ChatQuickReplyDto"
+            },
+            "type": "array"
+          },
+          "stepId": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "url": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "text",
+          "quickReplies",
+          "url",
+          "stepId",
+          "ended",
+          "outcome",
+          "isFallback"
+        ],
+        "type": "object"
+      },
       "ClientDto": {
         "properties": {
           "activeProjectCount": {
@@ -1391,6 +1469,66 @@
           "Owner"
         ],
         "type": "string"
+      },
+      "SendChatMessageRequest": {
+        "properties": {
+          "locale": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "quickReplyId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "sessionId": {
+            "format": "uuid",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "text": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "sessionId",
+          "locale",
+          "text",
+          "quickReplyId"
+        ],
+        "type": "object"
+      },
+      "SendChatMessageResult": {
+        "properties": {
+          "locale": {
+            "type": "string"
+          },
+          "newSession": {
+            "type": "boolean"
+          },
+          "reply": {
+            "$ref": "#/components/schemas/ChatReplyDto"
+          },
+          "sessionId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sessionId",
+          "locale",
+          "newSession",
+          "reply"
+        ],
+        "type": "object"
       },
       "StatusCount": {
         "properties": {
@@ -3556,6 +3694,107 @@
         },
         "tags": [
           "ApiKeys"
+        ]
+      }
+    },
+    "/api/chatbot/message": {
+      "post": {
+        "parameters": [
+          {
+            "description": "The requested API version",
+            "in": "header",
+            "name": "api-version",
+            "schema": {
+              "enum": [
+                "1.0"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "The requested API version",
+            "in": "query",
+            "name": "api-version",
+            "schema": {
+              "enum": [
+                "1.0"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendChatMessageRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendChatMessageRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendChatMessageRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SendChatMessageResult"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Too many requests. Wait the seconds in Retry-After and try again.",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "format": "int32",
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Chatbot"
         ]
       }
     },
@@ -10125,6 +10364,9 @@
     },
     {
       "name": "ApiKeys"
+    },
+    {
+      "name": "Chatbot"
     },
     {
       "name": "Clients"

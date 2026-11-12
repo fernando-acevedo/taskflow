@@ -106,6 +106,7 @@ public sealed class SqlServerApiFactory : WebApplicationFactory<Program>, IAsync
         builder.UseSetting("Seed:Admin:Email", AdminEmail);
         builder.UseSetting("Seed:Admin:Password", AdminPassword);
         builder.UseSetting("RateLimiting:Auth:PermitLimit", "10000");
+        builder.UseSetting("RateLimiting:Chatbot:PermitLimit", "10000");
         builder.UseSetting("RateLimiting:User:TokenLimit", "1000000");
         builder.UseSetting("RateLimiting:Report:TokenLimit", "1000000");
         builder.UseSetting("RateLimiting:Export:TokenLimit", "1000000");

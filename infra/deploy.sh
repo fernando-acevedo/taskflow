@@ -22,6 +22,8 @@ ask TASKFLOW_DEMO_ADMIN_PASSWORD "Demo admin password (8+ chars, upper/lower/dig
 ask TASKFLOW_DEMO_MEMBER_PASSWORD "Demo member password (8+ chars, upper/lower/digit)"
 ask TASKFLOW_SEED_ADMIN_EMAIL "Email of the real admin account" 0
 ask TASKFLOW_SEED_ADMIN_PASSWORD "Real admin password (8+ chars, upper/lower/digit)"
+ask TASKFLOW_CHATBOT_SUPPORT_CONTACT "Chatbot support contact (email or URL shown to users)" 0
+ask TASKFLOW_CHATBOT_HELP_URL "Chatbot help page URL" 0
 
 check_app_password() {
   local v="${!1}"

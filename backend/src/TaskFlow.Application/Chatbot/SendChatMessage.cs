@@ -1,7 +1,9 @@
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using TaskFlow.Application.Abstractions;
 using TaskFlow.Application.Chatbot.Dialogue;
 using TaskFlow.Application.Chatbot.KnowledgeBase;
+using TaskFlow.Application.Common;
 using TaskFlow.Domain.Chatbot;
 using TaskFlow.Domain.Common;
 using KbOutcome = TaskFlow.Application.Chatbot.KnowledgeBase.ChatOutcome;
@@ -44,8 +46,19 @@ public static class SendChatMessageErrors
         Error.Invalid("Chatbot.MessageTooLong", "The message is too long.");
 }
 
+/// <summary>Only the bounds that protect the server. The text length rule with its own error code lives in the handler.</summary>
+public sealed class SendChatMessageValidator : AbstractValidator<SendChatMessageCommand>
+{
+    public SendChatMessageValidator()
+    {
+        RuleFor(command => command.Locale).NotEmpty().MaximumLength(10);
+        RuleFor(command => command.Text).MaximumLength(4 * ChatMessage.TextMaxLength);
+    }
+}
+
 public sealed class SendChatMessageHandler(
     IAppDbContext db,
+    IValidator<SendChatMessageCommand> validator,
     IKnowledgeBase kb,
     DialogueEngine engine,
     IIntentClassifier classifier,
@@ -55,6 +68,12 @@ public sealed class SendChatMessageHandler(
     public async Task<Result<SendChatMessageResult>> HandleAsync(SendChatMessageCommand command, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(command);
+        var validation = await validator.ValidateAsync(command, cancellationToken);
+        if (!validation.IsValid)
+        {
+            return validation.ToError();
+        }
+
         var text = string.IsNullOrWhiteSpace(command.Text) ? null : command.Text.Trim();
         var quickReplyId = string.IsNullOrWhiteSpace(command.QuickReplyId) ? null : command.QuickReplyId.Trim();
         if (quickReplyId is not null)

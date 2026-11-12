@@ -31,6 +31,8 @@ Read-SecretIfMissing 'TASKFLOW_DEMO_ADMIN_PASSWORD' 'Demo admin password (8+ cha
 Read-SecretIfMissing 'TASKFLOW_DEMO_MEMBER_PASSWORD' 'Demo member password (8+ chars, upper/lower/digit)'
 if (-not $env:TASKFLOW_SEED_ADMIN_EMAIL) { $env:TASKFLOW_SEED_ADMIN_EMAIL = Read-Host -Prompt 'Email of the real admin account' }
 Read-SecretIfMissing 'TASKFLOW_SEED_ADMIN_PASSWORD' 'Real admin password (8+ chars, upper/lower/digit)'
+if (-not $env:TASKFLOW_CHATBOT_SUPPORT_CONTACT) { $env:TASKFLOW_CHATBOT_SUPPORT_CONTACT = Read-Host -Prompt 'Chatbot support contact (email or URL shown to users)' }
+if (-not $env:TASKFLOW_CHATBOT_HELP_URL) { $env:TASKFLOW_CHATBOT_HELP_URL = Read-Host -Prompt 'Chatbot help page URL' }
 
 function Assert-AppPassword([string]$Name) {
   $v = [Environment]::GetEnvironmentVariable($Name)

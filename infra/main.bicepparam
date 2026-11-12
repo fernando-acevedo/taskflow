@@ -14,6 +14,9 @@ param demoTimeZone = 'UTC'
 param seedAdminEmail = readEnvironmentVariable('TASKFLOW_SEED_ADMIN_EMAIL')
 param seedAdminPassword = readEnvironmentVariable('TASKFLOW_SEED_ADMIN_PASSWORD')
 param seedAdminDisplayName = readEnvironmentVariable('TASKFLOW_SEED_ADMIN_DISPLAY_NAME', 'Administrator')
+// Required by the chatbot (ADR 0026); no defaults, so a deployment without them fails before reaching Azure.
+param chatbotSupportContact = readEnvironmentVariable('TASKFLOW_CHATBOT_SUPPORT_CONTACT')
+param chatbotHelpUrl = readEnvironmentVariable('TASKFLOW_CHATBOT_HELP_URL')
 param forwardedHeadersKnownNetworks = [
   '10.0.0.0/8'
   '172.16.0.0/12'
