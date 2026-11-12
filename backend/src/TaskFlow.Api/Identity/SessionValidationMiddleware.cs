@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using TaskFlow.Infrastructure.ApiKeys;
 using TaskFlow.Infrastructure.Identity;
 
@@ -11,6 +12,21 @@ internal sealed class SessionValidationMiddleware(RequestDelegate next)
 {
     public async Task InvokeAsync(HttpContext context, SessionValidator sessions)
     {
+        // An anonymous endpoint (the support chat, say) must not fail because the caller sends a token that outlived its
+        // session: the call goes on as anonymous instead of answering 401.
+        if (context.GetEndpoint()?.Metadata.GetMetadata<IAllowAnonymous>() is not null)
+        {
+            if (context.User.Identity?.IsAuthenticated == true
+                && !context.User.HasClaim(claim => claim.Type == ApiKeyDefaults.KeyIdClaim)
+                && !await sessions.IsCurrentAsync(context.User, context.RequestAborted))
+            {
+                context.User = new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity());
+            }
+
+            await next(context);
+            return;
+        }
+
         // API keys have no security stamp: the key handler checks the key and its owner (ADR 0016).
         if (context.User.Identity?.IsAuthenticated == true
             && !context.User.HasClaim(claim => claim.Type == ApiKeyDefaults.KeyIdClaim)

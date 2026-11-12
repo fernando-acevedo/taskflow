@@ -12,6 +12,7 @@ public sealed class NoDatabaseApiFactory : WebApplicationFactory<Program>
         builder.UseSetting("ConnectionStrings:TaskFlow", "Server=unused;Database=unused");
         builder.UseSetting("Notifications:DueSoonEnabled", "false");
         builder.UseSetting("Outbox:Enabled", "false");
+        builder.UseSetting("Chatbot:Retention:Enabled", "false");
         builder.UseSetting("Chatbot:SupportContact", "support@tests.local");
         builder.UseSetting("Chatbot:HelpUrl", "http://localhost:4200/help");
         builder.UseSetting("Cors:AllowedOrigins:0", "http://localhost:4200");

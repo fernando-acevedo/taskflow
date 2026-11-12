@@ -113,6 +113,7 @@ public sealed class SqlServerApiFactory : WebApplicationFactory<Program>, IAsync
         builder.UseSetting("Email:FrontendUrl", "http://localhost:4200");
         builder.UseSetting("Notifications:DueSoonEnabled", "false");
         builder.UseSetting("Outbox:Enabled", "false");
+        builder.UseSetting("Chatbot:Retention:Enabled", "false");
         builder.UseSetting("Chatbot:SupportContact", "support@tests.local");
         builder.UseSetting("Chatbot:HelpUrl", "http://localhost:4200/help");
         builder.ConfigureTestServices(services =>

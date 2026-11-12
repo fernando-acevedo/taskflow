@@ -64,8 +64,9 @@ public sealed class DialogueEngine(IKnowledgeBase kb, LocalizedReplyProvider rep
             }
         }
 
-        // A url-only button keeps the user where they are; the client opens the url.
-        return Show(state, reply.Next ?? state.Step!, state.Intent, url, false, null, 0);
+        // A url-only button keeps the user where they are, and the fallback streak so it cannot dodge escalation;
+        // the client opens the url.
+        return Show(state, reply.Next ?? state.Step!, state.Intent, url, false, null, reply.Next is null ? state.ConsecutiveFallbacks : 0);
     }
 
     private Result<DialogueTurn> OnText(DialogueState state, IntentPrediction? prediction)

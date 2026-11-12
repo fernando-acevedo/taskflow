@@ -9,6 +9,9 @@ public class PiiRedactorTests
     [InlineData("write to ana.perez@example.com please", "write to [email] please")]
     [InlineData("see https://taskflow.example/reset#token=abc now", "see [url] now")]
     [InlineData("call 1234567 or 12345", "call [number] or 12345")]
+    [InlineData("call 612 345 678 now", "call [number] now")]
+    [InlineData("tel +34 612-345-678.", "tel [number].")]
+    [InlineData("(11) 4567-8901", "[number]")]
     [InlineData("my password is Hunter2!", "my password is [secret]")]
     [InlineData("mi contraseña es abc123", "mi contraseña es [secret]")]
     [InlineData("mi clave es zeta9 gracias", "mi clave es [secret] gracias")]
@@ -22,6 +25,8 @@ public class PiiRedactorTests
     [InlineData("How do I reset my password?")]
     [InlineData("I forgot my password")]
     [InlineData("my password does not work")]
+    [InlineData("it takes 5 minutes or 8 characters")]
+    [InlineData("I have 3 projects and 12 tasks")]
     [InlineData("No puedo iniciar sesión")]
     [InlineData("")]
     public void LeavesPlainSentencesUntouched(string input) =>

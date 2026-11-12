@@ -32,6 +32,10 @@ public static class ChatbotServices
             var replies = new LocalizedReplyProvider(kb, provider.GetRequiredService<IVariantPicker>(), Links(kb, options));
             return new DialogueEngine(kb, replies);
         });
+        services.AddOptions<ChatRetentionOptions>().Bind(configuration.GetSection(ChatRetentionOptions.SectionName)).ValidateOnStart();
+        services.AddSingleton<IValidateOptions<ChatRetentionOptions>, ChatRetentionOptionsValidator>();
+        services.AddSingleton<ChatRetentionPurger>();
+        services.AddHostedService<ChatRetentionWorker>();
         services.AddHostedService<ChatbotStartupCheck>();
         return services;
     }
@@ -55,7 +59,7 @@ public static class ChatbotServices
 }
 
 /// <summary>Builds the chatbot services at startup so an invalid KB or contact setting fails fast, not on the first chat.</summary>
-internal sealed partial class ChatbotStartupCheck(IServiceProvider services, ILogger<ChatbotStartupCheck> logger) : IHostedService
+internal sealed partial class ChatbotStartupCheck(IServiceProvider services, IHostEnvironment environment, ILogger<ChatbotStartupCheck> logger) : IHostedService
 {
     public Task StartAsync(CancellationToken cancellationToken)
     {
@@ -63,6 +67,11 @@ internal sealed partial class ChatbotStartupCheck(IServiceProvider services, ILo
         _ = services.GetRequiredService<DialogueEngine>();
         if (!services.GetRequiredService<IIntentClassifier>().IsLoaded)
         {
+            if (!environment.IsDevelopment())
+            {
+                throw new InvalidOperationException("The chatbot intent model is not loaded; check the Chatbot:Model settings and the model file (ADR 0026).");
+            }
+
             ModelNotLoaded(logger);
         }
 

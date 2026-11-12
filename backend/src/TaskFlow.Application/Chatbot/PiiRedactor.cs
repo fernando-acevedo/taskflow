@@ -24,6 +24,13 @@ public static partial class PiiRedactor
     [GeneratedRegex(@"\d{6,}", Options, TimeoutMs)]
     private static partial Regex NumberRegex();
 
+    // Phone numbers written with separators: "612 345 678", "+34 612-345-678", "(11) 4567-8901". Groups of 2-4 digits
+    // joined by space, dot or dash and at least PhoneMinDigits digits in all, so "5 minutes" or "8 characters" stay intact.
+    [GeneratedRegex(@"(?<![\p{L}\p{N}])\+?\(?\d{2,4}\)?(?:[\s.\-]\(?\d{2,4}\)?){2,5}(?![\p{L}\p{N}])", Options, TimeoutMs)]
+    private static partial Regex PhoneRegex();
+
+    private const int PhoneMinDigits = 8;
+
     public static string Redact(string? text)
     {
         if (string.IsNullOrEmpty(text))
@@ -36,7 +43,8 @@ public static partial class PiiRedactor
             var result = SecretRegex().Replace(text, m => m.Groups["prefix"].Value + "[secret]");
             result = EmailRegex().Replace(result, "[email]");
             result = UrlRegex().Replace(result, "[url]");
-            return NumberRegex().Replace(result, "[number]");
+            result = NumberRegex().Replace(result, "[number]");
+            return PhoneRegex().Replace(result, m => m.Value.Count(char.IsAsciiDigit) >= PhoneMinDigits ? "[number]" : m.Value);
         }
         catch (RegexMatchTimeoutException)
         {

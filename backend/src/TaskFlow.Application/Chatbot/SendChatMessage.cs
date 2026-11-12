@@ -191,7 +191,7 @@ public sealed class SendChatMessageHandler(
                 prediction?.Top.Score,
                 prediction?.Second?.Intent,
                 prediction?.Second?.Score,
-                command.Locale,
+                session.Locale,
                 LanguageGuesser.Guess(text),
                 prediction?.ModelVersion,
                 OutcomeOf(turn.Reply),

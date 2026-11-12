@@ -167,6 +167,21 @@ public class DialogueEngineTests
     }
 
     [Fact]
+    public void AUrlOnlyQuickReplyKeepsTheFallbackStreak()
+    {
+        var engine = Engine();
+        var miss = DialogueInput.Text(Predict(0.2, 0.1));
+        var t1 = engine.Advance(engine.Start("en").Value.State, miss).Value;
+        t1.State.ConsecutiveFallbacks.ShouldBe(1);
+
+        var help = engine.Advance(t1.State, DialogueInput.QuickReply("help")).Value;
+
+        help.Reply.Url.ShouldBe("https://h.test");
+        help.State.ConsecutiveFallbacks.ShouldBe(1);
+        help.State.Step.ShouldBe("fallback");
+    }
+
+    [Fact]
     public void EscalatesAfterMaxFallbacksAndSuccessResetsTheCounter()
     {
         var engine = Engine();
