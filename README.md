@@ -8,7 +8,7 @@ mentions, time tracking and a workload dashboard, in English and Spanish. It is 
 an ASP.NET Core 10 API in Clean Architecture on SQL Server, an Angular 22 frontend with NgRx and Angular Material,
 and a free-tier Azure deployment defined in Bicep.
 
-> **Status:** phases 0 to 6 are done in code; the first Azure deploy is pending. Next: multitenancy, per-user theme and API keys (planned).
+> **Status:** phases 0 to 13 are done in code; the first Azure deploy is pending.
 > **Live demo:** `https://<your-static-web-app>.azurestaticapps.net` (coming once deployed; this is a placeholder,
 > not a working URL). Demo data resets nightly, and the demo credentials are shown on the login page.
 
@@ -166,6 +166,14 @@ The ADRs are indexed, with their status and decision, in [docs/adr/README.md](do
 | 4 | Dashboards | Done |
 | 5 | Azure deployment and the public demo with nightly reset | Done (code), first deploy pending |
 | 6 | Polish: screenshots, accessibility, docs | Done |
+| F1–F5 | Collaboration: labels, task comments with mentions, activity log ([ADR 9](docs/adr/0009-activity-log.md)), time tracking, notifications ([ADR 10](docs/adr/0010-notifications-delivery.md)) | Done |
+| 7 | Multitenancy with an automatic tenant filter ([ADRs 12–14](docs/adr/0012-tenancy-model.md)) | Done |
+| 8 | Per-user light/dark theme ([ADR 15](docs/adr/0015-per-user-theme.md)) | Done |
+| 9 | API keys and Gantt planning fields on tasks ([ADRs 16–17](docs/adr/0016-api-keys.md)) | Done |
+| 10 | Hardening: email outbox, serializable board moves, live/ready health probes ([ADRs 18–19](docs/adr/0018-email-outbox.md)) | Done |
+| 11 | Scale: distributed cache and job locks, observability, HTTP contract with an OpenAPI snapshot and generated frontend types ([ADRs 20–22](docs/adr/0020-distributed-cache-and-job-locks.md)) | Done |
+| 12 | Product: real time with SignalR, domain events, cursor pagination, end-to-end tests ([ADRs 23–25](docs/adr/0023-realtime-with-signalr.md)) | Done |
+| 13 | Support chatbot for sign-in and password problems, in English and Spanish, with an ML.NET intent classifier and scripted dialogue ([ADR 26](docs/adr/0026-chatbot-knowledge-base-and-classifier.md)) | Done |
 
 ## License
 
