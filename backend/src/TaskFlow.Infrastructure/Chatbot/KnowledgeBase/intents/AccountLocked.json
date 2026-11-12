@@ -1,0 +1,194 @@
+{
+  "intent": "AccountLocked",
+  "description": "La cuenta quedó bloqueada tras varios intentos fallidos.",
+  "triggers": [
+    "Menciona bloqueo o demasiados intentos",
+    "Le dicen que intente más tarde"
+  ],
+  "notTriggers": [
+    "Cuenta desactivada por un administrador (escalar)",
+    "Solo contraseña incorrecta (WrongPassword)"
+  ],
+  "confusedWith": [
+    "WrongPassword",
+    "LoginIssue"
+  ],
+  "utterances": {
+    "en": [
+      "My account has been locked.",
+      "Unfortunately my account is now locked and I cannot sign in.",
+      "acount is locked",
+      "my account got locked",
+      "Could you please unlock my account?",
+      "Locked account, what now",
+      "got locked out",
+      "they locked me out of my account",
+      "i got locked out after a few tries",
+      "Locked out again, please help",
+      "I am unable to access my account because it is locked out.",
+      "got lockd out of my acount",
+      "It says there were too many login attempts.",
+      "Too many failed attempts, it won't let me try again",
+      "The system says I exceeded the allowed number of login attempts.",
+      "says too many atempts",
+      "Why does it say too many login attempts?",
+      "I tried a few times and now it says too many attempts!",
+      "account locked",
+      "account is locked",
+      "locked account",
+      "blocked account",
+      "acount lockd",
+      "my account is blocked",
+      "How long until my account unlocks?",
+      "When will my account be unlocked?",
+      "how long does the lock last",
+      "Is there a waiting period before my account is unlocked?",
+      "how long til acount unlocks",
+      "can i unlock my account myself or do i wait?",
+      "locked acount help",
+      "acount locked please help",
+      "my acount is lockd, help",
+      "help my account is locked",
+      "Locked acount, need asistance",
+      "lcoked account",
+      "it says try again later",
+      "it tells me to try again in a while",
+      "message says to try again later and wont let me in",
+      "Please try again later, that's all it says after my attempts",
+      "says try agian later",
+      "it keeps saying try again later, how many minutes is that?",
+      "I'm locked out and I need to work now!",
+      "I'm locked out again and this is ridiculous!",
+      "my account is locked and I have a deadline, fix it now!",
+      "Locked out!! I cant do anything",
+      "Why am I locked out? I need to get in right now!",
+      "lockd out and i have work to do!!"
+    ],
+    "es": [
+      "Mi cuenta quedó bloqueada.",
+      "Mi cuenta se encuentra bloqueada y no puedo ingresar.",
+      "mi cuenta esta bloqueada",
+      "se bloqueo mi cuenta",
+      "Necesito que desbloqueen mi cuenta, por favor.",
+      "mi cuenta quedo bloqueada, ayuda",
+      "me bloquearon la cuenta",
+      "me bloquearon el acceso a mi cuenta",
+      "me quedé bloqueado después de varios intentos",
+      "la cuenta me salio bloqueada",
+      "Me dejaron fuera de mi cuenta por intentos fallidos.",
+      "me bloqueó el sistema",
+      "Dice que hubo demasiados intentos de inicio de sesión.",
+      "Me aparece que superé el número de intentos permitidos.",
+      "dice demasiados intentos fallidos",
+      "demaciados intentos de inisio de sesion",
+      "¿Por qué dice que hice demasiados intentos?",
+      "Intenté entrar varias veces y ahora dice que hay demasiados intentos",
+      "cuenta bloqueada",
+      "mi cuenta bloqueada",
+      "usuario bloqueado",
+      "bloqueada mi cuenta",
+      "cuenta blokeada",
+      "acceso bloqueado por intentos",
+      "¿Cuánto tarda en desbloquearse mi cuenta?",
+      "¿Cuánto tiempo dura el bloqueo de mi cuenta?",
+      "cuanto hay que esperar para que se desbloquee",
+      "¿Cuándo podré volver a entrar si mi cuenta está bloqueada?",
+      "cuanto tarda en desbloquearce la cuenta",
+      "¿Puedo desbloquear mi cuenta yo mismo o debo esperar?",
+      "cuenta bloquiada ayuda",
+      "ayuda mi cuenta esta bloqueda",
+      "cuenta bloqueda, necesito ayuda",
+      "me bloquiaron la cuenta",
+      "mi cuenta se bloqueo y no se que hacer",
+      "bloqueo de cuenta ayuda",
+      "dice que intente más tarde",
+      "me dice que vuelva a intentar más tarde",
+      "sale un mensaje de que intente luego y no me deja entrar",
+      "Aparece que debo esperar un tiempo para volver a intentar.",
+      "dice q intente mas tarde",
+      "¿Por qué me pide que intente de nuevo más tarde?",
+      "¡Estoy bloqueado y necesito trabajar ya!",
+      "¡Otra vez bloqueado y tengo trabajo urgente!",
+      "¡Mi cuenta está bloqueada y no puedo esperar, desbloquéenla ya!",
+      "Estoy bloqueado, esto es una pérdida de tiempo",
+      "¡Me bloquearon la cuenta y necesito entrar ahora mismo!",
+      "bloqueado y con trabajo pendiente!!"
+    ]
+  },
+  "entryStep": "locked.start",
+  "steps": {
+    "locked.start": {
+      "text": {
+        "en": [
+          "For security, after several failed attempts your account is locked for a few minutes. Wait about 5 minutes and try again, or reset your password if you don't remember it.",
+          "For your security, the account locks for a few minutes after several failed attempts. Wait about 5 minutes and try again, or reset your password if you can't remember it.",
+          "Too many failed attempts lock the account for a few minutes to protect it. Try again in about 5 minutes, or reset your password if you've forgotten it.",
+          "Your account is temporarily locked because of several failed attempts. It unlocks on its own in about 5 minutes; if you don't remember the password, you can reset it.",
+          "This is a security measure: after several wrong attempts, the account locks for a few minutes. Wait around 5 minutes before trying again, or reset your password if you're not sure of it."
+        ],
+        "es": [
+          "Por seguridad, después de varios intentos fallidos tu cuenta se bloquea durante unos minutos. Espera unos 5 minutos e inténtalo de nuevo, o restablece tu contraseña si no la recuerdas.",
+          "Por tu seguridad, la cuenta se bloquea unos minutos después de varios intentos fallidos. Espera unos 5 minutos e inténtalo otra vez, o restablece tu contraseña si no la recuerdas.",
+          "Demasiados intentos fallidos bloquean la cuenta unos minutos para protegerla. Vuelve a intentarlo en unos 5 minutos, o restablece tu contraseña si la olvidaste.",
+          "Tu cuenta está bloqueada temporalmente por varios intentos fallidos. Se desbloquea sola en unos 5 minutos; si no recuerdas la contraseña, puedes restablecerla.",
+          "Es una medida de seguridad: después de varios intentos incorrectos, la cuenta se bloquea unos minutos. Espera alrededor de 5 minutos antes de volver a intentarlo, o restablece tu contraseña si tienes dudas sobre ella."
+        ]
+      },
+      "quickReplies": [
+        {
+          "id": "reset",
+          "label": {
+            "en": "Reset password",
+            "es": "Restablecer contraseña"
+          },
+          "next": "close",
+          "url": "/forgot-password"
+        },
+        {
+          "id": "wait",
+          "label": {
+            "en": "I'll wait",
+            "es": "Voy a esperar"
+          },
+          "next": "locked.wait"
+        }
+      ]
+    },
+    "locked.wait": {
+      "text": {
+        "en": [
+          "Okay. If it's still locked after waiting, or you think an administrator deactivated your account, our team can help.",
+          "Sounds good. If it's still locked after waiting, or you think an administrator deactivated your account, our team can help you.",
+          "Alright. If the lock doesn't go away after waiting, or you suspect an administrator deactivated your account, our team can help.",
+          "Got it. If you still can't get in after a few minutes, or you think an administrator deactivated your account, our team can help.",
+          "Okay, let's wait. If it stays locked or you believe an administrator deactivated your account, our team can help you."
+        ],
+        "es": [
+          "De acuerdo. Si sigue bloqueada después de esperar, o crees que un administrador desactivó tu cuenta, nuestro equipo puede ayudarte.",
+          "Muy bien. Si sigue bloqueada después de esperar, o crees que un administrador desactivó tu cuenta, nuestro equipo puede ayudarte.",
+          "Está bien. Si el bloqueo no desaparece después de esperar, o sospechas que un administrador desactivó tu cuenta, nuestro equipo puede ayudarte.",
+          "Entendido. Si después de unos minutos sigues sin poder entrar, o piensas que un administrador desactivó tu cuenta, nuestro equipo te puede ayudar.",
+          "De acuerdo, esperemos. Si continúa bloqueada o crees que un administrador desactivó tu cuenta, nuestro equipo puede ayudarte."
+        ]
+      },
+      "quickReplies": [
+        {
+          "id": "worked",
+          "label": {
+            "en": "Yes, I'm in",
+            "es": "Sí, ya entré"
+          },
+          "next": "end"
+        },
+        {
+          "id": "still",
+          "label": {
+            "en": "Still locked",
+            "es": "Sigue bloqueada"
+          },
+          "next": "escalate"
+        }
+      ]
+    }
+  }
+}

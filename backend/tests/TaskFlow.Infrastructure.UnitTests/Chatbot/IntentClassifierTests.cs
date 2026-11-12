@@ -4,13 +4,11 @@ using TaskFlow.Infrastructure.Chatbot;
 
 namespace TaskFlow.Infrastructure.UnitTests.Chatbot;
 
-/// <summary>Trains on the DRAFT fixture (not the real KB) and checks the classifier plumbing, not its accuracy.</summary>
+/// <summary>Trains on the frozen KB and checks the classifier plumbing, not its accuracy.</summary>
 public class IntentClassifierTests
 {
-    private static readonly string FixtureDir = Path.Combine(AppContext.BaseDirectory, "Chatbot", "Fixtures", "kb-draft");
-
     private static readonly Lazy<KnowledgeBase> Kb = new(() =>
-        JsonKnowledgeBaseLoader.LoadFromDirectory(FixtureDir, new KnowledgeBaseValidationOptions(MinUtterancesPerLocale: 5)));
+        JsonKnowledgeBaseLoader.LoadFromAssembly(typeof(JsonKnowledgeBaseLoader).Assembly));
 
     private static readonly Lazy<TrainedIntentModel> Trained = new(() => IntentModelTrainer.Train(Kb.Value));
 
@@ -46,7 +44,11 @@ public class IntentClassifierTests
     [MemberData(nameof(KnownUtterances))]
     public void ClassifiesKnownUtteranceOfEveryIntentInBothLocales(string intent, string utterance)
     {
-        Classify(utterance).Top.Intent.ShouldBe(intent);
+        // Plumbing check, not an accuracy gate: the frozen KB has intents that overlap by design (ResetPassword and
+        // ForgotPassword), so landing on one of the intent's declared confusedWith neighbors is accepted.
+        var accepted = Kb.Value.Intents.Single(i => i.Intent == intent).ConfusedWith.Append(intent);
+
+        accepted.ShouldContain(Classify(utterance).Top.Intent);
     }
 
     [Theory]

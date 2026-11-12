@@ -1,0 +1,191 @@
+{
+  "intent": "LoginIssue",
+  "description": "Quiere entrar y no puede, sin dar la causa.",
+  "triggers": [
+    "No puede entrar y no dice por qué",
+    "Pide ayuda general para acceder"
+  ],
+  "notTriggers": [
+    "Menciona contraseña incorrecta (WrongPassword)",
+    "Menciona bloqueo (AccountLocked)",
+    "Error 500 o página caída (ServerError)"
+  ],
+  "confusedWith": [
+    "WrongPassword",
+    "ServerError",
+    "InvitationPending"
+  ],
+  "utterances": {
+    "en": [
+      "I can't log in to TaskFlow.",
+      "Unable to log in to TaskFlow at the moment.",
+      "cant log into taskflow",
+      "Why am I not able to sign in to TaskFlow?",
+      "i cant lgoin to taskflw",
+      "Hello, I am having trouble logging in to TaskFlow, could you help me?",
+      "cant login lol",
+      "cant get in lol",
+      "login is broken for me",
+      "cant log in agian",
+      "why cant i login",
+      "no luck logging in today",
+      "I am unable to sign in to my account.",
+      "I am not able to access my account at all.",
+      "Could you help me? I am unable to log into my account.",
+      "unable to sign in",
+      "i am unabel to sing in to my acount",
+      "Why can I not sign in to my account?",
+      "login not working",
+      "login doesnt work",
+      "the sign in page is not working for me",
+      "logn not woking",
+      "why is login not working?",
+      "login still not working!!",
+      "How do I get into my account?",
+      "How can I access my account?",
+      "what do i do to get into my account",
+      "How do I get in my acount",
+      "I need help entering my account.",
+      "how to get in",
+      "i cant acces my acount",
+      "cant get into my accont",
+      "I cannot access my account.",
+      "acces to my acount isnt working",
+      "i cant get in to my profile",
+      "Can you help me access my account?",
+      "sign in keeps failing for me",
+      "Signing in fails every time I try.",
+      "login keeps failing",
+      "sign in keps faling",
+      "every time i try to log in it fails",
+      "Why does sign in keep failing?",
+      "I've tried everything and still can't get in!!",
+      "i have tried everything and still cant get in",
+      "This is ridiculous, I still cannot log in!",
+      "tried everythign cant get in!!!",
+      "Nothing works, I simply can't get into my account.",
+      "still cant log in after trying all day"
+    ],
+    "es": [
+      "No puedo iniciar sesión en TaskFlow.",
+      "No es posible iniciar sesión en TaskFlow.",
+      "no puedo iniciar sesion hoy en taskflow",
+      "¿Por qué no puedo iniciar sesión en TaskFlow?",
+      "no puedo inciar secion en taskflow",
+      "Hola, tengo dificultades para iniciar sesión en TaskFlow, ¿me pueden ayudar?",
+      "no puedo entrar",
+      "no puedo entrar a taskflow",
+      "no logro entrar",
+      "no pued entrar",
+      "no puedo entrar hoy",
+      "¿por qué no puedo entrar?",
+      "No logro ingresar a mi cuenta.",
+      "No consigo ingresar a mi cuenta.",
+      "Me resulta imposible ingresar a mi cuenta.",
+      "no logro ingrsar a mi cuenta",
+      "no puedo ingresar",
+      "¿Por qué no logro ingresar a mi cuenta?",
+      "el login no funciona",
+      "el inicio de sesion no funciona",
+      "login no funciona",
+      "el logn no funsiona",
+      "¿Por qué no funciona el login?",
+      "el login sigue sin funcionar!!",
+      "¿Cómo entro a mi cuenta?",
+      "¿Cómo puedo acceder a mi cuenta?",
+      "como puedo entrar a mi cuenta",
+      "como ingreso a mi cuneta",
+      "Necesito ayuda para entrar a mi cuenta.",
+      "¿qué hago para entrar?",
+      "no puedo aceder a mi cuenta",
+      "no puedo acceder a mi cuenta",
+      "no pudeo acceder a mi cuenta",
+      "No tengo acceso a mi cuenta.",
+      "no me funciona el acceso a mi cuenta",
+      "¿Me ayudan a acceder a mi cuenta?",
+      "no me deja iniciar sesion",
+      "no me deja entrar",
+      "No me permite iniciar sesión.",
+      "no me dej iniciar seson",
+      "no me deja ingresar a la cuenta",
+      "¿Por qué no me deja iniciar sesión?",
+      "¡Ya probé de todo y sigo sin poder entrar!",
+      "¡Intenté de todo y aún no puedo entrar!",
+      "ya no se que mas hacer, sigo sin poder entrar",
+      "ya probe todo y sigo sin poder ingrsar",
+      "¡Esto es imposible, no puedo ingresar a mi cuenta!",
+      "Llevo horas intentándolo y no logro entrar."
+    ]
+  },
+  "entryStep": "login.start",
+  "steps": {
+    "login.start": {
+      "text": {
+        "en": [
+          "Let's sort it out. What do you see when you try to sign in?",
+          "Let's fix this together. What happens when you try to sign in?",
+          "Okay, let's look into it. What do you see on screen when you try to sign in?",
+          "I'll help you get in. What happens when you try to sign in?",
+          "Let's figure it out. What message or screen do you get when you try to sign in?"
+        ],
+        "es": [
+          "Vamos a resolverlo. ¿Qué ves cuando intentas iniciar sesión?",
+          "Resolvámoslo juntos. ¿Qué pasa cuando intentas iniciar sesión?",
+          "De acuerdo, veamos. ¿Qué aparece en la pantalla cuando intentas iniciar sesión?",
+          "Te ayudo a entrar. ¿Qué sucede cuando intentas iniciar sesión?",
+          "Averigüemos qué pasa. ¿Qué mensaje o pantalla ves al intentar iniciar sesión?"
+        ]
+      },
+      "quickReplies": [
+        {
+          "id": "wrong",
+          "label": {
+            "en": "Wrong password",
+            "es": "Contraseña incorrecta"
+          },
+          "next": "wrong.start"
+        },
+        {
+          "id": "locked",
+          "label": {
+            "en": "Account locked",
+            "es": "Cuenta bloqueada"
+          },
+          "next": "locked.start"
+        },
+        {
+          "id": "confirm",
+          "label": {
+            "en": "Confirm my email",
+            "es": "Confirmar mi correo"
+          },
+          "next": "confirm.start"
+        },
+        {
+          "id": "invited",
+          "label": {
+            "en": "I was invited",
+            "es": "Me invitaron"
+          },
+          "next": "invite.start"
+        },
+        {
+          "id": "error",
+          "label": {
+            "en": "An error or a blank page",
+            "es": "Un error o una pantalla en blanco"
+          },
+          "next": "error.start"
+        },
+        {
+          "id": "other",
+          "label": {
+            "en": "Something else",
+            "es": "Otra cosa"
+          },
+          "next": "other"
+        }
+      ]
+    }
+  }
+}

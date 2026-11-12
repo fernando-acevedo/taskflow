@@ -147,7 +147,7 @@ public static partial class KnowledgeBaseValidator
         List<string> problems)
     {
         var where = $"{file}, step '{id}'";
-        CheckLocalized(step.Text, $"{where}, text", kb, problems);
+        CheckVariants(step.Text, $"{where}, text", kb, problems);
 
         if (!step.End && step.QuickReplies.Count == 0 && !step.ExpectsText)
         {
@@ -174,6 +174,11 @@ public static partial class KnowledgeBaseValidator
                 problems.Add($"{rwhere}: needs next or url.");
             }
 
+            foreach (var name in Placeholders(reply.Url ?? "").Where(n => !kb.Settings.Links.ContainsKey(n)))
+            {
+                problems.Add($"{rwhere}: url placeholder {{{name}}} is not in settings.links.");
+            }
+
             if (!string.IsNullOrWhiteSpace(reply.Next) && !steps.ContainsKey(reply.Next))
             {
                 problems.Add($"{rwhere}: next '{reply.Next}' does not exist.");
@@ -186,10 +191,19 @@ public static partial class KnowledgeBaseValidator
         }
     }
 
-    // Every locale present and non-empty, no extra locales, same placeholders everywhere, placeholders known,
-    // and no voseo in Spanish.
+    // A single-string value (quick reply label) is checked as a list of one variant.
     private static void CheckLocalized(
         IReadOnlyDictionary<string, string> values,
+        string where,
+        KnowledgeBaseContent kb,
+        List<string> problems) =>
+        CheckVariants(values.ToDictionary(kv => kv.Key, kv => (IReadOnlyList<string>)[kv.Value]), where, kb, problems);
+
+    // Every locale present with at least one variant, no extra locales, the same number of variants per locale,
+    // no empty or repeated variants, the same known placeholders in every variant of every locale, and no voseo
+    // in any Spanish variant.
+    private static void CheckVariants(
+        IReadOnlyDictionary<string, IReadOnlyList<string>> values,
         string where,
         KnowledgeBaseContent kb,
         List<string> problems)
@@ -197,7 +211,7 @@ public static partial class KnowledgeBaseValidator
         var locales = kb.Settings.Locales;
         foreach (var locale in locales)
         {
-            if (!values.TryGetValue(locale, out var v) || string.IsNullOrWhiteSpace(v))
+            if (!values.TryGetValue(locale, out var list) || list.Count == 0 || list.All(string.IsNullOrWhiteSpace))
             {
                 problems.Add($"{where}: missing or empty '{locale}' value.");
             }
@@ -208,30 +222,63 @@ public static partial class KnowledgeBaseValidator
             problems.Add($"{where}: locale '{locale}' is not in settings.locales.");
         }
 
-        var present = values.Where(kv => locales.Contains(kv.Key) && !string.IsNullOrWhiteSpace(kv.Value)).ToList();
-        var sets = present.ToDictionary(kv => kv.Key, kv => Placeholders(kv.Value));
-        foreach (var (locale, set) in sets)
+        var present = values
+            .Where(kv => locales.Contains(kv.Key) && kv.Value.Count > 0 && !kv.Value.All(string.IsNullOrWhiteSpace))
+            .ToList();
+
+        if (present.Select(kv => kv.Value.Count).Distinct().Count() > 1)
         {
-            foreach (var name in set.Where(n => !kb.Settings.Links.ContainsKey(n)))
-            {
-                problems.Add($"{where} ({locale}): placeholder {{{name}}} is not in settings.links.");
-            }
+            problems.Add($"{where}: locales have a different number of variants ({string.Join(", ", present.Select(kv => $"{kv.Key}: {kv.Value.Count}"))}).");
         }
 
-        if (sets.Count > 1)
+        HashSet<string>? reference = null;
+        string referenceName = "";
+        foreach (var (locale, list) in present)
         {
-            var first = sets.First();
-            foreach (var other in sets.Skip(1).Where(o => !o.Value.SetEquals(first.Value)))
+            var seen = new Dictionary<string, int>(StringComparer.Ordinal);
+            for (var i = 0; i < list.Count; i++)
             {
-                problems.Add($"{where}: placeholders differ between '{first.Key}' ({Format(first.Value)}) and '{other.Key}' ({Format(other.Value)}).");
-            }
-        }
+                var variant = $"'{locale}' variant {i + 1}";
+                var value = list[i];
+                if (string.IsNullOrWhiteSpace(value))
+                {
+                    problems.Add($"{where}: {variant} is empty.");
+                    continue;
+                }
 
-        if (values.TryGetValue("es", out var es) && !string.IsNullOrWhiteSpace(es))
-        {
-            foreach (var word in BlockedWords(es))
-            {
-                problems.Add($"{where} (es): '{word}' is voseo/regionalism; use neutral Spanish.");
+                var key = value.Trim().ToLowerInvariant();
+                if (seen.TryGetValue(key, out var firstIndex))
+                {
+                    problems.Add($"{where}: {variant} repeats variant {firstIndex + 1}.");
+                }
+                else
+                {
+                    seen[key] = i;
+                }
+
+                var set = Placeholders(value);
+                foreach (var name in set.Where(n => !kb.Settings.Links.ContainsKey(n)))
+                {
+                    problems.Add($"{where} ({locale}): placeholder {{{name}}} is not in settings.links.");
+                }
+
+                if (reference is null)
+                {
+                    reference = set;
+                    referenceName = variant;
+                }
+                else if (!set.SetEquals(reference))
+                {
+                    problems.Add($"{where}: placeholders differ between {referenceName} ({Format(reference)}) and {variant} ({Format(set)}).");
+                }
+
+                if (locale == "es")
+                {
+                    foreach (var word in BlockedWords(value))
+                    {
+                        problems.Add($"{where} (es, variant {i + 1}): '{word}' is voseo/regionalism; use neutral Spanish.");
+                    }
+                }
             }
         }
     }

@@ -1,0 +1,203 @@
+{
+  "steps": {
+    "start": {
+      "text": {
+        "en": [
+          "Hi! I'm the TaskFlow assistant. I can help you with signing in and your password. What's going on?",
+          "Hello! I'm TaskFlow's assistant. I can help with signing in and with your password. What do you need?",
+          "Hi there! This is the TaskFlow assistant. If you're having trouble signing in or with your password, I can help. What's happening?",
+          "Welcome! I'm the TaskFlow assistant, here to help with signing in and passwords. How can I help you today?",
+          "Hi! TaskFlow assistant here. I can help you sign in or sort out your password. Tell me what's going on."
+        ],
+        "es": [
+          "¡Hola! Soy el asistente de TaskFlow. Puedo ayudarte con el inicio de sesión y tu contraseña. ¿Qué sucede?",
+          "¡Hola! Soy el asistente de TaskFlow. Te ayudo con el inicio de sesión y con tu contraseña. ¿Qué necesitas?",
+          "¡Buenas! Aquí el asistente de TaskFlow. Si tienes problemas para iniciar sesión o con tu contraseña, puedo ayudarte. ¿Qué está pasando?",
+          "¡Te doy la bienvenida! Soy el asistente de TaskFlow y estoy para ayudarte con el inicio de sesión y las contraseñas. ¿En qué te ayudo hoy?",
+          "¡Hola! Te habla el asistente de TaskFlow. Puedo ayudarte a iniciar sesión o a resolver lo de tu contraseña. Cuéntame qué sucede."
+        ]
+      },
+      "quickReplies": [
+        {
+          "id": "cant_login",
+          "label": {
+            "en": "I can't sign in",
+            "es": "No puedo iniciar sesión"
+          },
+          "next": "login.start"
+        },
+        {
+          "id": "forgot",
+          "label": {
+            "en": "I forgot my password",
+            "es": "Olvidé mi contraseña"
+          },
+          "next": "forgot.start"
+        },
+        {
+          "id": "no_email",
+          "label": {
+            "en": "An email didn't arrive",
+            "es": "No me llegó un correo"
+          },
+          "next": "email.start"
+        },
+        {
+          "id": "other",
+          "label": {
+            "en": "Something else",
+            "es": "Otra cosa"
+          },
+          "next": "other"
+        }
+      ]
+    },
+    "other": {
+      "text": {
+        "en": [
+          "Tell me in your own words what's happening and I'll try to help.",
+          "Describe what's happening in your own words and I'll do my best to help.",
+          "Go ahead and tell me what's going on, however you like, and I'll see how I can help.",
+          "Write what's happening in your own words and I'll try to point you in the right direction.",
+          "Tell me a bit more about the problem in your own words and I'll try to help you."
+        ],
+        "es": [
+          "Cuéntame con tus palabras qué sucede y trataré de ayudarte.",
+          "Descríbeme con tus palabras qué está pasando y haré lo posible por ayudarte.",
+          "Escríbeme qué sucede, como te resulte más fácil, y veré cómo ayudarte.",
+          "Cuéntame qué está pasando, con tus propias palabras, y trataré de orientarte.",
+          "Explícame un poco más el problema con tus palabras y trataré de ayudarte."
+        ]
+      },
+      "expectsText": true
+    },
+    "close": {
+      "text": {
+        "en": [
+          "Did this solve your problem?",
+          "Did that fix it?",
+          "Is the problem solved now?",
+          "Were you able to solve it?",
+          "Did that help you sort it out?"
+        ],
+        "es": [
+          "¿Esto resolvió tu problema?",
+          "¿Con eso se solucionó?",
+          "¿Ya quedó resuelto el problema?",
+          "¿Pudiste resolverlo?",
+          "¿Te sirvió para solucionarlo?"
+        ]
+      },
+      "quickReplies": [
+        {
+          "id": "yes",
+          "label": {
+            "en": "Yes",
+            "es": "Sí"
+          },
+          "next": "end"
+        },
+        {
+          "id": "no",
+          "label": {
+            "en": "No",
+            "es": "No"
+          },
+          "next": "escalate"
+        }
+      ]
+    },
+    "end": {
+      "text": {
+        "en": [
+          "Great! If you need anything else, write to me here.",
+          "Glad it worked! I'm here if you need anything else.",
+          "Perfect! If something else comes up, just write to me here.",
+          "Excellent! Come back here whenever you need help.",
+          "Good to hear! If you need anything more, I'm right here."
+        ],
+        "es": [
+          "¡Perfecto! Si necesitas algo más, escríbeme aquí.",
+          "¡Qué bueno que funcionó! Aquí estoy si necesitas algo más.",
+          "¡Excelente! Si surge otra cosa, escríbeme aquí.",
+          "¡Genial! Vuelve aquí cuando necesites ayuda.",
+          "¡Me alegra! Si necesitas algo más, aquí estoy."
+        ]
+      },
+      "end": true,
+      "outcome": "Completed"
+    },
+    "fallback": {
+      "text": {
+        "en": [
+          "Sorry, I didn't understand. Could you say it another way? You can also choose an option or check the help page.",
+          "I'm not sure I understood. Could you rephrase it? Or pick one of the options, or check the help page.",
+          "Sorry, I didn't catch that. Try saying it differently, choose an option below or visit the help page.",
+          "Hmm, I didn't quite get that. Could you explain it in other words? You can also use the options or the help page.",
+          "I didn't understand that, sorry. Can you write it another way? If you prefer, choose an option or open the help page."
+        ],
+        "es": [
+          "Lo siento, no entendí. ¿Puedes decirlo de otra forma? También puedes elegir una opción o consultar la página de ayuda.",
+          "No sé si entendí bien. ¿Puedes expresarlo de otra manera? O elige una de las opciones, o consulta la página de ayuda.",
+          "Perdona, no lo entendí. Intenta decirlo de otra forma, elige una opción o visita la página de ayuda.",
+          "Mmm, no logré entenderlo. ¿Puedes explicarlo con otras palabras? También puedes usar las opciones o la página de ayuda.",
+          "Disculpa, no entendí eso. ¿Puedes escribirlo de otra manera? Si prefieres, elige una opción o abre la página de ayuda."
+        ]
+      },
+      "quickReplies": [
+        {
+          "id": "cant_login",
+          "label": {
+            "en": "I can't sign in",
+            "es": "No puedo iniciar sesión"
+          },
+          "next": "login.start"
+        },
+        {
+          "id": "forgot",
+          "label": {
+            "en": "I forgot my password",
+            "es": "Olvidé mi contraseña"
+          },
+          "next": "forgot.start"
+        },
+        {
+          "id": "no_email",
+          "label": {
+            "en": "An email didn't arrive",
+            "es": "No me llegó un correo"
+          },
+          "next": "email.start"
+        },
+        {
+          "id": "help",
+          "label": {
+            "en": "Help page",
+            "es": "Página de ayuda"
+          },
+          "url": "{help}"
+        }
+      ]
+    },
+    "escalate": {
+      "text": {
+        "en": [
+          "I'll put you in touch with our team. Write to support at {support} and include the email you use in TaskFlow and what you see on the screen. Never share your password.",
+          "Our team can take it from here. Email {support} with the address you use in TaskFlow and a description of what you see on screen. Please never send your password.",
+          "Let's get a person to help you. Write to {support} and tell them the email you sign in to TaskFlow with and what appears on the screen. Don't include your password.",
+          "I'll hand this over to our support team. Send a message to {support} with your TaskFlow email and what the screen shows. Remember: never share your password.",
+          "This one is best handled by our team. Contact {support} and mention the email you use in TaskFlow and what you're seeing. Never share your password with anyone."
+        ],
+        "es": [
+          "Te pondré en contacto con nuestro equipo. Escribe a soporte a {support} e incluye el correo con el que usas TaskFlow y lo que ves en la pantalla. Nunca compartas tu contraseña.",
+          "Nuestro equipo puede seguir desde aquí. Escribe a {support} con el correo que usas en TaskFlow y una descripción de lo que ves en la pantalla. Por favor, nunca envíes tu contraseña.",
+          "Mejor que te ayude una persona. Escribe a {support} y cuéntales con qué correo entras a TaskFlow y qué aparece en la pantalla. No incluyas tu contraseña.",
+          "Voy a pasar esto a nuestro equipo de soporte. Envía un mensaje a {support} con tu correo de TaskFlow y lo que muestra la pantalla. Recuerda: nunca compartas tu contraseña.",
+          "Esto lo resuelve mejor nuestro equipo. Contacta a {support} e indica el correo que usas en TaskFlow y lo que estás viendo. Nunca compartas tu contraseña con nadie."
+        ]
+      },
+      "end": true,
+      "outcome": "Escalated"
+    }
+  }
+}

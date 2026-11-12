@@ -18,10 +18,6 @@
     <PackageReference Include="Shouldly" />
   </ItemGroup>
 
-  <ItemGroup>
-    <!-- DRAFT chatbot KB fixture (not the real KB). -->
-    <Content Include="Chatbot/Fixtures/**/*.json" CopyToOutputDirectory="PreserveNewest" />
-  </ItemGroup>
 
   <ItemGroup>
     <Using Include="Xunit" />

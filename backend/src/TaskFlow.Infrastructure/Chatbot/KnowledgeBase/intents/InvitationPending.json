@@ -1,0 +1,236 @@
+{
+  "intent": "InvitationPending",
+  "description": "Un administrador lo invitó y todavía no creó su contraseña.",
+  "triggers": [
+    "Dice que lo invitaron o agregaron",
+    "Nunca creó una contraseña"
+  ],
+  "notTriggers": [
+    "Se registró solo y falta confirmar (EmailNotConfirmed)"
+  ],
+  "confusedWith": [
+    "EmailNotReceived",
+    "LoginIssue"
+  ],
+  "utterances": {
+    "en": [
+      "I was invited but I don't have a password.",
+      "I received an invitation to TaskFlow, but I have not been given a password.",
+      "got invited but theres no password for me",
+      "invited, no password",
+      "i was invted but i dont have any pasword",
+      "Where do I get a password if someone invited me?",
+      "got an invite, now what",
+      "ok so i got an invite, what do i do next",
+      "got invited, next step?",
+      "I received an invitation to the platform, how do I get started?",
+      "recieved an invitaton, wat now",
+      "I have received an invitation and would like to know the next step.",
+      "My administrator added me. How do I sign in?",
+      "The account administrator created access for me. How should I log in for the first time?",
+      "my admin added me to the system, how do i get in",
+      "admin added me, first login?",
+      "my admin addded me how do i sing in",
+      "Can you tell me how to log in for the first time? My admin set up my account.",
+      "invitation help",
+      "help with my invite",
+      "need help with the invite i got",
+      "I would like assistance with an invitation I received.",
+      "invitaton problem",
+      "How does the invitation work?",
+      "What is my password? I was just invited.",
+      "I was invited today, which password do I use?",
+      "I was recently invited to the platform. Which password should I enter?",
+      "just got invited, whats the password",
+      "just invted, whats my pasword suposed to be",
+      "invited, password?",
+      "invted to taskflow cant login",
+      "was invted to taskflow but cant log in",
+      "they invited me to taskflow and i cant log in",
+      "I was invited to TaskFlow but I am unable to log in.",
+      "invited, cant login",
+      "Invited to TaskFlow and I still cant get in, nothing works!",
+      "never set a password tbh",
+      "i never made a password for this",
+      "no password set, my admin added me",
+      "Do I have to create a password first? I never set one.",
+      "never created a pasword, was added by my boss",
+      "I have never created a password for this account.",
+      "My team added me days ago and I still can't get in!",
+      "My manager added me last week and I still cant log in!!",
+      "I was added by my team several days ago and still have no access.",
+      "admin added me ages ago and still no way in",
+      "my admin invitted me days ago and i stil cant enter",
+      "added days ago, still cant get in"
+    ],
+    "es": [
+      "Me invitaron pero no tengo contraseña.",
+      "Recibí una invitación a TaskFlow, pero no me han dado ninguna contraseña.",
+      "me invitaron y no tengo clave",
+      "invitado, sin contraseña",
+      "me imbitaron pero no tengo contrasena",
+      "¿De dónde saco la contraseña si me invitaron?",
+      "me llegó una invitación, ¿y ahora?",
+      "He recibido una invitación y quisiera saber cuál es el siguiente paso.",
+      "me mandaron una invitacion, que hago",
+      "recibí invitación, ¿siguiente paso?",
+      "me yego una invitasion y ahora",
+      "Me invitaron a la plataforma, ¿cómo empiezo?",
+      "Mi administrador me agregó. ¿Cómo inicio sesión?",
+      "El administrador creó mi acceso. ¿Cómo debo ingresar la primera vez?",
+      "mi admin me agregó al sistema, como entro",
+      "admin me agregó, ¿primer acceso?",
+      "mi administrador me agrego y no se como iniciar sesion",
+      "¿Cómo entro por primera vez? Mi jefe me dio de alta.",
+      "ayuda con la invitación",
+      "ayuda con mi invitacion",
+      "Necesito ayuda con una invitación que recibí.",
+      "necesito ayuda con la invitación que me mandaron",
+      "problema con la imbitacion",
+      "¿Cómo funciona la invitación?",
+      "¿Cuál es mi contraseña? Me acaban de invitar.",
+      "Me invitaron hoy, ¿qué contraseña uso?",
+      "Fui invitado recientemente a la plataforma. ¿Qué contraseña debo ingresar?",
+      "acaban de invitarme, cual es la clave",
+      "me acaban de imbitar, cual es mi contrasena",
+      "invitado, ¿contraseña?",
+      "me invitaron a taskflow y no puedo entar",
+      "me invitaron a taskflow pero no puedo entrar, no se q contrasena",
+      "me invitaron a taskflow y no consigo entrar",
+      "Me invitaron a TaskFlow y no logro iniciar sesión.",
+      "invitado y sin acceso",
+      "¡Me invitaron a TaskFlow y todavía no puedo entrar!",
+      "nunca creé una contraseña",
+      "no he puesto ninguna contraseña todavía, me agregaron",
+      "sin contraseña creada",
+      "Nunca he establecido una contraseña para esta cuenta.",
+      "nunca cree una contrasena, me dieron de alta",
+      "¿Tengo que crear la contraseña primero? Nunca puse una.",
+      "¡Mi equipo me agregó hace días y sigo sin poder entrar!",
+      "¡Mi jefe me dio de alta la semana pasada y todavía no puedo entrar!",
+      "Mi equipo me agregó hace varios días y aún no tengo acceso.",
+      "me agregaron al equipo hace dias y sigo sin poder entrar",
+      "mi admin me imbito hace dias y sigo sin entar",
+      "agregado hace días, sigo sin acceso"
+    ]
+  },
+  "entryStep": "invite.start",
+  "steps": {
+    "invite.start": {
+      "text": {
+        "en": [
+          "When an administrator invites you, you get an email with a link to create your password. You can't sign in until you open it.",
+          "When an administrator invites you, you receive an email with a link to set your password. You need to open it before you can sign in.",
+          "Invited accounts don't have a password yet: the invitation email includes a link to create it. Until you open it, you can't sign in.",
+          "An administrator's invitation comes with an email containing a link to create your password. Signing in only works after you open that link.",
+          "If you were invited, look for the invitation email: it has a link to create your password. You'll be able to sign in once you've opened it."
+        ],
+        "es": [
+          "Cuando un administrador te invita, recibes un correo con un enlace para crear tu contraseña. No puedes iniciar sesión hasta abrirlo.",
+          "Cuando un administrador te invita, te llega un correo con un enlace para definir tu contraseña. Tienes que abrirlo antes de poder iniciar sesión.",
+          "Las cuentas invitadas todavía no tienen contraseña: el correo de invitación trae un enlace para crearla. Hasta que lo abras, no puedes iniciar sesión.",
+          "La invitación de un administrador llega con un correo que contiene un enlace para crear tu contraseña. Solo podrás iniciar sesión después de abrir ese enlace.",
+          "Si te invitaron, busca el correo de invitación: tiene un enlace para crear tu contraseña. Podrás iniciar sesión cuando lo hayas abierto."
+        ]
+      },
+      "quickReplies": [
+        {
+          "id": "have",
+          "label": {
+            "en": "I have the email",
+            "es": "Tengo el correo"
+          },
+          "next": "invite.open"
+        },
+        {
+          "id": "missing",
+          "label": {
+            "en": "It didn't arrive",
+            "es": "No me llegó"
+          },
+          "next": "invite.resend"
+        },
+        {
+          "id": "expired",
+          "label": {
+            "en": "The link expired",
+            "es": "El enlace expiró"
+          },
+          "next": "invite.expired"
+        }
+      ]
+    },
+    "invite.open": {
+      "text": {
+        "en": [
+          "Open the link, create your password and then sign in with your email.",
+          "Click the link, set your password, then sign in using your email.",
+          "Follow the link to create your password; after that, sign in with your email.",
+          "Open the invitation link, choose a password and sign in with your email.",
+          "Just open the link, create a password and sign in with the email you were invited with."
+        ],
+        "es": [
+          "Abre el enlace, crea tu contraseña y luego inicia sesión con tu correo.",
+          "Haz clic en el enlace, define tu contraseña y después inicia sesión con tu correo.",
+          "Sigue el enlace para crear tu contraseña; luego inicia sesión con tu correo.",
+          "Abre el enlace de la invitación, elige una contraseña e inicia sesión con tu correo.",
+          "Solo abre el enlace, crea una contraseña e inicia sesión con el correo con el que te invitaron."
+        ]
+      },
+      "quickReplies": [
+        {
+          "id": "worked",
+          "label": {
+            "en": "Yes, I'm in",
+            "es": "Sí, ya entré"
+          },
+          "next": "end"
+        },
+        {
+          "id": "link",
+          "label": {
+            "en": "The link doesn't work",
+            "es": "El enlace no funciona"
+          },
+          "next": "invite.expired"
+        }
+      ]
+    },
+    "invite.resend": {
+      "text": {
+        "en": [
+          "Check your spam folder first. If it's not there, ask the administrator who invited you to resend the invitation from the user list.",
+          "First, take a look in your spam folder. If it isn't there, ask the administrator who invited you to resend the invitation from the user list.",
+          "It may have landed in spam, so check there first. Otherwise, the administrator who invited you can resend it from the user list.",
+          "Check spam first. If you still can't find it, ask whoever invited you (an administrator) to resend the invitation from the user list.",
+          "Look in your spam folder. If the invitation isn't there either, the administrator who invited you can send it again from the user list."
+        ],
+        "es": [
+          "Primero revisa la carpeta de spam. Si no está, pide al administrador que te invitó que reenvíe la invitación desde la lista de usuarios.",
+          "Primero echa un vistazo a la carpeta de spam. Si no está ahí, pide al administrador que te invitó que reenvíe la invitación desde la lista de usuarios.",
+          "Puede haber caído en spam, así que revisa ahí primero. Si no, el administrador que te invitó puede reenviarla desde la lista de usuarios.",
+          "Revisa spam primero. Si aún no la encuentras, pide a quien te invitó (un administrador) que reenvíe la invitación desde la lista de usuarios.",
+          "Busca en la carpeta de spam. Si la invitación tampoco está ahí, el administrador que te invitó puede enviarla de nuevo desde la lista de usuarios."
+        ]
+      },
+      "quickReplies": [
+        {
+          "id": "done",
+          "label": {
+            "en": "Okay",
+            "es": "De acuerdo"
+          },
+          "next": "close"
+        },
+        {
+          "id": "who",
+          "label": {
+            "en": "I don't know who invited me",
+            "es": "No sé quién me invitó"
+          },
+          "next": "escalate"
+        }
+      ]
+    }
+  }
+}

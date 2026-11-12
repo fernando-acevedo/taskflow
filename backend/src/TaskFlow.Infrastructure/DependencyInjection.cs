@@ -12,6 +12,7 @@ using TaskFlow.Application.Demo;
 using TaskFlow.Application.Notifications;
 using TaskFlow.Application.Users;
 using TaskFlow.Infrastructure.ApiKeys;
+using TaskFlow.Infrastructure.Chatbot;
 using TaskFlow.Infrastructure.Demo;
 using TaskFlow.Infrastructure.Email;
 using TaskFlow.Infrastructure.Email.Outbox;
@@ -122,6 +123,10 @@ public static class DependencyInjection
         services.AddScoped<IEmailOutbox, EmailOutbox>();
         services.AddSingleton<OutboxDispatcher>();
         services.AddHostedService<OutboxProcessor>();
+
+        // Chatbot placeholders ({support}, {help}); required outside Development. The KB itself is registered in T-142.
+        services.AddOptions<ChatbotOptions>().Bind(configuration.GetSection(ChatbotOptions.SectionName)).ValidateOnStart();
+        services.AddSingleton<IValidateOptions<ChatbotOptions>, ChatbotOptionsValidator>();
 
         services.AddScoped<IInvitationSender, InvitationSender>();
         services.AddScoped<INotificationEmailSender, NotificationEmailSender>();

@@ -1,5 +1,5 @@
 {
-  "version": "0.0.0-draft",
+  "version": "1.0.0",
   "locales": [
     "en",
     "es"
@@ -14,8 +14,7 @@
   "escalateStep": "escalate",
   "outOfScopeIntent": "OutOfScope",
   "links": {
-    "support": "support@taskflow.example",
-    "help": "/help",
-    "forgotPassword": "/forgot-password"
+    "support": "",
+    "help": ""
   }
 }

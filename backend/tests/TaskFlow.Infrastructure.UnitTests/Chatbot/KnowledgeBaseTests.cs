@@ -3,15 +3,28 @@ using TaskFlow.Infrastructure.Chatbot;
 
 namespace TaskFlow.Infrastructure.UnitTests.Chatbot;
 
-/// <summary>Loader and validator, against the DRAFT fixture (not the real KB) and small broken variants of it.</summary>
+/// <summary>Loader and validator, against the frozen KB (embedded resources) and small broken variants of it.</summary>
 public class KnowledgeBaseTests
 {
-    private static readonly string FixtureDir = Path.Combine(AppContext.BaseDirectory, "Chatbot", "Fixtures", "kb-draft");
+    private static KnowledgeBase Load() => JsonKnowledgeBaseLoader.LoadFromAssembly(typeof(JsonKnowledgeBaseLoader).Assembly);
 
-    // The fixture only has 5 utterances per locale.
-    private static readonly KnowledgeBaseValidationOptions Relaxed = new(MinUtterancesPerLocale: 5);
+    // Writes the embedded KB files to a folder so a test can break one of them.
+    private static string ExportKb()
+    {
+        var dir = Path.Combine(Path.GetTempPath(), "kb-" + Guid.NewGuid().ToString("N"));
+        var assembly = typeof(JsonKnowledgeBaseLoader).Assembly;
+        foreach (var name in assembly.GetManifestResourceNames()
+                     .Where(n => n.StartsWith(JsonKnowledgeBaseLoader.ResourcePrefix, StringComparison.Ordinal)))
+        {
+            var target = Path.Combine(dir, name[JsonKnowledgeBaseLoader.ResourcePrefix.Length..]);
+            Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+            using var stream = assembly.GetManifestResourceStream(name)!;
+            using var file = File.Create(target);
+            stream.CopyTo(file);
+        }
 
-    private static KnowledgeBase Load() => JsonKnowledgeBaseLoader.LoadFromDirectory(FixtureDir, Relaxed);
+        return dir;
+    }
 
     // Rebuilds the unvalidated content of the fixture so tests can break one thing at a time.
     private static KnowledgeBaseContent Content()
@@ -28,7 +41,7 @@ public class KnowledgeBaseTests
     }
 
     private static IReadOnlyList<string> Validate(KnowledgeBaseContent content) =>
-        KnowledgeBaseValidator.Validate(content, Relaxed);
+        KnowledgeBaseValidator.Validate(content);
 
     private static KnowledgeBaseContent WithIntent(KnowledgeBaseContent c, string name, Func<IntentDefinition, IntentDefinition> change) =>
         c with { Intents = c.Intents.Select(i => i.Intent == name ? change(i) : i).ToList() };
@@ -43,32 +56,60 @@ public class KnowledgeBaseTests
             }).ToList(),
         };
 
-    private static Dictionary<string, string> Text(string en, string es) => new() { ["en"] = en, ["es"] = es };
+    private static Dictionary<string, IReadOnlyList<string>> Text(string en, string es) =>
+        new() { ["en"] = [en], ["es"] = [es] };
+
+    private static Dictionary<string, IReadOnlyList<string>> Variants(string[] en, string[] es) =>
+        new() { ["en"] = en, ["es"] = es };
 
     [Fact]
-    public void DraftFixtureLoadsAndValidates()
+    public void FrozenKbLoadsAndValidates()
     {
         var kb = Load();
 
-        kb.Settings.Version.ShouldBe("0.0.0-draft");
-        kb.Intents.Count.ShouldBe(8);
-        kb.Steps.ShouldContainKey("start");
-        kb.GetText("escalate", "es").ShouldBe("Te comunicamos con una persona: escribe a soporte en support@taskflow.example.");
-        kb.GetText("reset.start", "en").ShouldContain("Forgot my password");
+        kb.Settings.Version.ShouldBe("1.0.0");
+        kb.Settings.ConfidenceThreshold.ShouldBe(0.65);
+        kb.Settings.MinMargin.ShouldBe(0.1);
+        kb.Settings.MaxConsecutiveFallbacks.ShouldBe(2);
+        kb.Settings.SessionIdleMinutes.ShouldBe(30);
+        kb.Settings.Links.Keys.ShouldBe(["support", "help"], ignoreOrder: true);
+        kb.Intents.Count.ShouldBe(13);
+        kb.Intents.ShouldAllBe(i => i.Utterances["en"].Count == 48 && i.Utterances["es"].Count == 48);
+        kb.Steps.Count.ShouldBe(29);
+        kb.Steps.Values.ShouldAllBe(s => s.Text["en"].Count == 5 && s.Text["es"].Count == 5);
+        kb.Intents.Single(i => i.Intent == "Greeting").EntryStep.ShouldBe("start");
+        kb.Intents.Single(i => i.Intent == "HumanAgent").EntryStep.ShouldBe("escalate");
         Validate(Content()).ShouldBeEmpty();
     }
 
     [Fact]
-    public void FixtureDoesNotSatisfyTheRealMinimumOfUtterances()
+    public void GetTextsReturnsEveryVariantAndLeavesUnresolvedPlaceholdersVisible()
     {
-        Should.Throw<KnowledgeBaseException>(() => JsonKnowledgeBaseLoader.LoadFromDirectory(FixtureDir))
-            .Problems.ShouldContain(p => p.Contains("at least 30 required", StringComparison.Ordinal));
+        var kb = Load();
+
+        var texts = kb.GetTexts("escalate", "es");
+
+        texts.Count.ShouldBe(5);
+        texts.ShouldAllBe(t => t.Contains("{support}", StringComparison.Ordinal));
+        kb.GetText("escalate", "es").ShouldBe(texts[0]);
+    }
+
+    [Fact]
+    public void LinksFromSettingsReplaceThePlaceholders()
+    {
+        var content = Content();
+        var kb = new KnowledgeBase(content with
+        {
+            Settings = content.Settings with { Links = new Dictionary<string, string> { ["support"] = "ayuda@example.test", ["help"] = "https://example.test/help" } },
+        });
+
+        kb.GetTexts("escalate", "en").ShouldAllBe(t => t.Contains("ayuda@example.test", StringComparison.Ordinal));
     }
 
     [Fact]
     public void MissingEsTextIsReported()
     {
-        var c = WithStep(Content(), "close", s => s with { Text = new Dictionary<string, string> { ["en"] = "Did that solve it?" } });
+        var c = WithStep(Content(), "close", s => s with { Text = new Dictionary<string, IReadOnlyList<string>> { ["en"] = ["Did that solve it?"] } });
 
         Validate(c).ShouldContain(p => p.Contains("step 'close'") && p.Contains("missing or empty 'es'"));
     }
@@ -76,7 +117,7 @@ public class KnowledgeBaseTests
     [Fact]
     public void ExtraLocaleIsReported()
     {
-        var c = WithStep(Content(), "end", s => s with { Text = new Dictionary<string, string>(s.Text) { ["fr"] = "Parfait" } });
+        var c = WithStep(Content(), "end", s => s with { Text = new Dictionary<string, IReadOnlyList<string>>(s.Text) { ["fr"] = ["Parfait"] } });
 
         Validate(c).ShouldContain(p => p.Contains("step 'end'") && p.Contains("locale 'fr' is not in settings.locales"));
     }
@@ -128,16 +169,17 @@ public class KnowledgeBaseTests
     [Fact]
     public void DuplicateUtteranceAcrossIntentsIsReported()
     {
+        var shared = Content().Intents.Single(i => i.Intent == "ForgotPassword").Utterances["en"][0];
         var c = WithIntent(Content(), "LinkExpired", i => i with
         {
             Utterances = new Dictionary<string, IReadOnlyList<string>>
             {
-                ["en"] = [.. i.Utterances["en"], "  I FORGOT my password "],
+                ["en"] = [.. i.Utterances["en"], "  " + shared.ToUpperInvariant() + " "],
                 ["es"] = i.Utterances["es"],
             },
         });
 
-        Validate(c).ShouldContain(p => p.Contains("LinkExpired") && p.Contains("also in") && p.Contains("ResetPassword"));
+        Validate(c).ShouldContain(p => p.Contains("LinkExpired") && p.Contains("also in") && p.Contains("ForgotPassword"));
     }
 
     [Fact]
@@ -147,7 +189,7 @@ public class KnowledgeBaseTests
         {
             Utterances = new Dictionary<string, IReadOnlyList<string>>
             {
-                ["en"] = [.. i.Utterances["en"], "The link has EXPIRED"],
+                ["en"] = [.. i.Utterances["en"], i.Utterances["en"][0].ToUpperInvariant()],
                 ["es"] = i.Utterances["es"],
             },
         });
@@ -195,7 +237,7 @@ public class KnowledgeBaseTests
     {
         var c = WithStep(Content(), "close", s => s with
         {
-            QuickReplies = [s.QuickReplies[0] with { Label = Text("Yes", "Sí, volvé") }, s.QuickReplies[1]],
+            QuickReplies = [s.QuickReplies[0] with { Label = new Dictionary<string, string> { ["en"] = "Yes", ["es"] = "Sí, volvé" } }, s.QuickReplies[1]],
         });
 
         Validate(c).ShouldContain(p => p.Contains("quick reply 'yes'") && p.Contains("volvé"));
@@ -213,11 +255,102 @@ public class KnowledgeBaseTests
     }
 
     [Fact]
-    public void TooFewUtterancesAreReportedWithTheRealMinimum()
+    public void DifferentNumberOfVariantsBetweenLocalesIsReported()
     {
-        var problems = KnowledgeBaseValidator.Validate(Content());
+        var c = WithStep(Content(), "close", s => s with { Text = Variants(["One", "Two", "Three"], ["Uno", "Dos"]) });
 
-        problems.ShouldContain(p => p.Contains("LoginIssue") && p.Contains("'es' has 5 utterances, at least 30 required"));
+        Validate(c).ShouldContain(p => p.Contains("step 'close'") && p.Contains("different number of variants") && p.Contains("en: 3") && p.Contains("es: 2"));
+    }
+
+    [Fact]
+    public void EmptyVariantIsReported()
+    {
+        var c = WithStep(Content(), "close", s => s with { Text = Variants(["One", " "], ["Uno", "Dos"]) });
+
+        Validate(c).ShouldContain(p => p.Contains("step 'close'") && p.Contains("'en' variant 2 is empty"));
+    }
+
+    [Fact]
+    public void DuplicateVariantInALocaleIsReported()
+    {
+        var c = WithStep(Content(), "close", s => s with { Text = Variants(["One", "Two"], ["Uno", "  UNO "]) });
+
+        Validate(c).ShouldContain(p => p.Contains("step 'close'") && p.Contains("'es' variant 2 repeats variant 1"));
+    }
+
+    [Fact]
+    public void LocaleWithoutVariantsIsReported()
+    {
+        var c = WithStep(Content(), "close", s => s with { Text = Variants(["One"], []) });
+
+        Validate(c).ShouldContain(p => p.Contains("step 'close'") && p.Contains("missing or empty 'es'"));
+    }
+
+    [Fact]
+    public void PlaceholderMissingFromOneVariantIsReported()
+    {
+        var c = WithStep(Content(), "escalate", s => s with
+        {
+            Text = Variants(["Write to {support}.", "Write to us."], ["Escribe a {support}.", "Escribe a {support} ahora."]),
+        });
+
+        Validate(c).ShouldContain(p => p.Contains("step 'escalate'") && p.Contains("placeholders differ") && p.Contains("'en' variant 2"));
+    }
+
+    [Fact]
+    public void PlaceholderDifferingInASecondSpanishVariantIsReported()
+    {
+        var c = WithStep(Content(), "escalate", s => s with
+        {
+            Text = Variants(["Write to {support}.", "Mail {support}."], ["Escribe a {support}.", "Escribe a {help}."]),
+        });
+
+        Validate(c).ShouldContain(p => p.Contains("step 'escalate'") && p.Contains("placeholders differ") && p.Contains("'es' variant 2"));
+    }
+
+    [Fact]
+    public void VoseoInAnySpanishVariantIsReported()
+    {
+        var c = WithStep(Content(), "close", s => s with
+        {
+            Text = Variants(["One", "Two", "Three"], ["Uno", "Dos", "¿Podés escribirnos?"]),
+        });
+
+        Validate(c).ShouldContain(p => p.Contains("step 'close'") && p.Contains("variant 3") && p.Contains("Podés"));
+    }
+
+    [Fact]
+    public void UnknownPlaceholderInAQuickReplyUrlIsReported()
+    {
+        var c = WithStep(Content(), "close", s => s with
+        {
+            QuickReplies = [s.QuickReplies[0] with { Url = "{nowhere}" }, s.QuickReplies[1]],
+        });
+
+        Validate(c).ShouldContain(p => p.Contains("quick reply 'yes'") && p.Contains("url placeholder {nowhere}"));
+    }
+
+    [Fact]
+    public void SingleVariantPerLocaleIsValid()
+    {
+        var c = WithStep(Content(), "close", s => s with { Text = Text("One", "Uno") });
+
+        Validate(c).ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void TooFewUtterancesAreReported()
+    {
+        var c = WithIntent(Content(), "LoginIssue", i => i with
+        {
+            Utterances = new Dictionary<string, IReadOnlyList<string>>
+            {
+                ["en"] = i.Utterances["en"],
+                ["es"] = [.. i.Utterances["es"].Take(5)],
+            },
+        });
+
+        Validate(c).ShouldContain(p => p.Contains("LoginIssue") && p.Contains("'es' has 5 utterances, at least 30 required"));
     }
 
     [Fact]
@@ -259,20 +392,22 @@ public class KnowledgeBaseTests
     [Fact]
     public void LoaderThrowsOneExceptionListingEveryProblem()
     {
-        var dir = Path.Combine(Path.GetTempPath(), "kb-" + Guid.NewGuid().ToString("N"));
+        var dir = ExportKb();
         try
         {
-            CopyDirectory(FixtureDir, dir);
             var close = Path.Combine(dir, "common.json");
-            File.WriteAllText(close, File.ReadAllText(close)
-                .Replace("\"Did that solve it?\"", "\"\"", StringComparison.Ordinal)
-                .Replace("\"¿Eso lo resolvió?\"", "\"¿Podés confirmarlo?\"", StringComparison.Ordinal));
+            var original = File.ReadAllText(close);
+            var changed = original
+                .Replace("\"Did this solve your problem?\"", "\"\"", StringComparison.Ordinal)
+                .Replace("\"¿Esto resolvió tu problema?\"", "\"¿Podés confirmarlo?\"", StringComparison.Ordinal);
+            changed.ShouldNotBe(original);
+            File.WriteAllText(close, changed);
 
-            var ex = Should.Throw<KnowledgeBaseException>(() => JsonKnowledgeBaseLoader.LoadFromDirectory(dir, Relaxed));
+            var ex = Should.Throw<KnowledgeBaseException>(() => JsonKnowledgeBaseLoader.LoadFromDirectory(dir));
 
             ex.Problems.Count.ShouldBe(2);
             ex.Message.ShouldContain("2 problems");
-            ex.Message.ShouldContain("missing or empty 'en'");
+            ex.Message.ShouldContain("'en' variant 1 is empty");
             ex.Message.ShouldContain("Podés");
         }
         finally
@@ -304,28 +439,17 @@ public class KnowledgeBaseTests
     [Fact]
     public void LoaderAllowsCommentsAndTrailingCommas()
     {
-        var dir = Path.Combine(Path.GetTempPath(), "kb-" + Guid.NewGuid().ToString("N"));
+        var dir = ExportKb();
         try
         {
-            CopyDirectory(FixtureDir, dir);
             var path = Path.Combine(dir, "synonyms.json");
             File.WriteAllText(path, "// comment\n{ \"password\": [\"clave\",], }");
 
-            JsonKnowledgeBaseLoader.LoadFromDirectory(dir, Relaxed).Synonyms["password"].ShouldBe(["clave"]);
+            JsonKnowledgeBaseLoader.LoadFromDirectory(dir).Synonyms["password"].ShouldBe(["clave"]);
         }
         finally
         {
             Directory.Delete(dir, true);
-        }
-    }
-
-    private static void CopyDirectory(string from, string to)
-    {
-        foreach (var file in Directory.EnumerateFiles(from, "*", SearchOption.AllDirectories))
-        {
-            var target = Path.Combine(to, Path.GetRelativePath(from, file));
-            Directory.CreateDirectory(Path.GetDirectoryName(target)!);
-            File.Copy(file, target);
         }
     }
 }

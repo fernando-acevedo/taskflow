@@ -16,8 +16,11 @@ public interface IKnowledgeBase
 
     DialogStep? FindStep(string stepId);
 
-    /// <summary>The step's text in the locale, with the <c>{link}</c> placeholders replaced.</summary>
+    /// <summary>The first (reviewed original) text variant of the step in the locale, placeholders replaced.</summary>
     string GetText(string stepId, string locale);
+
+    /// <summary>All text variants of the step in the locale, placeholders replaced; the runtime picks one at random.</summary>
+    IReadOnlyList<string> GetTexts(string stepId, string locale);
 
     /// <summary>A quick reply label in the locale, with placeholders replaced.</summary>
     string GetLabel(QuickReply reply, string locale);
@@ -58,10 +61,12 @@ public sealed partial class KnowledgeBase : IKnowledgeBase
 
     public DialogStep? FindStep(string stepId) => _steps.GetValueOrDefault(stepId);
 
-    public string GetText(string stepId, string locale)
+    public string GetText(string stepId, string locale) => GetTexts(stepId, locale)[0];
+
+    public IReadOnlyList<string> GetTexts(string stepId, string locale)
     {
         var step = FindStep(stepId) ?? throw new KeyNotFoundException($"Unknown step '{stepId}'.");
-        return Render(step.Text[locale]);
+        return step.Text[locale].Select(Render).ToList();
     }
 
     public string GetLabel(QuickReply reply, string locale)
@@ -72,7 +77,7 @@ public sealed partial class KnowledgeBase : IKnowledgeBase
 
     private string Render(string text) =>
         PlaceholderRegex().Replace(text, m =>
-            Settings.Links.TryGetValue(m.Groups[1].Value, out var value) ? value : m.Value);
+            Settings.Links.TryGetValue(m.Groups[1].Value, out var value) && !string.IsNullOrEmpty(value) ? value : m.Value);
 
     [GeneratedRegex(@"\{(\w+)\}")]
     private static partial Regex PlaceholderRegex();

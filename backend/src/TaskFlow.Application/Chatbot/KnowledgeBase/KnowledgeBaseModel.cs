@@ -55,8 +55,12 @@ public sealed record QuickReply
 /// <summary>One node of the scripted dialogue.</summary>
 public sealed record DialogStep
 {
-    /// <summary>Message per locale; may contain <c>{support}</c>-style placeholders.</summary>
-    public IReadOnlyDictionary<string, string> Text { get; init; } = new Dictionary<string, string>();
+    /// <summary>
+    /// Message variants per locale (the same number in every locale); may contain <c>{support}</c>-style placeholders.
+    /// The runtime picks one variant uniformly at random each time the step is shown. Index 0 is the reviewed original.
+    /// </summary>
+    public IReadOnlyDictionary<string, IReadOnlyList<string>> Text { get; init; } =
+        new Dictionary<string, IReadOnlyList<string>>();
 
     public IReadOnlyList<QuickReply> QuickReplies { get; init; } = [];
 

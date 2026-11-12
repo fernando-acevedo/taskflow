@@ -1,0 +1,229 @@
+{
+  "intent": "LinkExpired",
+  "description": "El enlace del correo venció, ya se usó o no es válido.",
+  "triggers": [
+    "Dice enlace o token inválido o vencido",
+    "El enlace del correo no funciona"
+  ],
+  "notTriggers": [
+    "No llegó el correo (EmailNotReceived)"
+  ],
+  "confusedWith": [
+    "EmailNotReceived",
+    "ResetPassword"
+  ],
+  "utterances": {
+    "en": [
+      "The reset link has expired.",
+      "The link to reset my password is no longer valid because it expired.",
+      "reset link expired",
+      "the link in my email says its expired",
+      "Your reset link has expired, it says. I just got the email.",
+      "the reset linc expired",
+      "link doesnt work",
+      "the link doesnt open",
+      "link not working",
+      "the link from the email won't work",
+      "i click the link and nothing works",
+      "the lnk dosnt work",
+      "The page says the token is invalid.",
+      "It says invalid token when I open the link from the email.",
+      "I get an invalid token message",
+      "token invalid or expired",
+      "Why does the page show an invalid token error?",
+      "invalid tokken error",
+      "expired link",
+      "link expired",
+      "expired",
+      "the link has expired",
+      "expird link",
+      "link no longer valid",
+      "Why does the link say it was already used?",
+      "Why does it say the link has already been used?",
+      "it says the link was already used but i only clicked once",
+      "How can the link be already used? I never opened it.",
+      "link already used, can i get a new one?",
+      "the link was alredy used?",
+      "the invitaton link expird",
+      "the reset link expierd",
+      "invitaton link is expired",
+      "linkk has expred",
+      "the link i recieved says expird",
+      "my link is expierd",
+      "link from the email is broken",
+      "the email came but the link is dead",
+      "I got the email but the link is broken",
+      "link in the mail leads to an error page",
+      "email arrived, link doesnt open anything",
+      "the link they sent is not working",
+      "I clicked the link and it just says invalid!",
+      "I keep clicking the link and it says invalid or expired!",
+      "Every link you send me is expired! Why?",
+      "the link is dead AGAIN, I just got it!",
+      "Invalid link, invalid link, I'm tired of this!",
+      "i clicked the link right away and its already expired!!"
+    ],
+    "es": [
+      "El enlace para restablecer expiró.",
+      "El enlace para cambiar mi contraseña ya no es válido porque venció.",
+      "enlace de restablecimiento expirado",
+      "el link del correo dice que expiró",
+      "El vínculo para restablecer expiró, y acabo de recibir el correo.",
+      "el enlase de reseteo expiro",
+      "el link no funciona",
+      "el enlace no abre",
+      "link que no sirve",
+      "el vínculo del correo no me funciona",
+      "hago clic en el link y no pasa nada",
+      "el linc no funsiona",
+      "La página dice que el token es inválido.",
+      "Al abrir el enlace del correo dice que el token no es válido.",
+      "me sale un mensaje de token inválido",
+      "token invalido o vencido",
+      "¿Por qué la página muestra un error de token inválido?",
+      "error de tokken invalido",
+      "enlace vencido",
+      "enlace expirado",
+      "link vencido",
+      "el enlace ya venció",
+      "enlase vensido",
+      "vínculo ya no válido",
+      "¿Por qué dice que el enlace ya se usó?",
+      "¿Por qué dice que el enlace ya fue utilizado?",
+      "dice que el link ya se usó pero solo lo abrí una vez",
+      "¿Cómo puede estar usado si nunca lo abrí?",
+      "enlace ya usado, ¿me pueden dar uno nuevo?",
+      "el link ya fue usado?",
+      "el enlase de invitacion expiro",
+      "el enlace de reseteo expiró",
+      "el link de invitacion esta vencido",
+      "el vinculo expiro",
+      "el enlase que me llego dice expirado",
+      "mi enlase ya expiro",
+      "el link del correo está roto",
+      "me llegó el correo pero el link está muerto",
+      "recibí el mensaje pero el enlace da error",
+      "el enlace del email lleva a una página de error",
+      "llegó el mail, pero el link no abre nada",
+      "el vínculo que me enviaron no sirve",
+      "¡Hago clic en el enlace y solo dice inválido!",
+      "¡Hago clic en el enlace y dice inválido o vencido una y otra vez!",
+      "¡Todos los enlaces que me mandan salen vencidos!",
+      "¡El link está muerto otra vez y lo acabo de recibir!",
+      "¡Enlace inválido, enlace inválido, ya me cansé!",
+      "¡abrí el link enseguida y ya estaba vencido!"
+    ]
+  },
+  "entryStep": "link.start",
+  "steps": {
+    "link.start": {
+      "text": {
+        "en": [
+          "Links only work for a limited time and stop working once used. Which link was it?",
+          "Links are valid for a limited time and expire once you use them. Which one was it?",
+          "For security, links expire after a while and can only be used once. Which link were you trying to open?",
+          "Each link works only once and for a limited time. Which link are we talking about?",
+          "Links have an expiry time and stop working after the first use. What was the link for?"
+        ],
+        "es": [
+          "Los enlaces solo sirven por un tiempo limitado y dejan de funcionar una vez usados. ¿Qué enlace era?",
+          "Los enlaces son válidos por un tiempo limitado y vencen una vez que los usas. ¿Cuál era?",
+          "Por seguridad, los enlaces vencen después de un tiempo y solo se pueden usar una vez. ¿Qué enlace intentabas abrir?",
+          "Cada enlace funciona una sola vez y por un tiempo limitado. ¿De qué enlace se trata?",
+          "Los enlaces tienen un tiempo de vencimiento y dejan de funcionar después del primer uso. ¿Para qué era el enlace?"
+        ]
+      },
+      "quickReplies": [
+        {
+          "id": "reset",
+          "label": {
+            "en": "Password reset",
+            "es": "Restablecer contraseña"
+          },
+          "next": "link.reset"
+        },
+        {
+          "id": "invite",
+          "label": {
+            "en": "Invitation",
+            "es": "Invitación"
+          },
+          "next": "invite.expired"
+        },
+        {
+          "id": "confirm",
+          "label": {
+            "en": "Email confirmation",
+            "es": "Confirmación de correo"
+          },
+          "next": "confirm.resend"
+        }
+      ]
+    },
+    "link.reset": {
+      "text": {
+        "en": [
+          "Request a new link and open the most recent email.",
+          "Ask for a new link and use the latest email you receive.",
+          "Just request another link and open the newest email.",
+          "Request a fresh link, then open the most recent email we send.",
+          "Get a new link and make sure you open the latest email."
+        ],
+        "es": [
+          "Solicita un enlace nuevo y abre el correo más reciente.",
+          "Pide un enlace nuevo y usa el último correo que recibas.",
+          "Solo solicita otro enlace y abre el correo más nuevo.",
+          "Solicita un enlace nuevo y luego abre el correo más reciente que te enviemos.",
+          "Pide un enlace nuevo y asegúrate de abrir el último correo."
+        ]
+      },
+      "quickReplies": [
+        {
+          "id": "go",
+          "label": {
+            "en": "Request a new link",
+            "es": "Solicitar un enlace nuevo"
+          },
+          "next": "close",
+          "url": "/forgot-password"
+        }
+      ]
+    },
+    "invite.expired": {
+      "text": {
+        "en": [
+          "Invitation links last 7 days. Ask the administrator who invited you to send the invitation again.",
+          "An invitation link is valid for 7 days. Ask the administrator who invited you to resend it.",
+          "Invitations expire after 7 days. The administrator who invited you can send you a new one.",
+          "Invitation links only last 7 days, so you'll need a new one: ask the administrator who invited you to resend the invitation.",
+          "After 7 days the invitation link stops working. Ask the administrator who invited you for a new invitation."
+        ],
+        "es": [
+          "Los enlaces de invitación duran 7 días. Pide al administrador que te invitó que te reenvíe la invitación.",
+          "Un enlace de invitación es válido por 7 días. Pide al administrador que te invitó que te lo reenvíe.",
+          "Las invitaciones vencen a los 7 días. El administrador que te invitó puede enviarte una nueva.",
+          "Los enlaces de invitación solo duran 7 días, así que necesitas uno nuevo: pide al administrador que te invitó que reenvíe la invitación.",
+          "Después de 7 días el enlace de invitación deja de funcionar. Pide al administrador que te invitó una invitación nueva."
+        ]
+      },
+      "quickReplies": [
+        {
+          "id": "done",
+          "label": {
+            "en": "Okay",
+            "es": "De acuerdo"
+          },
+          "next": "close"
+        },
+        {
+          "id": "who",
+          "label": {
+            "en": "I don't know who invited me",
+            "es": "No sé quién me invitó"
+          },
+          "next": "escalate"
+        }
+      ]
+    }
+  }
+}
