@@ -39,7 +39,6 @@ import { ChatLink, classifyLink } from './chat-link';
       @if (!isOpen()) {
         <button
           #launcher
-          mat-fab
           type="button"
           class="launcher"
           data-testid="chat-launcher"

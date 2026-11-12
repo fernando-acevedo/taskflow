@@ -141,3 +141,28 @@
     outline-offset: 1px;
   }
 }
+
+/* A plain button instead of mat-fab: the FAB styles are a sizeable part of the initial bundle when shared. */
+.launcher {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border: 0;
+  border-radius: 16px;
+  cursor: pointer;
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-on-primary-container);
+  box-shadow: var(--mat-sys-level3);
+
+  &:hover {
+    box-shadow: var(--mat-sys-level4);
+  }
+
+  &:focus-visible {
+    outline: 3px solid var(--mat-sys-primary);
+    outline-offset: 2px;
+  }
+}

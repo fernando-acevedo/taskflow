@@ -34,7 +34,6 @@ import {
   resolveInitialLanguage,
 } from '@core/i18n/languages';
 import { TranslocoHttpLoader } from '@core/i18n/transloco-loader';
-import { chatbotEffects, chatbotFeature } from '@features/chatbot';
 import { notificationsEffects, notificationsFeature } from '@features/notifications';
 
 export const appConfig: ApplicationConfig = {
@@ -52,11 +51,9 @@ export const appConfig: ApplicationConfig = {
       // Registered at the root, like auth, instead of on a route: the bell lives in the always-present shell
       // toolbar, so its state must exist on every page for as long as the app does (ADR 0010).
       [notificationsFeature.name]: notificationsFeature.reducer,
-      // Root too: the support bot is available on the sign-in pages, outside any feature route, and keeps its
-      // conversation (in memory only) while the user moves between pages.
-      [chatbotFeature.name]: chatbotFeature.reducer,
+      // The support bot's state is not here: it is provided with the lazy widget (`loadChatWidget`).
     }),
-    provideEffects(authEffects, tenantEffects, notificationsEffects, chatbotEffects, realtimeEffects),
+    provideEffects(authEffects, tenantEffects, notificationsEffects, realtimeEffects),
     provideRouterStore(),
     // Development only: in production anyone with the extension could read every action and the state.
     ...(typeof ngDevMode !== 'undefined' && ngDevMode

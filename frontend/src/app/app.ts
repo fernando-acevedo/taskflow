@@ -1,5 +1,5 @@
 import { NgComponentOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, Type, afterNextRender, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EnvironmentInjector, afterNextRender, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
@@ -17,7 +17,7 @@ import { LanguageService } from '@core/i18n/language.service';
 import { SUPPORTED_LANGUAGES } from '@core/i18n/languages';
 import { ThemeMenu } from '@core/theme/theme-menu';
 import { OfflineBanner } from '@core/network/offline-banner';
-import { loadChatWidget } from '@features/chatbot';
+import { LoadedChatWidget, loadChatWidget } from '@features/chatbot';
 import { NotificationBell } from '@features/notifications';
 
 const languageNames = new Map<string, string>(
@@ -60,11 +60,13 @@ export class App {
   /** Owner or Admin of the current tenant. */
   protected readonly canManage = this.store.selectSignal(tenantFeature.selectCanManage);
   /** The support chat, loaded after the first render so it stays out of the initial bundle. */
-  protected readonly chatWidget = signal<Type<unknown> | null>(null);
+  protected readonly chatWidget = signal<LoadedChatWidget | null>(null);
+
+  private readonly environmentInjector = inject(EnvironmentInjector);
 
   constructor() {
     afterNextRender(() => {
-      void loadChatWidget().then((widget) => this.chatWidget.set(widget));
+      void loadChatWidget(this.environmentInjector).then((widget) => this.chatWidget.set(widget));
     });
   }
 

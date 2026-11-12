@@ -95,6 +95,6 @@
   </main>
 
   @if (chatWidget(); as widget) {
-    <ng-container *ngComponentOutlet="widget" />
+    <ng-container *ngComponentOutlet="widget.component; environmentInjector: widget.injector" />
   }
 </ng-container>
