@@ -82,4 +82,5 @@
   <data name="Tasks.SyncTooLarge" xml:space="preserve"><value>A sync can carry at most 200 tasks.</value></data>
   <data name="Chatbot.SessionClosed" xml:space="preserve"><value>This conversation has ended. Start a new one.</value></data>
   <data name="Chatbot.InvalidLocale" xml:space="preserve"><value>The language must be en or es.</value></data>
+  <data name="Chatbot.UnknownQuickReply" xml:space="preserve"><value>That option is not available at this step.</value></data>
 </root>
