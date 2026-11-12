@@ -124,9 +124,8 @@ public static class DependencyInjection
         services.AddSingleton<OutboxDispatcher>();
         services.AddHostedService<OutboxProcessor>();
 
-        // Chatbot placeholders ({support}, {help}); required outside Development. The KB itself is registered in T-142.
-        services.AddOptions<ChatbotOptions>().Bind(configuration.GetSection(ChatbotOptions.SectionName)).ValidateOnStart();
-        services.AddSingleton<IValidateOptions<ChatbotOptions>, ChatbotOptionsValidator>();
+        // Support chatbot (ADR 0026): knowledge base, classifier, dialogue engine; {support}/{help} required outside Development.
+        services.AddChatbot(configuration);
 
         services.AddScoped<IInvitationSender, InvitationSender>();
         services.AddScoped<INotificationEmailSender, NotificationEmailSender>();

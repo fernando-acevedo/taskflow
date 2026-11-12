@@ -83,4 +83,6 @@
   <data name="Chatbot.SessionClosed" xml:space="preserve"><value>This conversation has ended. Start a new one.</value></data>
   <data name="Chatbot.InvalidLocale" xml:space="preserve"><value>The language must be en or es.</value></data>
   <data name="Chatbot.UnknownQuickReply" xml:space="preserve"><value>That option is not available at this step.</value></data>
+  <data name="Chatbot.EmptyMessage" xml:space="preserve"><value>Write a message or choose an option.</value></data>
+  <data name="Chatbot.MessageTooLong" xml:space="preserve"><value>The message is too long.</value></data>
 </root>
