@@ -100,6 +100,10 @@ Check the current numbers in the Azure documentation before relying on them.
    `environment: production`. Restrict it to the `main` branch and, optionally, require reviewers. The federated
    credential trusts only that environment, so no other workflow, branch or PR can get a token.
 
+   **Subject format.** GitHub may send the subject with immutable owner/repo ids
+   (`repo:<owner>@<ownerId>/<repo>@<repoId>:environment:production`). If **Azure login (OIDC)** fails with
+   `AADSTS700213`, the log prints the exact subject it presented: add a second federated credential with it.
+
    **Least privilege.** The role grants `Microsoft.Web/sites/read`, `.../config/read`, `.../publish/Action`,
    `.../restart/Action` and `.../basicPublishingCredentialsPolicies/read` on the web app. It deliberately omits
    `Microsoft.Web/sites/config/list/Action`, which returns the app settings (connection string, admin and demo
