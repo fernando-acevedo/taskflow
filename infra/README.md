@@ -9,9 +9,9 @@ Bicep templates and scripts for the public demo (phase 5). See
 
 | Resource | SKU | Notes |
 | --- | --- | --- |
-| App Service plan (Linux) | F1 Free | East US |
+| App Service plan (Linux) | F1 Free | West US 3 (new subscriptions had no F1 quota in East US) |
 | Web app (API) | `DOTNETCORE\|10.0` | HTTPS only, FTPS off, TLS 1.2, Always On off |
-| SQL server + database `taskflow` | Free offer, serverless GP_S_Gen5, auto-pause | East US, SQL authentication, firewall rule for Azure services |
+| SQL server + database `taskflow` | Free offer, serverless GP_S_Gen5, auto-pause | West US 3, SQL authentication, firewall rule for Azure services |
 | Static Web App (frontend) | Free | East US 2 (Free is only offered in a few regions) |
 
 Names are `<prefix>-<kind>-<uniqueString(resourceGroupId)>`, so they are globally unique and stable per group.
@@ -99,6 +99,10 @@ Check the current numbers in the Azure documentation before relying on them.
    Then create the GitHub environment **production** (Settings > Environments); both deploy workflows declare
    `environment: production`. Restrict it to the `main` branch and, optionally, require reviewers. The federated
    credential trusts only that environment, so no other workflow, branch or PR can get a token.
+
+   **Subject format.** GitHub may send the subject with immutable owner/repo ids
+   (`repo:<owner>@<ownerId>/<repo>@<repoId>:environment:production`). If **Azure login (OIDC)** fails with
+   `AADSTS700213`, the log prints the exact subject it presented: add a second federated credential with it.
 
    **Least privilege.** The role grants `Microsoft.Web/sites/read`, `.../config/read`, `.../publish/Action`,
    `.../restart/Action` and `.../basicPublishingCredentialsPolicies/read` on the web app. It deliberately omits
