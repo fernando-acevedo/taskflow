@@ -6,6 +6,7 @@
     "Microsoft.Web/sites/read",
     "Microsoft.Web/sites/config/read",
     "Microsoft.Web/sites/publish/Action",
+    "Microsoft.Web/sites/publishxml/Action",
     "Microsoft.Web/sites/restart/Action",
     "Microsoft.Web/sites/basicPublishingCredentialsPolicies/read"
   ],
