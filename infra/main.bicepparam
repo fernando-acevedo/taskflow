@@ -3,7 +3,7 @@ using './main.bicep'
 // No secrets in this file: they are read from environment variables at deployment time
 // (deploy.ps1 / deploy.sh set them, prompting when they are missing).
 param namePrefix = 'taskflow'
-param location = 'eastus'
+param location = 'westus3'
 param staticWebAppLocation = 'eastus2'
 param sqlAdminLogin = 'taskflowadmin'
 param sqlAdminPassword = readEnvironmentVariable('TASKFLOW_SQL_ADMIN_PASSWORD')
